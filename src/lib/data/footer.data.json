@@ -1,0 +1,93 @@
+{
+  "columns": [
+    {
+      "id": "col1",
+      "links": [
+        {
+          "label": "FAQs",
+          "href": "/landing#faqs"
+        },
+        {
+          "label": "Terms & Conditions",
+          "href": "https://jojoapp.in/terms-conditions"
+        },
+        {
+          "label": "Privacy Policy",
+          "href": "https://jojoapp.in/privacy-policy"
+        }
+      ]
+    },
+    {
+      "id": "col2",
+      "links": [
+        {
+          "label": "Advertise with us",
+          "href": "https://jojolimited.com"
+        },
+        {
+          "label": "Contact Us",
+          "href": "https://jojolimited.com/contact"
+        },
+        {
+          "label": "Help & Support",
+          "href": ""
+        },
+        {
+          "label": "Assets",
+          "href": ""
+        },
+        {
+          "label": "Careers",
+          "href": "https://jojolimited.com/career"
+        }
+      ]
+    }
+  ],
+  "social": {
+    "title": "Follow us for more updates",
+    "platforms": [
+      {
+        "id": "facebook",
+        "label": "Facebook",
+        "href": "https://www.facebook.com/people/JOJO-APP/61585843836378/#",
+        "iconKey": "FACEBOOK_ICON"
+      },
+      {
+        "id": "instagram",
+        "label": "Instagram",
+        "href": "https://www.instagram.com/accounts/login/?next=%2Fjojoapp.in&source=omni_redirect",
+        "iconKey": "INSTAGRAM_ICON"
+      },
+      {
+        "id": "youtube",
+        "label": "YouTube",
+        "href": "https://www.youtube.com/@JOJOPARJOJO",
+        "iconKey": "YOUTUBE_ICON"
+      },
+      {
+        "id": "linkdin",
+        "label": "Linkdin",
+        "href": "https://www.linkedin.com/authwall?trk=bf&trkInfo=AQGu11QqTN7wvgAAAZ5FfkZgE1eERbP681cod9SBrwbx5LbHkvnM23VOocjLarsq3UlyBgNRKkQwVCZrTwBhaagL5_HSiSu5XiACo5gpFz5d5YbUXF4OCJ4kicSAaRxyYLikh10=&original_referer=&sessionRedirect=https%3A%2F%2Fwww.linkedin.com%2Fcompany%2Fjojoapp%2Fposts%2F%3FfeedView%3Dall",
+        "iconKey": "LINKDIN_ICON"
+      }
+    ]
+  },
+  "appDownload": {
+    "title": "Download the JOJO app",
+    "buttons": [
+      {
+        "id": "google",
+        "label": "Google Play",
+        "href": "https://play.google.com/store/apps/details?id=com.navkarevent.jojo&pcampaignid=web_share%5D",
+        "imageKey": "GOOGLE_PLAY"
+      },
+      {
+        "id": "apple",
+        "label": "App Store",
+        "href": "https://apps.apple.com/us/app/jojo-app-movies-shows-natak/id1665094876",
+        "imageKey": "APPLE_STORE"
+      }
+    ]
+  },
+  "copyright": "All the Copyrights Reserved to JOJO Limited"
+}

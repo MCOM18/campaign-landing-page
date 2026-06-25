@@ -1,0 +1,134 @@
+/**
+ * Centralized route constants
+ * Single source of truth for all application routes
+ */
+export const ROUTES = {
+  HOME: '/',
+  SEARCH: '/search',
+  PROFILE: '/profile',
+  AUTH_REGISTER_TO_OTP_SCREEN_NAVIGATE: '/register/otp?',
+  AUTH_LOGIN_TO_OTP_SCREEN_NAVIGATE: '/login/otp?',
+  HOMEPAGE: "/home",
+  WATCH: (id: string) => `/watch?v=${id}`,
+
+  // Public routes
+  LANDING: '/landing',
+  LOGIN: '/login',
+  LOGIN_OTP: '/login/otp',
+  REGISTER: '/register',
+  REGISTER_OTP: '/register/otp',
+  REGISTER_CREATE_ACCOUNT: '/register/create-account',
+  ADD_PROFILE: '/profile/add-profile',
+  AVATAR: '/profile/avtar',
+  DOWNLOAD_APP: '/download-app',
+  FORGOT_PASSWORD: '/forgot-password',
+  TERMS: '/terms',
+  PRIVACY: '/privacy',
+  KIDS: '/kids',
+  HOT_AND_NEW: '/hot-and-new',
+  MOVIES: "/movies",
+  SHOWS: "/shows",
+  NATAK: "/nataks",
+  WATCHLIST: "/watchlist",
+
+  // SSO Callback routes
+  APPLE_CALLBACK: '/auth/apple/callback',
+  GOOGLE_CALLBACK: '/auth/google/callback',
+  FACEBOOK_CALLBACK: '/auth/facebook/callback',
+
+  // Debug routes (development only)
+  DEBUG_API_RESPONSE: '/debug/api-response',
+
+  // Demo (remove before production)
+  PLAYER_DEMO: '/watch/demo',
+
+  // Protected routes
+  WATCHING: '/watching',
+
+  // Player
+  WATCH_BASE: '/watch',
+} as const;
+
+/**
+ * Where unauthenticated users are sent (e.g. after cache clear or visiting HOME).
+ */
+export const UNAUTHENTICATED_ENTRY_ROUTE = ROUTES.LOGIN;
+
+/**
+ * Public routes that don't require authentication
+ */
+export const PUBLIC_ROUTES = [
+  ROUTES.LANDING,
+  ROUTES.LOGIN,
+  ROUTES.LOGIN_OTP,
+  ROUTES.REGISTER,
+  ROUTES.REGISTER_OTP,
+  ROUTES.REGISTER_CREATE_ACCOUNT,
+  ROUTES.FORGOT_PASSWORD,
+  ROUTES.TERMS,
+  ROUTES.PRIVACY,
+  ROUTES.DOWNLOAD_APP,
+  ROUTES.APPLE_CALLBACK,
+  ROUTES.GOOGLE_CALLBACK,
+  ROUTES.FACEBOOK_CALLBACK,
+  ROUTES.DEBUG_API_RESPONSE,
+  ROUTES.PLAYER_DEMO,
+] as const;
+
+/**
+ * Auth-only routes — logged-in users must be redirected AWAY from these.
+ * These are routes that only make sense when a user is NOT authenticated.
+ */
+export const AUTH_ONLY_ROUTES = [
+  ROUTES.LOGIN,
+  ROUTES.LOGIN_OTP,
+  ROUTES.REGISTER,
+  ROUTES.REGISTER_OTP,
+  ROUTES.LANDING,
+] as const;
+
+/**
+ * Protected routes that require authentication
+ */
+export const PROTECTED_ROUTES = [
+  ROUTES.HOME,
+  ROUTES.REGISTER_CREATE_ACCOUNT,
+  ROUTES.ADD_PROFILE,
+  ROUTES.AVATAR,
+  ROUTES.WATCHING,
+  ROUTES.SEARCH,
+  ROUTES.WATCH_BASE,
+] as const;
+
+/**
+ * Routes always reachable on mobile even when both mobile flags are false.
+ */
+export const MOBILE_LOGIN_ALLOWED_ROUTES = [
+  ROUTES.LOGIN,
+  ROUTES.LOGIN_OTP,
+  ROUTES.APPLE_CALLBACK,
+  ROUTES.GOOGLE_CALLBACK,
+  ROUTES.FACEBOOK_CALLBACK,
+] as const;
+
+/**
+ * Routes reachable on mobile when MOBILE_RESPONSIVE_WITH_AUTH is enabled.
+ */
+export const MOBILE_AUTH_ALLOWED_ROUTES = [
+  ROUTES.LANDING,
+  ROUTES.LOGIN,
+  ROUTES.LOGIN_OTP,
+  ROUTES.REGISTER,
+  ROUTES.REGISTER_OTP,
+  ROUTES.REGISTER_CREATE_ACCOUNT,
+  ROUTES.FORGOT_PASSWORD,
+  ROUTES.ADD_PROFILE,
+  ROUTES.AVATAR,
+  ROUTES.WATCHING,
+  ROUTES.WATCH_BASE,
+  ROUTES.APPLE_CALLBACK,
+  ROUTES.GOOGLE_CALLBACK,
+  ROUTES.FACEBOOK_CALLBACK,
+  ROUTES.TERMS,
+  ROUTES.PRIVACY,
+] as const;
