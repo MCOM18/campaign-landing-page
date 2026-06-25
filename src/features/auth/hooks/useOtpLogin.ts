@@ -1,8 +1,9 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { initiateOtpFlow, completeOtpVerification } from "../services/auth.service";
 import { checkUser } from "../api/checkUser";
+import { getCountries } from "../api/getCountries";
 import { mapCheckUserResponse } from "../model/mapper";
 import { useAuthStore } from "@store/useAuthStore";
 import { handleError } from "@lib/error/handler";
@@ -158,5 +159,20 @@ export function useResendOtp() {
       const message = handleError(error);
       logger.error("[OTP Resend Error]", { message });
     },
+  });
+}
+
+/**
+ * Hook to get supported country list
+ */
+export function useGetCountries() {
+  return useQuery({
+    queryKey: ["countries"],
+    queryFn: async () => {
+      const sessionId = useAuthStore.getState().token ?? undefined;
+      const res = await getCountries(sessionId);
+      return res.data || [];
+    },
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours cache
   });
 }

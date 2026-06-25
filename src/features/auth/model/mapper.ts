@@ -11,6 +11,7 @@ import type {
   VerifySpecialUserResponse,
   GuestLoginResponse,
   User,
+  Country,
 } from "./types";
 
 /**
@@ -107,4 +108,22 @@ export function mapSocialLoginResponse(apiResponse: ApiResponse<any>): import(".
     email: data.email,
     phone: data.phone,
   };
+}
+
+/**
+ * Maps country list API response
+ */
+export function mapCountryList(apiResponse: ApiResponse<any>): Country[] {
+  const data = apiResponse.data;
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  
+  return data.map((item: any) => ({
+    id: item.id,
+    countryCode: item.countryCode || item.country_code || item.code || '',
+    phoneCode: item.phoneCode || item.phone_code || '',
+    countryName: item.countryName || item.country_name || item.name || '',
+    flag: item.flag || undefined,
+  }));
 }

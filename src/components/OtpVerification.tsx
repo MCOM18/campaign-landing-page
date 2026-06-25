@@ -29,6 +29,11 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
     }
   }, [timer]);
 
+  // Focus first input on mount
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
+
   // Handle auto-focus and auto-submit
   const handleChange = (value: string, index: number) => {
     // Only allow numbers

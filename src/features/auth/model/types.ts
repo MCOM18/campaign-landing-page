@@ -114,3 +114,11 @@ export interface OtpFlowState {
   isSpecialUser: boolean;
   error: string | null;
 }
+
+export interface Country {
+  id?: string;
+  countryCode: string;  // e.g. "IN"
+  phoneCode: string;    // e.g. "+91"
+  countryName: string;  // e.g. "India"
+  flag?: string;        // flag URL or emoji
+}

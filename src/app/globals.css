@@ -31,7 +31,7 @@ body {
   overflow-x: hidden;
   color: var(--text-primary);
   background-color: var(--background);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -117,14 +117,17 @@ body {
 .form-input {
   width: 100%;
   padding: 12px 20px;
-  background-color: var(--input-bg);
-  border: none;
+  background-image: linear-gradient(rgba(25, 25, 25, 0.5), rgba(25, 25, 25, 0.5)),
+    linear-gradient(135deg, transparent, transparent);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1.5px solid transparent;
   border-radius: 16px;
   color: var(--text-primary);
   font-size: 16px;
   font-family: inherit;
   outline: none;
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
 }
 
@@ -134,11 +137,15 @@ body {
 }
 
 .form-input:hover {
-  background-color: rgba(25, 25, 25, 0.6);
+  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
+    linear-gradient(135deg, rgba(250, 175, 63, 0.3), rgba(255, 214, 69, 0.15), rgba(250, 175, 63, 0.3));
 }
 
-.form-input:focus {
-  background-color: rgba(25, 25, 25, 0.6);
+.form-input:focus,
+.form-input:active {
+  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
+    linear-gradient(135deg, #faaf3f 21.627%, #ffd691 49.519%, #faaf3f 81.684%);
+  box-shadow: 0 0 12px var(--gold-glow);
 }
 
 /* OTP digit inputs */
@@ -154,26 +161,34 @@ body {
   width: 89px;
   height: 48px;
   border-radius: 16px;
-  background-color: var(--input-bg);
-  border: none;
+  background-image: linear-gradient(rgba(25, 25, 25, 0.5), rgba(25, 25, 25, 0.5)),
+    linear-gradient(135deg, transparent, transparent);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1.5px solid transparent;
   color: #ffffff;
   font-size: 16px;
   font-weight: 400;
   text-align: center;
   outline: none;
-  transition: background-color 0.2s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .otp-input:hover {
-  background-color: rgba(25, 25, 25, 0.6);
+  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
+    linear-gradient(135deg, rgba(250, 175, 63, 0.3), rgba(255, 214, 69, 0.15), rgba(250, 175, 63, 0.3));
 }
 
-.otp-input:focus {
-  background-color: rgba(25, 25, 25, 0.6);
+.otp-input:focus,
+.otp-input:active {
+  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
+    linear-gradient(135deg, #faaf3f 21.627%, #ffd691 49.519%, #faaf3f 81.684%);
+  box-shadow: 0 0 12px var(--gold-glow);
 }
 
 .otp-input.filled {
-  background-color: var(--input-bg);
+  background-image: linear-gradient(rgba(25, 25, 25, 0.5), rgba(25, 25, 25, 0.5)),
+    linear-gradient(135deg, rgba(250, 175, 63, 0.4), rgba(255, 214, 69, 0.2), rgba(250, 175, 63, 0.4));
 }
 
 /* Success Modal Overlay - full viewport cover */
@@ -523,5 +538,169 @@ body {
       margin-left: 0 !important;
       margin-right: auto !important;
     }
+  }
+}
+
+/* Country Selector and Dropdown Styles */
+.form-input-container.flex-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.country-selector-wrapper {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.country-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  outline: none;
+}
+
+.country-selector-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.country-flag {
+  font-size: 18px;
+}
+
+.country-code {
+  color: #ffffff;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.form-input.with-country-picker {
+  padding-left: 96px;
+  text-align: left;
+}
+
+.country-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -12px;
+  width: 280px;
+  background: rgba(28, 26, 23, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  padding: 12px;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.country-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(25, 25, 25, 0.8);
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 10px;
+  transition: all 0.2s ease-in-out;
+}
+
+.country-search-input:focus {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+
+.country-list-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 4px;
+}
+
+.country-option-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.country-option-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.country-option-item.selected {
+  background-color: rgba(250, 175, 63, 0.15);
+  color: var(--gold-primary);
+  font-weight: 500;
+}
+
+.country-option-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.country-option-code {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.no-countries-found {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 12px 0;
+}
+
+/* Premium Gradient Loader */
+.premium-loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 30%, #faaf3f, #ffd691, #faaf3f);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+  animation: spin 1.2s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }

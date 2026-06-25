@@ -14,9 +14,11 @@ import { SuccessScreen } from "@/components/SuccessScreen";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/services/auth.service";
+import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 
 export default function Home() {
   const { isAppReady } = useBootstrap();
+  const { data: countries = [] } = useGetCountries();
   const [step, setStep] = useState<"input" | "otp" | "success">("input");
   const [contactInfo, setContactInfo] = useState("");
   const [parsedPhone, setParsedPhone] = useState("");
@@ -37,10 +39,31 @@ export default function Home() {
 
     if (!isEmail) {
       if (phone.startsWith("+")) {
-        const match = phone.match(/^\+(\d{1,4})(.*)$/);
-        if (match) {
-          phoneCode = `+${match[1]}`;
-          phone = match[2].replace(/\D/g, "");
+        const clean = phone.substring(1).replace(/\D/g, ""); // e.g. "918460139822"
+        let bestMatchCode = "";
+        let bestMatchLength = 0;
+
+        const codesToCheck = countries.length > 0
+          ? countries.map((c) => c.phoneCode.replace(/\D/g, ""))
+          : ["91", "1", "44", "971", "61", "65", "60", "966", "965", "968", "973", "974", "92", "880", "977", "94", "254"];
+
+        for (const code of codesToCheck) {
+          if (clean.startsWith(code) && code.length > bestMatchLength) {
+            bestMatchCode = code;
+            bestMatchLength = code.length;
+          }
+        }
+
+        if (bestMatchLength > 0) {
+          phoneCode = `+${bestMatchCode}`;
+          phone = clean.substring(bestMatchLength);
+        } else {
+          // Fallback if no matching code is found
+          const match = phone.match(/^\+(\d{1,3})(.*)$/);
+          if (match) {
+            phoneCode = `+${match[1]}`;
+            phone = match[2].replace(/\D/g, "");
+          }
         }
       } else {
         const clean = phone.replace(/\D/g, "");
@@ -132,24 +155,8 @@ export default function Home() {
           color: "#ffffff",
         }}
       >
-        <div
-          style={{
-            width: "48px",
-            height: "48px",
-            border: "3px solid rgba(255, 214, 69, 0.1)",
-            borderTop: "3px solid var(--gold-primary)",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-            marginBottom: "1rem",
-          }}
-        />
+        <div className="premium-loader" />
         <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Loading settings...</p>
-        <style jsx global>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
@@ -311,24 +318,8 @@ export default function Home() {
                   minHeight: "200px",
                 }}
               >
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    border: "3px solid rgba(255, 214, 69, 0.1)",
-                    borderTop: "3px solid var(--gold-primary)",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                    marginBottom: "1rem",
-                  }}
-                />
+                <div className="premium-loader" />
                 <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
-                <style jsx global>{`
-                  @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                  }
-                `}</style>
               </div>
             ) : step === "input" ? (
               <FreeTrialForm onSubmit={handleInputSubmit} />
@@ -421,17 +412,7 @@ export default function Home() {
                     width: "100%"
                   }}
                 >
-                  <div
-                    style={{
-                      width: "48px",
-                      height: "48px",
-                      border: "3px solid rgba(255, 214, 69, 0.1)",
-                      borderTop: "3px solid var(--gold-primary)",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
-                      marginBottom: "1rem",
-                    }}
-                  />
+                  <div className="premium-loader" />
                   <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
                 </div>
               ) : step === "input" ? (
