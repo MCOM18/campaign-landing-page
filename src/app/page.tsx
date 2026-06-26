@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   JojoLogo,
   NoAdsIcon,
@@ -15,10 +15,76 @@ import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/services/auth.service";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
+import footerData from "@/lib/data/footer.data.json";
+import { logger } from "@/lib/logger/logger";
+import { AppConfig } from "@/lib/config/app.config";
+
+/** Map each platform id → the SVG asset filename */
+const SOCIAL_ICON_MAP: Record<string, string> = {
+  facebook: "/assets/facebook.svg",
+  instagram: "/assets/instagram.svg",
+  youtube: "/assets/youtube.svg",
+  linkdin: "/assets/linkdin.svg", // currently twitter.svg is used for LinkedIn slot
+};
 
 export default function Home() {
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
+  logger.info("countries", countries)
+
+  // Extract and log special offer plan data
+  const specialOffer = AppConfig.specialOfferPlan;
+  console.log("Special Offer Plan Data:", specialOffer);
+  logger.info("[Home] Special Offer Plan Data:", specialOffer);
+
+  const subscriptionGroup = specialOffer?.oSubscriptionGroup;
+  const product = subscriptionGroup?.aSubscriptionProducts?.[0];
+  const offer = product?.oOfferDetails;
+  const offerTranslation = offer?.oOfferTranslation;
+  const features = product?.aFeatures || [];
+  const pricing = product?.aProviderSkus?.[0]?.oPricing;
+
+  // Title: "Free TRIAL" or dynamic bottom line text / title
+  const pageTitle = offerTranslation?.oOfferHeadline?.sBottomLineText || "";
+
+  // Badge: "For 7 days" or dynamic top line text / tagName
+  const badgeText = offerTranslation?.oOfferHeadline?.sTopLineText || "";
+
+  // Confirm Button Label
+  const confirmButtonLabel = offerTranslation?.sConfirmButtonLabel || "";
+
+  // Formatted Short Disclaimer
+  const disclaimerTemplate = offerTranslation?.sOfferDisclaimer;
+  const currencySymbol = pricing?.sCurrencySymbol || "₹";
+  const productPrice = pricing?.nPrice !== undefined ? pricing.nPrice : "499";
+  const disclaimerText = disclaimerTemplate
+    ? disclaimerTemplate
+      .replace("{sCurrencySymbol}", currencySymbol)
+      .replace("{nPrice}", productPrice.toString())
+      .replace("/yearly", "/year")
+      .replace("/years", "/year")
+    : "";
+
+  // Long Footer Note
+  const footerNote = offerTranslation?.sFooterNote || "";
+
+  const activeFeatures = features;
+
+  const getFeatureIcon = (featureType: string, uid: string) => {
+    switch (featureType) {
+      case "AD_INVIDEO":
+        return <NoAdsIcon uid={uid} />;
+      case "STREAM_LIMIT":
+        return <DevicesIcon />;
+      case "CONTENT_SVOD_ONLY":
+        return <ExclusiveIcon />;
+      case "MAX_VIDEO_QUALITY":
+        return <HdIcon uid={uid} />;
+      default:
+        return null;
+    }
+  };
+
   const [step, setStep] = useState<"input" | "otp" | "success">("input");
   const [contactInfo, setContactInfo] = useState("");
   const [parsedPhone, setParsedPhone] = useState("");
@@ -105,7 +171,7 @@ export default function Home() {
         isGuest: false,
         createdAt: new Date().toISOString(),
       };
-      
+
       setAuth(user, response.session_id, "");
       setStep("success");
     } catch (err: any) {
@@ -163,14 +229,142 @@ export default function Home() {
 
   return (
     <>
-    <main className="app-container">
-      {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
-      <div className="mobile-only" style={{ width: "100%" }}>
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <main className="app-container">
+        {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
+        <div className="mobile-only" style={{ width: "100%" }}>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {/* Movie Posters Banner */}
+            <div className="posters-banner-container">
+              <img
+                src="/assets/posters_mobile.png"
+                alt="Movie Posters"
+                className="posters-banner-image"
+              />
+              <div className="posters-banner-mask" />
+            </div>
+
+            {/* Top Header Logo */}
+            <header style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
+              <JojoLogo />
+            </header>
+
+            {/* Header Title Section & Tab Badge */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2.5rem" }}>
+              <h1
+                className="gold-text-gradient"
+                style={{
+                  fontSize: "44px",
+                  fontWeight: "900",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  textAlign: "center",
+                  margin: 0,
+                  lineHeight: "48px",
+                }}
+              >
+                {pageTitle || ""}
+              </h1>
+              <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
+                <div style={{ width: "100%", height: "1px", backgroundColor: "rgba(255, 225, 174, 0.15)" }} />
+                <div
+                  className="gold-bg-gradient"
+                  style={{
+                    color: "#050505",
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    width: "fit-content",
+                    padding: "0 16px",
+                    height: "34px",
+                    borderRadius: "0 0 16px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {badgeText}
+                </div>
+              </div>
+            </div>
+
+            {/* Benefits Grid */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+                marginBottom: "2.5rem",
+                gap: "8px",
+              }}
+            >
+              {activeFeatures.map((feature: any) => (
+                <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card-mobile">
+                  {getFeatureIcon(feature.eFeatureType, "mobile") || (
+                    <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px" }} />
+                  )}
+                  <span
+                    className="gold-text-gradient"
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: "600",
+                      textAlign: "center",
+                      lineHeight: "1.3",
+                    }}
+                  >
+                    {feature.sFeatureName}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Form Step Wrapper */}
+            <div style={{ width: "100%" }}>
+              {error && (
+                <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "center", fontWeight: "500" }}>
+                  {error}
+                </div>
+              )}
+              {isVerifying ? (
+                <div
+                  className="fade-in"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "200px",
+                  }}
+                >
+                  <div className="premium-loader" />
+                  <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
+                </div>
+              ) : step === "input" ? (
+                <FreeTrialForm
+                  onSubmit={handleInputSubmit}
+                  confirmButtonLabel={confirmButtonLabel}
+                  disclaimerText={disclaimerText}
+                  footerNote={footerNote}
+                />
+              ) : (
+                <OtpVerification
+                  contactInfo={contactInfo}
+                  onSubmit={handleOtpSubmit}
+                  onBack={handleBack}
+                  onResend={handleResendOtp}
+                  disclaimerText={disclaimerText}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 2. DESKTOP VIEW (Visible on screens >= 768px) */}
+        <div className="desktop-only" style={{ width: "100%" }}>
           {/* Movie Posters Banner */}
           <div className="posters-banner-container">
             <img
-              src="/assets/posters_mobile.png"
+              src="/assets/posters_desktop.png"
               alt="Movie Posters"
               className="posters-banner-image"
             />
@@ -183,7 +377,7 @@ export default function Home() {
           </header>
 
           {/* Header Title Section & Tab Badge */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2.5rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "3.5rem" }}>
             <h1
               className="gold-text-gradient"
               style={{
@@ -196,7 +390,7 @@ export default function Home() {
                 lineHeight: "48px",
               }}
             >
-              Free TRIAL
+              {pageTitle || ""}
             </h1>
             <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
               <div style={{ width: "100%", height: "1px", backgroundColor: "rgba(255, 225, 174, 0.15)" }} />
@@ -206,352 +400,192 @@ export default function Home() {
                   color: "#050505",
                   fontSize: "16px",
                   fontWeight: "700",
-                  width: "112px",
+                  width: "fit-content",
+                  padding: "0 16px",
                   height: "34px",
                   borderRadius: "0 0 16px 16px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   textAlign: "center",
+                  whiteSpace: "nowrap",
                 }}
               >
-                For 7 days
+                {badgeText || ""}
               </div>
             </div>
           </div>
 
-          {/* Benefits Grid */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              width: "100%",
-              marginBottom: "2.5rem",
-              padding: "0 1.5rem",
-              gap: "8px",
-            }}
-          >
-            {/* Benefit 1 */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "25%" }}>
-              <NoAdsIcon uid="mobile" />
-              <span
-                className="gold-text-gradient"
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  textAlign: "center",
-                  marginTop: "8px",
-                  lineHeight: "1.3",
-                }}
-              >
-                No In Video<br />Ads
-              </span>
-            </div>
-
-            {/* Benefit 2 */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "25%" }}>
-              <DevicesIcon />
-              <span
-                className="gold-text-gradient"
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  textAlign: "center",
-                  marginTop: "8px",
-                  lineHeight: "1.3",
-                }}
-              >
-                Watch on upto<br />4 Devices
-              </span>
-            </div>
-
-            {/* Benefit 3 */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "25%" }}>
-              <ExclusiveIcon />
-              <span
-                className="gold-text-gradient"
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  textAlign: "center",
-                  marginTop: "8px",
-                  lineHeight: "1.3",
-                }}
-              >
-                Exclusive<br />Content
-              </span>
-            </div>
-
-            {/* Benefit 4 */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "25%" }}>
-              <HdIcon uid="mobile" />
-              <span
-                className="gold-text-gradient"
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  textAlign: "center",
-                  marginTop: "8px",
-                  lineHeight: "1.3",
-                }}
-              >
-                Full HD 1080p<br />Content
-              </span>
-            </div>
-          </div>
-
-          {/* Form Step Wrapper */}
-          <div style={{ width: "100%", padding: "0 1.5rem" }}>
-            {error && (
-              <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "center", fontWeight: "500" }}>
-                {error}
-              </div>
-            )}
-            {isVerifying ? (
-              <div
-                className="fade-in"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minHeight: "200px",
-                }}
-              >
-                <div className="premium-loader" />
-                <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
-              </div>
-            ) : step === "input" ? (
-              <FreeTrialForm onSubmit={handleInputSubmit} />
-            ) : (
-              <OtpVerification
-                contactInfo={contactInfo}
-                onSubmit={handleOtpSubmit}
-                onBack={handleBack}
-                onResend={handleResendOtp}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 2. DESKTOP VIEW (Visible on screens >= 768px) */}
-      <div className="desktop-only" style={{ width: "100%" }}>
-        {/* Movie Posters Banner */}
-        <div className="posters-banner-container">
-          <img
-            src="/assets/posters_desktop.png"
-            alt="Movie Posters"
-            className="posters-banner-image"
-          />
-          <div className="posters-banner-mask" />
-        </div>
-
-        {/* Top Header Logo */}
-        <header style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
-          <JojoLogo />
-        </header>
-
-        {/* Header Title Section & Tab Badge */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "3.5rem" }}>
-          <h1
-            className="gold-text-gradient"
-            style={{
-              fontSize: "44px",
-              fontWeight: "900",
-              textTransform: "uppercase",
-              letterSpacing: "1.5px",
-              textAlign: "center",
-              margin: 0,
-              lineHeight: "48px",
-            }}
-          >
-            Free TRIAL
-          </h1>
-          <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
-            <div style={{ width: "100%", height: "1px", backgroundColor: "rgba(255, 225, 174, 0.15)" }} />
-            <div
-              className="gold-bg-gradient"
-              style={{
-                color: "#050505",
-                fontSize: "16px",
-                fontWeight: "700",
-                width: "112px",
-                height: "34px",
-                borderRadius: "0 0 16px 16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-              }}
-            >
-              For 7 days
-            </div>
-          </div>
-        </div>
-
-        {/* Web Split Columns Layout */}
-        <div className="web-split-layout">
-          {/* Left Column (50%): Form actions, Pricing, Disclaimer */}
-          <div className="web-layout-left">
-            <div style={{ width: "100%" }}>
-              {error && (
-                <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "left", fontWeight: "500" }}>
-                  {error}
-                </div>
-              )}
-              {isVerifying ? (
-                <div
-                  className="fade-in"
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minHeight: "150px",
-                    width: "100%"
-                  }}
-                >
-                  <div className="premium-loader" />
-                  <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
-                </div>
-              ) : step === "input" ? (
-                <FreeTrialForm onSubmit={handleInputSubmit} />
-              ) : (
-                <OtpVerification
-                  contactInfo={contactInfo}
-                  onSubmit={handleOtpSubmit}
-                  onBack={handleBack}
-                  onResend={handleResendOtp}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Right Column (50%): Gold Features Separator & 2x2 Feature Grid */}
-          <div className="web-layout-right">
-            <div className="web-features-header">
-              <div className="web-features-header-line" />
-              <span className="web-features-header-text gold-text-gradient">GOLD FEATURES</span>
-              <div className="web-features-header-line" />
-            </div>
-
-            <div className="web-features-grid">
-              {/* Card 1 */}
-              <div className="web-feature-card">
-                <NoAdsIcon uid="desktop" />
-                <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600" }}>No In Video Ads</span>
-              </div>
-
-              {/* Card 2 */}
-              <div className="web-feature-card">
-                <DevicesIcon />
-                <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600" }}>Watch on upto 4 Devices</span>
-              </div>
-
-              {/* Card 3 */}
-              <div className="web-feature-card">
-                <ExclusiveIcon />
-                <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600" }}>Exclusive Content</span>
-              </div>
-
-              {/* Card 4 */}
-              <div className="web-feature-card">
-                <HdIcon uid="desktop" />
-                <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600" }}>Full HD 1080 Content</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer links at the bottom */}
-        <footer className="web-footer-container">
-          <div className="web-footer-grid">
-            <div className="web-footer-column">
-              <span className="web-footer-link">FAQs</span>
-              <span className="web-footer-link">Terms & Conditions</span>
-              <span className="web-footer-link">Privacy Policy</span>
-              <div style={{ marginTop: "1rem" }}>
-                <img
-                  src="/assets/plain_logo.svg"
-                  alt="JOJO Logo"
-                  style={{ width: "93px", height: "30px", display: "block" }}
-                />
-              </div>
-            </div>
-
-            <div className="web-footer-column">
-              <span className="web-footer-link">Advertise with us</span>
-              <span className="web-footer-link">Contact Us</span>
-              <span className="web-footer-link">Help & Support</span>
-              <span className="web-footer-link">Assets</span>
-              <span className="web-footer-link">Careers</span>
-            </div>
-
-            <div className="web-footer-column" style={{ alignItems: "flex-end", textAlign: "right" }}>
-              <span style={{ color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Follow us for more updates</span>
-              <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
-                <img src="/assets/fb.svg" alt="Facebook" style={{ width: "32px", height: "32px", cursor: "pointer" }} />
-                <img src="/assets/twitter.svg" alt="Twitter" style={{ width: "32px", height: "32px", cursor: "pointer" }} />
-                <img src="/assets/instagram.svg" alt="Instagram" style={{ width: "32px", height: "32px", cursor: "pointer" }} />
-                <img src="/assets/youtube.svg" alt="YouTube" style={{ width: "32px", height: "32px", cursor: "pointer" }} />
-              </div>
-
-              <span style={{ color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Download the JOJO app</span>
-              <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
-                {/* Google Play Button */}
-                <div
-                  style={{
-                    backgroundColor: "#e2e2e2",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "6px 10px",
-                    borderRadius: "4px",
-                    height: "37px",
-                    cursor: "pointer"
-                  }}
-                >
-                  <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
-                    <img src="/assets/google_play_logo.png" alt="Google Play Icon" style={{ width: "21px", height: "22px" }} />
-                    <img src="/assets/google_play_text.svg" alt="Google Play Store" style={{ width: "76.7px", height: "23.5px" }} />
+          {/* Web Split Columns Layout */}
+          <div className="web-split-layout">
+            {/* Left Column (50%): Form actions, Pricing, Disclaimer */}
+            <div className="web-layout-left">
+              <div style={{ width: "100%" }}>
+                {error && (
+                  <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "left", fontWeight: "500" }}>
+                    {error}
                   </div>
+                )}
+                {isVerifying ? (
+                  <div
+                    className="fade-in"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: "150px",
+                      width: "100%"
+                    }}
+                  >
+                    <div className="premium-loader" />
+                    <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
+                  </div>
+                ) : step === "input" ? (
+                  <FreeTrialForm
+                    onSubmit={handleInputSubmit}
+                    confirmButtonLabel={confirmButtonLabel}
+                    disclaimerText={disclaimerText}
+                    footerNote={footerNote}
+                  />
+                ) : (
+                  <OtpVerification
+                    contactInfo={contactInfo}
+                    onSubmit={handleOtpSubmit}
+                    onBack={handleBack}
+                    onResend={handleResendOtp}
+                    disclaimerText={disclaimerText}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Right Column (50%): Gold Features Separator & 2x2 Feature Grid */}
+            <div className="web-layout-right">
+              <div className="web-features-header">
+                <div className="web-features-header-line" />
+                <span className="web-features-header-text gold-text-gradient">GOLD FEATURES</span>
+                <div className="web-features-header-line" />
+              </div>
+
+              <div className="web-features-grid">
+                {activeFeatures.map((feature: any) => (
+                  <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card">
+                    {getFeatureIcon(feature.eFeatureType, "desktop") || (
+                      <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px" }} />
+                    )}
+                    <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600", textAlign: "center" }}>
+                      {feature.sFeatureName}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer links at the bottom */}
+          <footer className="web-footer-container">
+            <div className="web-footer-grid">
+              <div className="web-footer-column">
+                <span className="web-footer-link">FAQs</span>
+                <span className="web-footer-link">Terms & Conditions</span>
+                <span className="web-footer-link">Privacy Policy</span>
+                <div style={{ marginTop: "1rem" }}>
+                  <img
+                    src="/assets/plain_logo.svg"
+                    alt="JOJO Logo"
+                    style={{ width: "93px", height: "30px", display: "block" }}
+                  />
                 </div>
-                {/* App Store Button */}
-                <div
-                  style={{
-                    backgroundColor: "#e2e2e2",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "6px 10px",
-                    borderRadius: "4px",
-                    height: "37px",
-                    cursor: "pointer"
-                  }}
-                >
-                  <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
-                    <img src="/assets/apple_logo.svg" alt="Apple Icon" style={{ width: "19.3px", height: "22.6px" }} />
-                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", justifyContent: "center" }}>
-                      <img src="/assets/apple_text_line1.svg" alt="Download on the" style={{ width: "72.6px", height: "6.4px" }} />
-                      <img src="/assets/apple_text_line2.svg" alt="App Store" style={{ width: "78.8px", height: "15.6px" }} />
+              </div>
+
+              <div className="web-footer-column">
+                <span className="web-footer-link">Advertise with us</span>
+                <span className="web-footer-link">Contact Us</span>
+                <span className="web-footer-link">Help & Support</span>
+                <span className="web-footer-link">Assets</span>
+                <span className="web-footer-link">Careers</span>
+              </div>
+
+              <div className="web-footer-column" style={{ alignItems: "flex-end", textAlign: "right" }}>
+                <span style={{ color: "var(--text-footer)", marginBottom: "0.5rem", fontWeight: 400 }}>Follow us for more updates</span>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
+                  {footerData.social.platforms.map((platform) => {
+                    const iconSrc = SOCIAL_ICON_MAP[platform.id];
+                    if (!iconSrc || !platform.href) return null;
+                    return (
+                      <a
+                        key={platform.id}
+                        href={platform.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={platform.label}
+                      >
+                        <img
+                          src={iconSrc}
+                          alt={platform.label}
+                          style={{ width: "32px", height: "32px", cursor: "pointer" }}
+                        />
+                      </a>
+                    );
+                  })}
+                </div>
+
+                <span style={{ color: "var(--text-footer)", marginBottom: "0.5rem", fontWeight: 400 }}>Download the JOJO app</span>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
+                  {/* Google Play Button */}
+                  <div
+                    style={{
+                      backgroundColor: "#e2e2e2",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "6px 10px",
+                      borderRadius: "4px",
+                      height: "37px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
+                      <img src="/assets/google_play_logo.png" alt="Google Play Icon" style={{ width: "21px", height: "22px" }} />
+                      <img src="/assets/google_play_text.svg" alt="Google Play Store" style={{ width: "76.7px", height: "23.5px" }} />
+                    </div>
+                  </div>
+                  {/* App Store Button */}
+                  <div
+                    style={{
+                      backgroundColor: "var(--text-footer)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "6px 10px",
+                      borderRadius: "4px",
+                      height: "37px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
+                      <img src="/assets/apple_logo.svg" alt="Apple Icon" style={{ width: "19.3px", height: "22.6px" }} />
+                      <div style={{ display: "flex", flexDirection: "column", gap: "3px", justifyContent: "center" }}>
+                        <img src="/assets/apple_text_line1.svg" alt="Download on the" style={{ width: "72.6px", height: "6.4px" }} />
+                        <img src="/assets/apple_text_line2.svg" alt="App Store" style={{ width: "78.8px", height: "15.6px" }} />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "1rem", justifyContent: "flex-end" }}>
-                <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
-                <span style={{ fontSize: "12px", color: "#e2e2e2" }}>
-                  2025 All the Copyrights Reserved to JOJO Limited
-                </span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "1rem", justifyContent: "flex-end" }}>
+                  <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
+                  <span style={{ fontSize: "12px", color: "var(--text-footer)", fontWeight: 400 }}>
+                    2025 All the Copyrights Reserved to JOJO Limited
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        </footer>
-      </div>
+          </footer>
+        </div>
 
-      {/* Unified Success State Overlay Modal - outside main so fixed covers full viewport */}
+        {/* Unified Success State Overlay Modal - outside main so fixed covers full viewport */}
       </main>
       {step === "success" && (
         <div className="success-overlay">

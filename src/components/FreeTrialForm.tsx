@@ -6,13 +6,21 @@ import { Country } from "@/features/auth/model/types";
 
 interface FreeTrialFormProps {
   onSubmit: (contactInfo: string) => void;
+  confirmButtonLabel?: string;
+  disclaimerText?: string;
+  footerNote?: string;
 }
 
-export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({ onSubmit }) => {
+export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
+  onSubmit,
+  confirmButtonLabel,
+  disclaimerText,
+  footerNote,
+}) => {
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const { data: countries = [] } = useGetCountries();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -102,7 +110,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({ onSubmit }) => {
               <span className="country-code">{selectedCountry.phoneCode}</span>
               <span className="dropdown-arrow">▾</span>
             </button>
-            
+
             {isOpen && (
               <div className="country-dropdown-menu fade-in">
                 <input
@@ -142,7 +150,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({ onSubmit }) => {
         <input
           type="text"
           ref={inputRef}
-          className={`form-input ${showCountryPicker ? "with-country-picker" : ""}`}
+          className="form-input"
           placeholder={showCountryPicker ? "Enter your Phone Number" : "Enter your Number/Email ID"}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -158,16 +166,21 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({ onSubmit }) => {
         style={{
           marginBottom: "1.2rem",
           outline: "none",
+          width: "50%",
+          display: "block",
+          marginLeft: "auto",
+          marginRight: "auto",
+          padding: "10px 10px 10px 10px",
         }}
       >
-        Start Free Trial
+        {confirmButtonLabel || "Start Free Trial"}
       </button>
 
       {/* Helper text under button */}
       <p
         style={{
           color: "rgba(255, 255, 255, 0.7)",
-          fontSize: "12px",
+          fontSize: "14px",
           fontWeight: "600",
           lineHeight: "18px",
           textAlign: "inherit",
@@ -175,21 +188,21 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({ onSubmit }) => {
           width: "100%",
         }}
       >
-        Free for 7 days, then ₹499/year. Cancel anytime.
+        {disclaimerText}
       </p>
 
       {/* Long disclaimer */}
       <p
         style={{
           color: "rgba(255, 255, 255, 0.7)",
-          fontSize: "12px",
-          lineHeight: "18px",
+          fontSize: "14px",
+          lineHeight: "22px",
           textAlign: "inherit",
           fontWeight: "400",
           width: "100%",
         }}
       >
-        No charges during the trial. Payment will be charged to your account after the trial ends unless cancelled at least 24 hours before renewal. Subscription renews automatically.
+        {footerNote || "No charges during the trial. Payment will be charged to your account after the trial ends unless cancelled at least 24 hours before renewal. Subscription renews automatically."}
       </p>
     </form>
   );

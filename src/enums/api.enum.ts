@@ -40,5 +40,8 @@ export enum ApiEndpoint {
   GET_ASSET_PRICING = "/v3/subscription/get-one-time-product",
   UPDATE_ENTITLEMENT = "/v3/subscription/tvod/update-user-entitlement",
   GET_APP_NAVIGATION = "/getAppNavigation",
-  SEARCH_API = "/search"
+  SEARCH_API = "/search",
+
+  // Speacial offer plan
+  SPECIAL_OFFER_PLAN = "/subscription/guest/special-offer-plan",
 }

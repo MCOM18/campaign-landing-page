@@ -7,6 +7,7 @@ interface OtpVerificationProps {
   onSubmit: (otp: string) => void;
   onBack: () => void;
   onResend?: () => void;
+  disclaimerText?: string;
 }
 
 export const OtpVerification: React.FC<OtpVerificationProps> = ({
@@ -14,6 +15,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
   onSubmit,
   onBack,
   onResend,
+  disclaimerText,
 }) => {
   const [otp, setOtp] = useState<string[]>(["", "", "", ""]);
   const [timer, setTimer] = useState(15);
@@ -171,7 +173,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
           width: "100%",
         }}
       >
-        Free for 7 days, then ₹499/year. Cancel anytime.
+        {disclaimerText || "Free for 7 days, then ₹499/year. Cancel anytime."}
       </p>
     </div>
   );

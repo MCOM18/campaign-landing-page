@@ -6,6 +6,7 @@ import { fetchGeoData } from "@lib/geo/geo.service";
 import { getCachedGeo, setCachedGeo } from "@lib/geo/geo.cache";
 import { logger } from "@lib/logger/logger";
 import { BootstrapContext } from "./BootstrapContext";
+import { getSpecialOfferPlan } from "@/features/subscription/api/getSpecialOfferPlan";
 
 interface BootstrapProviderProps {
   children: ReactNode;
@@ -54,10 +55,12 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
 
         // Check cache
         const cachedGeo = getCachedGeo(publicIp);
+        let activeGeoData = null;
 
         if (cachedGeo) {
           // Use cached geo
           logger.info("[Bootstrap] Using cached geo data");
+          activeGeoData = cachedGeo.geoData;
         } else {
           // Fetch fresh geo data
           logger.info("[Bootstrap] Fetching fresh geo data...");
@@ -69,6 +72,7 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
 
             // Cache the result
             setCachedGeo(geoData, publicIp, isAvailable);
+            activeGeoData = geoData;
 
             logger.info("[Bootstrap] Geo data fetched and cached", {
               country: geoData.country_code,
@@ -80,6 +84,39 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
               error: geoError instanceof Error ? geoError.message : 'Unknown'
             });
           }
+        }
+
+        // Set geolocation data in config
+        const finalGeoData = activeGeoData || {
+          country_code: 'IN',
+          region: '',
+          city: '',
+        };
+
+        config.geoLocationData = {
+          countryCode: finalGeoData.country_code,
+          region: finalGeoData.region || '',
+          city: finalGeoData.city || '',
+        };
+
+        // STEP 2.5: Fetch Special Offer Plan
+        try {
+          logger.info("[Bootstrap] Fetching special offer plan...");
+          const offerResponse = await getSpecialOfferPlan({
+            country: config.geoLocationData.countryCode,
+            countryCode: config.geoLocationData.countryCode,
+            sState: config.geoLocationData.region,
+            city: config.geoLocationData.city,
+            bIsRegistered: false,
+            fcmToken: ""
+          });
+          config.specialOfferPlan = offerResponse.data;
+          logger.info("[Bootstrap] Special offer plan loaded successfully", offerResponse.data);
+        } catch (offerError) {
+          // Special offer plan failure should NOT block app
+          logger.warn("[Bootstrap] Failed to fetch special offer plan", {
+            error: offerError instanceof Error ? offerError.message : 'Unknown'
+          });
         }
 
         // STEP 3: Set app ready

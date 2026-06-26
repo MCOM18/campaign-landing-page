@@ -39,6 +39,12 @@ export interface RuntimeConfig {
     envType: "stage" | "prod";
     publicIp?: string;
     apiUpdates?: ApiUpdate[];
+    geoLocationData?: {
+        countryCode: string;
+        region: string;
+        city: string;
+    };
+    specialOfferPlan?: any;
 }
 
 // In-memory config storage
@@ -250,6 +256,26 @@ export function getAppConfig(): RuntimeConfig {
     }
     return runtimeConfig;
 }
+
+/**
+ * Global AppConfig access helper for backward compatibility/client usage
+ */
+export const AppConfig = {
+    get geoLocationData() {
+        try {
+            return getAppConfig().geoLocationData;
+        } catch {
+            return undefined;
+        }
+    },
+    get specialOfferPlan() {
+        try {
+            return getAppConfig().specialOfferPlan;
+        } catch {
+            return undefined;
+        }
+    }
+};
 
 /**
  * Checks if config is loaded
