@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   JojoLogo,
   NoAdsIcon,
@@ -28,6 +29,7 @@ const SOCIAL_ICON_MAP: Record<string, string> = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
   logger.info("countries", countries)
@@ -164,6 +166,8 @@ export default function Home() {
         !isExists
       );
 
+      console.log("[OTP] Verification response:", response);
+
       const user = {
         id: response.user_id,
         phone: response.phone || "",
@@ -173,10 +177,19 @@ export default function Home() {
       };
 
       setAuth(user, response.session_id, "");
-      setStep("success");
+
+      // Save plain keys needed by usePaymentHandler (it reads "session_id" and "user_id" directly)
+      if (response.session_id) localStorage.setItem("session_id", response.session_id);
+      if (response.user_id) localStorage.setItem("user_id", response.user_id);
+      if (specialOffer) sessionStorage.setItem("selectedPlan", JSON.stringify(specialOffer));
+
+      console.log("[OTP] Navigating to /payment...");
+
+      // Use hard navigation to guarantee route change (router.push can be blocked mid-render)
+      window.location.href = "/payment";
     } catch (err: any) {
+      console.error("[OTP] Verification error:", err);
       setError(err.message || "Invalid OTP code. Please try again.");
-    } finally {
       setIsVerifying(false);
     }
   };
@@ -212,13 +225,15 @@ export default function Home() {
     return (
       <div
         style={{
+          position: "fixed",
+          inset: 0,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: "100vh",
           backgroundColor: "#0c0b0a",
           color: "#ffffff",
+          zIndex: 9999,
         }}
       >
         <div className="premium-loader" />

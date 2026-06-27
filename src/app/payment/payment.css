@@ -1,0 +1,767 @@
+/* =========================================================
+   Payment Page — Styles matching the exact classes used in Payment.tsx
+   Design: dark card on dark background, gold/orange accents
+   ========================================================= */
+
+/* ── Page layout override ─────────────────────────────────── */
+/* The payment page needs its own full-screen dark background,
+   overriding the body gradient from globals.css */
+.payment_wrapper {
+  min-height: 100vh;
+  width: 100vw;
+  /* Escape body's align-items: center on desktop */
+  margin-left: calc(-50vw + 50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a0f00 0%, #000000 50%, #2d1a00 100%) !important;
+  padding: 40px 16px 60px;
+}
+
+/* The inner card container */
+.payment-wrapper-b {
+  width: 100%;
+  max-width: 480px;
+  background: #111111;
+  border-radius: 24px;
+  padding: 28px 24px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+}
+
+/* ── Back header ──────────────────────────────────────────── */
+.pay-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  user-select: none;
+}
+
+.pay-head:hover {
+  opacity: 0.8;
+}
+
+/* ── Payment Method Sections ──────────────────────────────── */
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-section {
+  border-radius: 16px;
+  background: #191919;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  transition: border-color 0.25s, background 0.25s;
+}
+
+/* Active (expanded) section gets gold border */
+.payment-section.active {
+  border-color: rgba(250, 175, 63, 0.5);
+  background: #1a1608;
+}
+
+/* Payment accordion header row */
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  cursor: pointer;
+  user-select: none;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  gap: 10px;
+  transition: background 0.2s;
+}
+
+.payment-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Expanded panel body */
+.payment-content {
+  padding: 0 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Inputs inside payment panels ─────────────────────────── */
+.payment-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  background: #1e1e1e;
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none !important;
+  transition: border-color 0.25s;
+  display: block;
+  -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+  box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.payment-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.35);
+}
+
+.payment-input:focus,
+.payment-input:focus-visible,
+.payment-input:active {
+  border-color: rgba(255, 255, 255, 0.09);
+  outline: none !important;
+  -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+  box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+}
+
+.payment-input.input-error {
+  border-color: rgba(229, 62, 62, 0.7) !important;
+  -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+  box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+}
+
+/* CVV wrapper with eye toggle */
+.cvv-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Expiry + CVV side-by-side row */
+.pay-expiry-cvv-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.cvv-input-wrapper .payment-input {
+  padding-right: 44px;
+}
+
+.cvv-eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.cvv-eye-btn:hover {
+  color: #FAAF3F;
+}
+
+/* Inline error text under inputs */
+.card-error-text {
+  font-size: 12px;
+  color: #fc8181;
+  padding-left: 4px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ── Pay Button ────────────────────────────────────────────── */
+.prcoess-btn {
+  width: 100%;
+  padding: 16px 32px;
+  border-radius: 50px;
+  border: none;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(90deg, #f26e21 0%, #ff8c42 100%);
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(242, 110, 33, 0.5);
+  letter-spacing: 0.3px;
+}
+
+.prcoess-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(242, 110, 33, 0.7);
+}
+
+.prcoess-btn:active {
+  transform: translateY(0);
+}
+
+.prcoess-btn:disabled {
+  background: rgba(50, 50, 50, 0.8) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ── SubscriptionPlanCard overrides inside payment ────────── */
+/* The plan card shown at the top of the payment page */
+.subscription-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.subscription-landscape-image {
+  width: 100%;
+  height: 160px;
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+}
+
+.subscription-box {
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: 14px;
+  transition: all 0.2s;
+}
+
+/* Active (selected) plan — golden gradient background */
+.highlighted-plan {
+  background: linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
+  box-shadow: 0 6px 24px rgba(250, 175, 63, 0.45);
+}
+
+.default-plan {
+  background: rgba(30, 30, 30, 0.8);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ── Payment section wrapper (from subscription.css usage) ── */
+.payment-section-wrapper {
+  background: linear-gradient(135deg, #1a0f00 0%, #000000 50%, #2d1a00 100%) !important;
+}
+
+/* ── Processing Overlay ───────────────────────────────────── */
+/* (Tailwind inline styles handle this overlay, but fallback) */
+
+/* ── Phone Collect Modal ─────────────────────────────────────── */
+.phone-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.phone-modal {
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+}
+
+.phone-modal-title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.phone-modal-subtitle {
+  color: #888;
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.phone-modal-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: relative;
+}
+
+.phone-modal-country-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.phone-modal-country-btn:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.phone-modal-code {
+  color: #FAAF3F;
+  font-weight: 600;
+}
+
+.phone-modal-chevron {
+  width: 14px;
+  height: 14px;
+  color: #888;
+  transition: transform 0.2s;
+}
+
+.phone-modal-chevron.open {
+  transform: rotate(180deg);
+}
+
+.phone-modal-input {
+  flex: 1;
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: #fff;
+  font-size: 15px;
+  outline: none !important;
+  transition: border-color 0.2s;
+  -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+  box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.phone-modal-input::placeholder {
+  color: #555;
+  -webkit-text-fill-color: #555;
+}
+
+.phone-modal-input:focus,
+.phone-modal-input:focus-visible {
+  outline: none !important;
+  border-color: rgba(255, 255, 255, 0.3);
+  -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+  box-shadow: 0 0 0 1000px #1e1e1e inset !important;
+}
+
+.phone-modal-input.input-error {
+  border-color: rgba(229, 62, 62, 0.7);
+}
+
+.phone-modal-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.phone-modal-search-wrapper {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.phone-modal-search {
+  width: 100%;
+  background: #242424;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+}
+
+.phone-modal-search::placeholder {
+  color: #555;
+}
+
+.phone-modal-dropdown-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.phone-modal-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.phone-modal-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.phone-modal-dropdown-item.active {
+  color: #FAAF3F;
+  background: rgba(250, 175, 63, 0.07);
+}
+
+.phone-modal-country-name {
+  flex: 1;
+}
+
+.phone-modal-country-code {
+  color: #FAAF3F;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.phone-modal-btn {
+  width: 100%;
+  margin-top: 22px;
+  padding: 15px;
+  background: linear-gradient(90deg, #f26e21 0%, #ff8c42 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.phone-modal-btn:hover {
+  opacity: 0.9;
+}
+
+/* ── Payment Success Page ─────────────────────────────────── */
+.svod-box {
+  width: 100%;
+  max-width: 500px;
+  background: #111;
+  border-radius: 24px;
+  padding: 36px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+  position: relative;
+}
+
+.cong-head {
+  font-size: 28px;
+  font-weight: 800;
+  color: #FAAF3F;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.cong-head2 {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.gold-box {
+  background: linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 8px;
+}
+
+.paym-card-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #050505;
+}
+
+.member-till {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.fr-det {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+
+.filter-brightness {
+  filter: brightness(0) invert(1);
+}
+
+.fet-txt {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── Subscription card inside payment (overrides) ─────────── */
+/* Keep highlighted plan text dark (gold bg) */
+.highlighted-plan .text-lg,
+.highlighted-plan p,
+.highlighted-plan span {
+  color: #050505 !important;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .payment-wrapper-b {
+    padding: 20px 14px 24px;
+    border-radius: 18px;
+  }
+
+  .pay-head {
+    font-size: 18px;
+    margin-bottom: 18px;
+  }
+
+  .prcoess-btn {
+    font-size: 15px;
+    padding: 14px 24px;
+  }
+
+  .svod-box {
+    padding: 24px 16px;
+  }
+
+  .cong-head {
+    font-size: 22px;
+  }
+}
+
+/* ── Processing Overlay ───────────────────────────────────── */
+.pay-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 5, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.pay-overlay-card {
+  background: #191919;
+  border: 1.5px solid rgba(250, 175, 63, 0.25);
+  border-radius: 24px;
+  padding: 40px 32px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.pay-spinner {
+  width: 56px;
+  height: 56px;
+  border: 3px solid rgba(250, 175, 63, 0.2);
+  border-top-color: #FAAF3F;
+  border-radius: 50%;
+  animation: pay-spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes pay-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pay-overlay-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.pay-overlay-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pay-overlay-error {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(229, 62, 62, 0.1);
+  border: 1px solid rgba(229, 62, 62, 0.25);
+  border-radius: 12px;
+  font-size: 13px;
+  color: #fc8181;
+}
+
+/* =========================================================
+   SubscriptionPlanCard — used on the payment page
+   ========================================================= */
+
+.spc-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+/* Optional landscape image above the card */
+.spc-landscape {
+  width: 100%;
+  height: 160px;
+  border-radius: 16px 16px 0 0;
+  overflow: hidden;
+}
+
+.spc-landscape img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Card box */
+.spc-box {
+  width: 100%;
+  padding: 20px 22px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.spc-box--no-top-radius {
+  border-radius: 0 0 16px 16px;
+}
+
+/* Active (selected) — bold gold gradient, matches the screenshot */
+.spc-box--active {
+  background: linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
+  box-shadow: 0 6px 28px rgba(250, 175, 63, 0.45);
+}
+
+/* Default — subtle dark background */
+.spc-box--default {
+  background: rgba(30, 30, 30, 0.9);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Name + price in a single row */
+.spc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Left side: plan name + optional badge */
+.spc-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.spc-name {
+  font-size: 17px;
+  font-weight: 700;
+  /* Active card has dark text on gold; default has white text */
+  color: #050505;
+}
+
+.spc-box--default .spc-name {
+  color: #ffffff;
+}
+
+.spc-sub-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(5, 5, 5, 0.6);
+  margin-top: 1px;
+}
+
+.spc-box--default .spc-sub-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.spc-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(5, 5, 5, 0.15);
+  border-radius: 50px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #050505;
+  letter-spacing: 0.4px;
+}
+
+.spc-box--default .spc-badge {
+  background: rgba(250, 175, 63, 0.15);
+  color: #FAAF3F;
+}
+
+/* Right side: price + validity */
+.spc-right {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.spc-price {
+  font-size: 20px;
+  font-weight: 800;
+  color: #050505;
+}
+
+.spc-box--default .spc-price {
+  color: #ffffff;
+}
+
+.spc-validity {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(5, 5, 5, 0.6);
+}
+
+.spc-box--default .spc-validity {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Free trial subtitle line */
+.spc-trial-note {
+  font-size: 12px;
+  color: rgba(5, 5, 5, 0.65);
+  margin-top: 6px;
+}
+
+.spc-box--default .spc-trial-note {
+  color: rgba(255, 255, 255, 0.5);
+}
