@@ -41,7 +41,13 @@ function PaymentFailed() {
     }
   }, [errorData, isMounted]);
 
-  if (!isMounted) {
+  useEffect(() => {
+    if (isMounted && !errorData) {
+      router.push("/");
+    }
+  }, [isMounted, errorData, router]);
+
+  if (!isMounted || !errorData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
         <p className="text-gray-400">Loading error details...</p>

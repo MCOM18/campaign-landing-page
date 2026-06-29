@@ -16,6 +16,7 @@ function PaymentPage() {
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [countryCode, setCountryCode] = useState("IN");
 
   const {
@@ -30,7 +31,18 @@ function PaymentPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const sessionId = localStorage.getItem("session_id");
+      const userId = localStorage.getItem("user_id");
       const stored = sessionStorage.getItem("selectedPlan");
+
+      if (!sessionId || !userId || !stored) {
+        toast.error("Please log in first.");
+        router.push("/");
+        return;
+      }
+
+      setIsAuthorized(true);
+
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
@@ -48,7 +60,7 @@ function PaymentPage() {
       }
     }
     setIsMounted(true);
-  }, []);
+  }, [router]);
 
   const isOverseasUser = countryCode !== "IN";
 
@@ -274,7 +286,7 @@ function PaymentPage() {
     selectedPlan?.oSubscriptionGroup?.aMediaUrls?.[0] ||
     null;
 
-  if (!isMounted || !selectedPlan || !pricingData) {
+  if (!isMounted || !isAuthorized || !selectedPlan || !pricingData) {
     return (
       <div className="payment_wrapper">
         <p style={{ color: "rgba(255,255,255,0.5)" }}>Loading plan details...</p>

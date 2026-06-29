@@ -1,6 +1,21 @@
 export const getUserGeoLocation = () => {
   try {
     if (typeof window === "undefined") return {};
+    
+    // Check the new Next.js app geo cache first
+    const newGeoRaw = localStorage.getItem("ott_geo_cache");
+    if (newGeoRaw) {
+      const parsed = JSON.parse(newGeoRaw);
+      if (parsed && parsed.geoData) {
+        return {
+          city: parsed.geoData.city || null,
+          region: parsed.geoData.region || null,
+          country_code: parsed.geoData.country_code || null,
+        };
+      }
+    }
+
+    // Fallback to legacy key if present
     const rawGeo = localStorage.getItem("geoLocationData");
     const geoData = rawGeo ? JSON.parse(rawGeo) : null;
 
