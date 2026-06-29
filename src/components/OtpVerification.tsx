@@ -110,20 +110,24 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       {/* OTP Boxes Wrapper */}
       <div className="otp-boxes-container">
         {otp.map((digit, idx) => (
-          <input
+          <div
             key={idx}
-            type="text"
-            inputMode="numeric"
-            maxLength={1}
-            value={digit}
-            onChange={(e) => handleChange(e.target.value, idx)}
-            onKeyDown={(e) => handleKeyDown(e, idx)}
-            onPaste={idx === 0 ? handlePaste : undefined}
-            ref={(el) => {
-              inputRefs.current[idx] = el;
-            }}
-            className={`otp-input ${digit ? "filled" : ""}`}
-          />
+            className={`otp-input-wrapper ${digit ? "filled" : ""}`}
+          >
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleChange(e.target.value, idx)}
+              onKeyDown={(e) => handleKeyDown(e, idx)}
+              onPaste={idx === 0 ? handlePaste : undefined}
+              ref={(el) => {
+                inputRefs.current[idx] = el;
+              }}
+              className="otp-input"
+            />
+          </div>
         ))}
       </div>
 
@@ -166,7 +170,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       {/* Subscription Pricing line */}
       <p
         style={{
-          color: "var(--text-secondary)",
+          color: "#ffffff",
           fontSize: "14px",
           textAlign: "inherit",
           fontWeight: "400",

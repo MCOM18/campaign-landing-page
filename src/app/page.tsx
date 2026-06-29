@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   JojoLogo,
@@ -18,6 +18,8 @@ import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
 import { AppConfig } from "@/lib/config/app.config";
+import Lottie from "lottie-react";
+import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 
 /** Map each platform id → the SVG asset filename */
 const SOCIAL_ICON_MAP: Record<string, string> = {
@@ -32,6 +34,21 @@ export default function Home() {
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
   logger.info("countries", countries)
+
+  const lottieMobileRef = useRef<any>(null);
+  const lottieDesktopRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (lottieMobileRef.current) {
+      lottieMobileRef.current.setSpeed(0.3);
+    }
+  }, [lottieMobileRef.current]);
+
+  useEffect(() => {
+    if (lottieDesktopRef.current) {
+      lottieDesktopRef.current.setSpeed(0.3);
+    }
+  }, [lottieDesktopRef.current]);
 
   // Extract and log special offer plan data
   const specialOffer = AppConfig.specialOfferPlan;
@@ -281,10 +298,12 @@ export default function Home() {
           <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
             {/* Movie Posters Banner */}
             <div className="posters-banner-container">
-              <img
-                src="/assets/posters_mobile.png"
-                alt="Movie Posters"
-                className="posters-banner-image"
+              <Lottie
+                lottieRef={lottieMobileRef}
+                animationData={thumbnailsJson}
+                loop={true}
+                style={{ width: "100%", height: "100%" }}
+                rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
               />
               <div className="posters-banner-mask" />
             </div>
@@ -407,10 +426,12 @@ export default function Home() {
         <div className="desktop-only" style={{ width: "100%" }}>
           {/* Movie Posters Banner */}
           <div className="posters-banner-container">
-            <img
-              src="/assets/posters_desktop.png"
-              alt="Movie Posters"
-              className="posters-banner-image"
+            <Lottie
+              lottieRef={lottieDesktopRef}
+              animationData={thumbnailsJson}
+              loop={true}
+              style={{ width: "100%", height: "100%" }}
+              rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
             />
             <div className="posters-banner-mask" />
           </div>

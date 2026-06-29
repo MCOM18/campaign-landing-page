@@ -44,25 +44,7 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
         alignItems: "center",
       }}
     >
-      {/* Premium Badge Icon or Shield */}
-      <div
-        style={{
-          width: "56px",
-          height: "56px",
-          borderRadius: "50%",
-          background: "rgba(250, 175, 63, 0.1)",
-          border: "1px solid rgba(250, 175, 63, 0.3)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <img
-          src="/assets/images/Logo/jojo-gold-black.svg"
-          alt="JOJO Gold"
-          style={{ width: "32px", height: "32px", filter: "brightness(0) invert(1)" }}
-        />
-      </div>
+
 
       {/* Title & Description */}
       <div

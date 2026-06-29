@@ -118,25 +118,38 @@ body {
   position: relative;
   width: 100%;
   margin-bottom: 1.5rem;
-  background-image: linear-gradient(rgba(25, 25, 25, 0.5), rgba(25, 25, 25, 0.5)),
-    linear-gradient(135deg, transparent, transparent);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  border: 1.5px solid transparent;
+  background: transparent !important;
   border-radius: 16px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 1.5px;
   padding-left: 12px;
   padding-right: 8px;
 }
 
-.form-input-container:hover {
-  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
-    linear-gradient(135deg, rgba(250, 175, 63, 0.3), rgba(255, 214, 69, 0.15), rgba(250, 175, 63, 0.3));
+.form-input-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-input-container:hover::before {
+  background: linear-gradient(135deg, rgba(250, 175, 63, 0.3), rgba(255, 214, 69, 0.15), rgba(250, 175, 63, 0.3));
+}
+
+.form-input-container:focus-within::before {
+  background: linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
 }
 
 .form-input-container:focus-within {
-  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
-    linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
   box-shadow: 0 0 12px var(--gold-glow);
 }
 
@@ -162,45 +175,66 @@ body {
 /* OTP digit inputs */
 .otp-boxes-container {
   display: flex;
-  gap: 6px;
+  gap: 12px;
   justify-content: center;
   margin-bottom: 1.5rem;
   width: 100%;
 }
 
-.otp-input {
+.otp-input-wrapper {
   width: 89px;
   height: 48px;
   border-radius: 16px;
-  background-color: transparent !important;
-  background-image: linear-gradient(transparent, transparent),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  border: 1.5px solid transparent;
+  position: relative;
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.otp-input-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.otp-input-wrapper:hover::before {
+  background: linear-gradient(135deg, rgba(250, 175, 63, 0.3), rgba(255, 214, 69, 0.15), rgba(250, 175, 63, 0.3));
+}
+
+.otp-input-wrapper:focus-within::before {
+  background: linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
+}
+
+.otp-input-wrapper:focus-within {
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.otp-input-wrapper.filled::before {
+  background: linear-gradient(135deg, rgba(250, 175, 63, 0.4), rgba(255, 214, 69, 0.2), rgba(250, 175, 63, 0.4));
+}
+
+.otp-input {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
   color: #ffffff;
   font-size: 16px;
   font-weight: 400;
   text-align: center;
   outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.otp-input:hover {
-  background-image: linear-gradient(transparent, transparent),
-    linear-gradient(135deg, rgba(250, 175, 63, 0.3), rgba(255, 214, 69, 0.15), rgba(250, 175, 63, 0.3));
-}
-
-.otp-input:focus,
-.otp-input:active {
-  background-image: linear-gradient(transparent, transparent),
-    linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
-  box-shadow: 0 0 12px var(--gold-glow);
-}
-
-.otp-input.filled {
-  background-image: linear-gradient(transparent, transparent),
-    linear-gradient(135deg, rgba(250, 175, 63, 0.4), rgba(255, 214, 69, 0.2), rgba(250, 175, 63, 0.4));
+  padding: 0;
 }
 
 /* Success Modal Overlay - full viewport cover */
