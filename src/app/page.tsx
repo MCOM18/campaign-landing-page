@@ -529,24 +529,23 @@ export default function Home() {
           <footer className="web-footer-container">
             <div className="web-footer-grid">
               <div className="web-footer-column">
-                <span className="web-footer-link">FAQs</span>
-                <span className="web-footer-link">Terms & Conditions</span>
-                <span className="web-footer-link">Privacy Policy</span>
+                <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Terms & Conditions</a>
+                <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Privacy Policy</a>
                 <div style={{ marginTop: "1rem" }}>
-                  <img
-                    src="/assets/plain_logo.svg"
-                    alt="JOJO Logo"
-                    style={{ width: "93px", height: "30px", display: "block" }}
-                  />
+                  <a href="https://jojoapp.in/" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
+                    <img
+                      src="/assets/plain_logo.svg"
+                      alt="JOJO Logo"
+                      style={{ width: "93px", height: "30px", display: "block", cursor: "pointer" }}
+                    />
+                  </a>
                 </div>
               </div>
 
               <div className="web-footer-column">
-                <span className="web-footer-link">Advertise with us</span>
-                <span className="web-footer-link">Contact Us</span>
-                <span className="web-footer-link">Help & Support</span>
-                <span className="web-footer-link">Assets</span>
-                <span className="web-footer-link">Careers</span>
+                <a href="https://appjojo.in/#contactUs" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Advertise with us</a>
+                <a href="https://appjojo.in/#contactUs" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Contact us</a>
+                <a href="mailto:support@appjojo.in" className="web-footer-link" style={{ textDecoration: "none" }}>Support</a>
               </div>
 
               <div className="web-footer-column" style={{ alignItems: "flex-end", textAlign: "right" }}>
@@ -576,7 +575,10 @@ export default function Home() {
                 <span style={{ color: "var(--text-footer)", marginBottom: "0.5rem", fontWeight: 400 }}>Download the JOJO app</span>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
                   {/* Google Play Button */}
-                  <div
+                  <a
+                    href="https://play.google.com/store/apps/details?id=com.navkarevent.jojo&pcampaignid=web_share%5D"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{
                       backgroundColor: "#e2e2e2",
                       display: "flex",
@@ -585,16 +587,20 @@ export default function Home() {
                       padding: "6px 10px",
                       borderRadius: "4px",
                       height: "37px",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      textDecoration: "none"
                     }}
                   >
                     <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
                       <img src="/assets/google_play_logo.png" alt="Google Play Icon" style={{ width: "21px", height: "22px" }} />
                       <img src="/assets/google_play_text.svg" alt="Google Play Store" style={{ width: "76.7px", height: "23.5px" }} />
                     </div>
-                  </div>
+                  </a>
                   {/* App Store Button */}
-                  <div
+                  <a
+                    href="https://apps.apple.com/us/app/jojo-app-movies-shows-natak/id1665094876"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{
                       backgroundColor: "var(--text-footer)",
                       display: "flex",
@@ -603,7 +609,8 @@ export default function Home() {
                       padding: "6px 10px",
                       borderRadius: "4px",
                       height: "37px",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      textDecoration: "none"
                     }}
                   >
                     <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
@@ -613,13 +620,13 @@ export default function Home() {
                         <img src="/assets/apple_text_line2.svg" alt="App Store" style={{ width: "78.8px", height: "15.6px" }} />
                       </div>
                     </div>
-                  </div>
+                  </a>
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "1rem", justifyContent: "flex-end" }}>
                   <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
                   <span style={{ fontSize: "12px", color: "var(--text-footer)", fontWeight: 400 }}>
-                    2025 All the Copyrights Reserved to JOJO Limited
+                    © {new Date().getFullYear()} JOJO LIMITED. All the Copyrights Reserved.
                   </span>
                 </div>
               </div>

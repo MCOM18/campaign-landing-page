@@ -528,10 +528,9 @@ body {
     text-shadow: 0 1px 11px rgba(250, 175, 63, 0.4) !important;
   }
 
-  /* Desktop Footer Layout */
   .web-footer-container {
     width: 100% !important;
-    padding: 18px 96px 0 96px !important;
+    padding: 40px 96px 40px 96px !important;
     margin-top: auto !important;
     position: relative !important;
     z-index: 10 !important;
@@ -548,7 +547,7 @@ body {
   .web-footer-column {
     display: flex !important;
     flex-direction: column !important;
-    gap: 3px !important;
+    gap: 16px !important;
     font-size: 16px !important;
     font-weight: 300 !important;
     color: var(--text-footer) !important;
@@ -560,10 +559,6 @@ body {
     font-weight: 300 !important;
     position: relative !important;
     transition: color 0.2s !important;
-  }
-
-  .web-footer-link:hover {
-    color: var(--gold-primary) !important;
   }
 
   /* Success Modal Overlay (Mobile & Desktop) - defined at root level */
