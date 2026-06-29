@@ -172,8 +172,9 @@ body {
   width: 89px;
   height: 48px;
   border-radius: 16px;
-  background-image: linear-gradient(rgba(25, 25, 25, 0.5), rgba(25, 25, 25, 0.5)),
-    linear-gradient(135deg, transparent, transparent);
+  background-color: transparent !important;
+  background-image: linear-gradient(transparent, transparent),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1.5px solid transparent;
@@ -186,19 +187,19 @@ body {
 }
 
 .otp-input:hover {
-  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
+  background-image: linear-gradient(transparent, transparent),
     linear-gradient(135deg, rgba(250, 175, 63, 0.3), rgba(255, 214, 69, 0.15), rgba(250, 175, 63, 0.3));
 }
 
 .otp-input:focus,
 .otp-input:active {
-  background-image: linear-gradient(rgba(25, 25, 25, 0.6), rgba(25, 25, 25, 0.6)),
+  background-image: linear-gradient(transparent, transparent),
     linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%);
   box-shadow: 0 0 12px var(--gold-glow);
 }
 
 .otp-input.filled {
-  background-image: linear-gradient(rgba(25, 25, 25, 0.5), rgba(25, 25, 25, 0.5)),
+  background-image: linear-gradient(transparent, transparent),
     linear-gradient(135deg, rgba(250, 175, 63, 0.4), rgba(255, 214, 69, 0.2), rgba(250, 175, 63, 0.4));
 }
 

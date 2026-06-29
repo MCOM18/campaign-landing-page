@@ -300,7 +300,7 @@ export default function Home() {
                 className="gold-text-gradient"
                 style={{
                   fontSize: "44px",
-                  fontWeight: "900",
+                  fontWeight: "700",
                   textTransform: "uppercase",
                   letterSpacing: "1.5px",
                   textAlign: "center",
@@ -311,7 +311,7 @@ export default function Home() {
                 {pageTitle || ""}
               </h1>
               <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
-                <div style={{ width: "100%", height: "1px", backgroundColor: "rgba(255, 225, 174, 0.15)" }} />
+                <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
                 <div
                   className="gold-bg-gradient"
                   style={{
@@ -426,7 +426,7 @@ export default function Home() {
               className="gold-text-gradient"
               style={{
                 fontSize: "44px",
-                fontWeight: "900",
+                fontWeight: "700",
                 textTransform: "uppercase",
                 letterSpacing: "1.5px",
                 textAlign: "center",
@@ -437,7 +437,7 @@ export default function Home() {
               {pageTitle || ""}
             </h1>
             <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
-              <div style={{ width: "100%", height: "1px", backgroundColor: "rgba(255, 225, 174, 0.15)" }} />
+              <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
               <div
                 className="gold-bg-gradient"
                 style={{
