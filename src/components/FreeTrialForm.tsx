@@ -86,7 +86,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
   };
 
   const isEmail = inputValue.includes("@") || /[a-zA-Z]/.test(inputValue);
-  const showCountryPicker = !isEmail;
+  const showCountryPicker = !isEmail && inputValue.trim().length > 0;
   const isActive = inputValue.trim().length > 0;
 
   const filteredCountries = countries.filter(c =>

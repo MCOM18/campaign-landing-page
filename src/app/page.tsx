@@ -4,10 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   JojoLogo,
-  NoAdsIcon,
-  DevicesIcon,
-  ExclusiveIcon,
-  HdIcon,
 } from "@/components/Icons";
 import { FreeTrialForm } from "@/components/FreeTrialForm";
 import { OtpVerification } from "@/components/OtpVerification";
@@ -74,21 +70,6 @@ export default function Home() {
   const footerNote = offerTranslation?.sFooterNote || "";
 
   const activeFeatures = features;
-
-  const getFeatureIcon = (featureType: string, uid: string) => {
-    switch (featureType) {
-      case "AD_INVIDEO":
-        return <NoAdsIcon uid={uid} />;
-      case "STREAM_LIMIT":
-        return <DevicesIcon />;
-      case "CONTENT_SVOD_ONLY":
-        return <ExclusiveIcon />;
-      case "MAX_VIDEO_QUALITY":
-        return <HdIcon uid={uid} />;
-      default:
-        return null;
-    }
-  };
 
   const [step, setStep] = useState<"input" | "otp" | "success">("input");
   const [contactInfo, setContactInfo] = useState("");
@@ -365,9 +346,7 @@ export default function Home() {
             >
               {activeFeatures.map((feature: any) => (
                 <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card-mobile">
-                  {getFeatureIcon(feature.eFeatureType, "mobile") || (
-                    <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px" }} />
-                  )}
+                  <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
                   <span
                     className="gold-text-gradient"
                     style={{
@@ -536,9 +515,7 @@ export default function Home() {
               <div className="web-features-grid">
                 {activeFeatures.map((feature: any) => (
                   <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card">
-                    {getFeatureIcon(feature.eFeatureType, "desktop") || (
-                      <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px" }} />
-                    )}
+                    <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
                     <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600", textAlign: "center" }}>
                       {feature.sFeatureName}
                     </span>
