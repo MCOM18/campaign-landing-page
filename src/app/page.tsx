@@ -12,6 +12,9 @@ import {
 import { FreeTrialForm } from "@/components/FreeTrialForm";
 import { OtpVerification } from "@/components/OtpVerification";
 import { SuccessScreen } from "@/components/SuccessScreen";
+import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
+import api from "../utils/apiClient";
+import { getUserGeoLocation } from "../utils/userUtil";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/services/auth.service";
@@ -94,6 +97,8 @@ export default function Home() {
   const [isExists, setIsExists] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [goldSubscriptionInfo, setGoldSubscriptionInfo] = useState<any>(null);
+  const [showGoldPopup, setShowGoldPopup] = useState(false);
 
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -181,12 +186,57 @@ export default function Home() {
       // Save plain keys needed by usePaymentHandler (it reads "session_id" and "user_id" directly)
       if (response.session_id) localStorage.setItem("session_id", response.session_id);
       if (response.user_id) localStorage.setItem("user_id", response.user_id);
+      
+      // Save userData in localStorage
+      localStorage.setItem("userData", JSON.stringify(user));
+
+      // Determine if logged in via email or phone
+      const isEmail = (response.email || contactInfo || parsedPhone || "").includes("@");
+      if (!isEmail) {
+        const phoneNum = response.phone || parsedPhone || "";
+        const phoneCodeNum = response.phone_code || parsedPhoneCode || "";
+        if (phoneNum) {
+          localStorage.setItem("user_phone", phoneNum);
+        }
+        if (phoneCodeNum) {
+          localStorage.setItem("user_phone_code", phoneCodeNum);
+        }
+      } else {
+        localStorage.removeItem("user_phone");
+        localStorage.removeItem("user_phone_code");
+      }
+
       if (specialOffer) sessionStorage.setItem("selectedPlan", JSON.stringify(specialOffer));
 
-      console.log("[OTP] Navigating to /payment...");
+      // Check if the user has an active Gold (SVOD) subscription
+      let isGoldUser = false;
+      try {
+        const geoData = getUserGeoLocation();
+        const subResponse = await api.post("subscription/verify-subscription", {
+          countryCode: geoData?.country_code || "IN"
+        }, {
+          headers: { sessionid: response.session_id }
+        });
+        
+        console.log("[Verify Subscription] Response:", subResponse.data);
+        
+        const subData = subResponse.data?.data;
+        if (subData?.planType === "SVOD") {
+          isGoldUser = true;
+          setGoldSubscriptionInfo(subData.subscription || { plan_name: "JOJO Gold Premium" });
+          setShowGoldPopup(true);
+          setIsVerifying(false);
+          handleReset();
+        }
+      } catch (subErr) {
+        console.error("Failed to verify subscription status:", subErr);
+      }
 
-      // Use hard navigation to guarantee route change (router.push can be blocked mid-render)
-      window.location.href = "/payment";
+      if (!isGoldUser) {
+        console.log("[OTP] Navigating to /payment...");
+        // Use hard navigation to guarantee route change (router.push can be blocked mid-render)
+        window.location.href = "/payment";
+      }
     } catch (err: any) {
       console.error("[OTP] Verification error:", err);
       setError(err.message || "Invalid OTP code. Please try again.");
@@ -605,6 +655,18 @@ export default function Home() {
       {step === "success" && (
         <div className="success-overlay">
           <SuccessScreen onReset={handleReset} />
+        </div>
+      )}
+
+      {showGoldPopup && (
+        <div className="success-overlay">
+          <GoldRestrictionModal
+            subscription={goldSubscriptionInfo}
+            onClose={() => {
+              setShowGoldPopup(false);
+              handleReset();
+            }}
+          />
         </div>
       )}
     </>

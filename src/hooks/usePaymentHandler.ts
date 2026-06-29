@@ -395,7 +395,6 @@ export const usePaymentHandler = () => {
           sToken,
         }));
 
-        router.push("/payment-success");
         return { success: true };
       }
 
@@ -512,6 +511,10 @@ export const usePaymentHandler = () => {
     } catch (err: unknown) {
       console.error("preparePayment failed:", err);
       setIsPreparing(false);
+      const isAlreadyActive = err instanceof Error && err.message === "Your subscription plan is already active";
+      if (isAlreadyActive) {
+        return { isAlreadyActive: true } as any;
+      }
       toast.error(err instanceof Error ? err.message : "Failed to prepare payment. Please try again.");
       return null;
     }
@@ -619,6 +622,10 @@ export const usePaymentHandler = () => {
         if (!initiateData) {
           setIsProcessing(false);
           return { success: false, error: "Failed to prepare payment" };
+        }
+        if ((initiateData as any).isAlreadyActive) {
+          setIsProcessing(false);
+          return { success: false, error: "Your subscription plan is already active", isAlreadyActive: true };
         }
       }
 

@@ -8,6 +8,8 @@ import SubscriptionPlanCard from "./SubscriptionPlanCard";
 import { usePaymentHandler, getPricingData, checkCardRecurringEligibility } from "../../hooks/usePaymentHandler";
 import { PAYMENT_METHOD } from "@/enums/enums";
 import PhoneCollectModal from "./PhoneCollectModal";
+import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
+import { SuccessScreen } from "@/components/SuccessScreen";
 import "./payment.css";
 
 function PaymentPage() {
@@ -70,6 +72,8 @@ function PaymentPage() {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [activeMethod, setActiveMethod] = useState<string | null>(PAYMENT_METHOD.UPI);
   const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [showGoldPopup, setShowGoldPopup] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   // Overseas users can't use UPI — default to card
   useEffect(() => {
@@ -208,7 +212,14 @@ function PaymentPage() {
     }
 
     const data = await preparePayment(selectedPlan, paymentMethod);
-    if (!data?.oOrderDetails) return;
+    if (!data) return;
+
+    if ((data as any).isAlreadyActive) {
+      setShowGoldPopup(true);
+      return;
+    }
+
+    if (!data.oOrderDetails) return;
 
     if (!pricingData) return; // narrowed: pricingData is PricingData from here
 
@@ -218,6 +229,11 @@ function PaymentPage() {
     };
 
     executePayment(selectedPlan, paymentMethod, paymentDetails, pricingData, data)
+      .then((res: any) => {
+        if (res?.success) {
+          setShowSuccessPopup(true);
+        }
+      })
       .catch((err: any) => {
         console.error("Payment failed:", err);
         toast.error(err?.message || "Payment failed. Please try again.");
@@ -275,6 +291,29 @@ function PaymentPage() {
             handlePaymentClick();
           }}
         />
+      )}
+
+      {showGoldPopup && (
+        <div className="success-overlay">
+          <GoldRestrictionModal
+            subscription={null}
+            onClose={() => {
+              setShowGoldPopup(false);
+              router.push("/");
+            }}
+          />
+        </div>
+      )}
+
+      {showSuccessPopup && (
+        <div className="success-overlay">
+          <SuccessScreen
+            onReset={() => {
+              setShowSuccessPopup(false);
+              router.push("/");
+            }}
+          />
+        </div>
       )}
 
       {/* Processing overlay */}
