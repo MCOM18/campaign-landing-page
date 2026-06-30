@@ -101,7 +101,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
     <div className="fade-in responsive-form-container" style={{ width: "100%" }}>
       {/* Contact Info and Edit Link */}
       <div className="responsive-text-align" style={{ marginBottom: "1.5rem", width: "100%" }}>
-        <p style={{ color: "var(--text-secondary)", fontSize: "16px", marginBottom: "0.5rem" }}>
+        <p style={{ color: "#ffffff", fontSize: "16px", marginBottom: "0.5rem" }}>
           Enter the OTP sent on <strong style={{ color: "#ffffff" }}>{contactInfo}</strong>
         </p>
 
@@ -132,9 +132,9 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       </div>
 
       {/* Timer / Resend OTP Link */}
-      <div style={{ marginBottom: "2.5rem", fontSize: "14px", textAlign: "center", width: "100%" }}>
+      <div className="responsive-text-align" style={{ marginBottom: "2.5rem", fontSize: "14px", width: "100%" }}>
         {timer > 0 ? (
-          <span style={{ color: "rgba(255,255,255,0.7)", textAlign: "center" }}>
+          <span style={{ color: "rgba(255,255,255,0.7)" }}>
             Resend OTP in <strong className="gold-text-gradient" style={{ fontWeight: "700" }}>00:{timer < 10 ? `0${timer}` : timer}</strong>
           </span>
         ) : (

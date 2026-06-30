@@ -20,6 +20,7 @@ import { logger } from "@/lib/logger/logger";
 import { AppConfig } from "@/lib/config/app.config";
 import Lottie from "lottie-react";
 import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
+import { TrialFormStep, PageSection } from "@/enums/ui.enum";
 
 /** Map each platform id → the SVG asset filename */
 const SOCIAL_ICON_MAP: Record<string, string> = {
@@ -55,6 +56,25 @@ export default function Home() {
   console.log("Special Offer Plan Data:", specialOffer);
   logger.info("[Home] Special Offer Plan Data:", specialOffer);
 
+  // Apply theme dynamically to document.body
+  useEffect(() => {
+    const theme = specialOffer?.sTheme || specialOffer?.theme || "theme-default";
+    
+    // Clean up existing theme classes on body
+    document.body.classList.forEach((cls) => {
+      if (cls.startsWith("theme-")) {
+        document.body.classList.remove(cls);
+      }
+    });
+    
+    document.body.classList.add(theme);
+    
+    return () => {
+      document.body.classList.remove(theme);
+    };
+  }, [specialOffer]);
+
+
   const subscriptionGroup = specialOffer?.oSubscriptionGroup;
   const product = subscriptionGroup?.aSubscriptionProducts?.[0];
   const offer = product?.oOfferDetails;
@@ -88,7 +108,7 @@ export default function Home() {
 
   const activeFeatures = features;
 
-  const [step, setStep] = useState<"input" | "otp" | "success">("input");
+  const [step, setStep] = useState<TrialFormStep>(TrialFormStep.INPUT);
   const [contactInfo, setContactInfo] = useState("");
   const [parsedPhone, setParsedPhone] = useState("");
   const [parsedPhoneCode, setParsedPhoneCode] = useState("");
@@ -149,7 +169,7 @@ export default function Home() {
       setParsedPhone(phone);
       setParsedPhoneCode(phoneCode);
       setIsExists(result.isExists);
-      setStep("otp");
+      setStep(TrialFormStep.OTP);
     } catch (err: any) {
       setError(err.message || "Failed to send OTP. Please check your credentials and try again.");
     } finally {
@@ -244,12 +264,12 @@ export default function Home() {
 
   const handleBack = () => {
     setError(null);
-    setStep("input");
+    setStep(TrialFormStep.INPUT);
   };
 
   const handleReset = () => {
     setError(null);
-    setStep("input");
+    setStep(TrialFormStep.INPUT);
     setContactInfo("");
     setParsedPhone("");
     setParsedPhoneCode("");
@@ -296,255 +316,302 @@ export default function Home() {
         {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
         <div className="mobile-only" style={{ width: "100%" }}>
           <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {/* Movie Posters Banner */}
-            <div className="posters-banner-container">
-              <Lottie
-                lottieRef={lottieMobileRef}
-                animationData={thumbnailsJson}
-                loop={true}
-                style={{ width: "100%", height: "100%" }}
-                rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-              />
-              <div className="posters-banner-mask" />
-            </div>
-
-            {/* Top Header Logo */}
-            <header style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
-              <JojoLogo />
-            </header>
-
-            {/* Header Title Section & Tab Badge */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2.5rem" }}>
-              <h1
-                className="gold-text-gradient"
-                style={{
-                  fontSize: "44px",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  textAlign: "center",
-                  margin: 0,
-                  lineHeight: "48px",
-                }}
-              >
-                {pageTitle || ""}
-              </h1>
-              <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
-                <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
-                <div
-                  className="gold-bg-gradient"
-                  style={{
-                    color: "#050505",
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    width: "fit-content",
-                    padding: "0 16px",
-                    height: "34px",
-                    borderRadius: "0 0 16px 16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    textAlign: "center",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {badgeText}
-                </div>
-              </div>
-            </div>
-
-            {/* Benefits Grid */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-                marginBottom: "2.5rem",
-                gap: "8px",
-              }}
-            >
-              {activeFeatures.map((feature: any) => (
-                <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card-mobile">
-                  <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
-                  <span
-                    className="gold-text-gradient"
+            {Object.values(PageSection).map((section) => {
+              if (section === PageSection.BANNER) {
+                return (
+                  <div key={section} className="posters-banner-container">
+                    <Lottie
+                      lottieRef={lottieMobileRef}
+                      animationData={thumbnailsJson}
+                      loop={true}
+                      style={{ width: "100%", height: "100%" }}
+                      rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+                    />
+                    <div className="posters-banner-mask" />
+                  </div>
+                );
+              }
+              if (section === PageSection.TOPBAR) {
+                return (
+                  <header key={section} style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
+                    <JojoLogo />
+                  </header>
+                );
+              }
+              if (section === PageSection.HEADING) {
+                return (
+                  <div key={section} style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2.5rem" }}>
+                    <h1
+                      className="gold-text-gradient"
+                      style={{
+                        fontSize: "44px",
+                        fontWeight: "700",
+                        textTransform: "uppercase",
+                        letterSpacing: "1.5px",
+                        textAlign: "center",
+                        margin: 0,
+                        lineHeight: "48px",
+                      }}
+                    >
+                      {pageTitle || ""}
+                    </h1>
+                    <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
+                      <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
+                      <div
+                        className="gold-bg-gradient"
+                        style={{
+                          color: "#050505",
+                          fontSize: "16px",
+                          fontWeight: "700",
+                          width: "fit-content",
+                          padding: "0 16px",
+                          height: "34px",
+                          borderRadius: "0 0 16px 16px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {badgeText}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              if (section === PageSection.FEATURES) {
+                return (
+                  <div
+                    key={section}
                     style={{
-                      fontSize: "10px",
-                      fontWeight: "600",
-                      textAlign: "center",
-                      lineHeight: "1.3",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      marginBottom: "2.5rem",
+                      gap: "8px",
                     }}
                   >
-                    {feature.sFeatureName}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Form Step Wrapper */}
-            <div style={{ width: "100%" }}>
-              {error && (
-                <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "center", fontWeight: "500" }}>
-                  {error}
-                </div>
-              )}
-              {isVerifying ? (
-                <div
-                  className="fade-in"
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minHeight: "200px",
-                  }}
-                >
-                  <div className="premium-loader" />
-                  <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
-                </div>
-              ) : step === "input" ? (
-                <FreeTrialForm
-                  onSubmit={handleInputSubmit}
-                  confirmButtonLabel={confirmButtonLabel}
-                  disclaimerText={disclaimerText}
-                  footerNote={footerNote}
-                />
-              ) : (
-                <OtpVerification
-                  contactInfo={contactInfo}
-                  onSubmit={handleOtpSubmit}
-                  onBack={handleBack}
-                  onResend={handleResendOtp}
-                  disclaimerText={disclaimerText}
-                />
-              )}
-            </div>
+                    {activeFeatures.map((feature: any) => (
+                      <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card-mobile">
+                        <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+                        <span
+                          className="gold-text-gradient"
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: "600",
+                            textAlign: "center",
+                            lineHeight: "1.3",
+                          }}
+                        >
+                          {feature.sFeatureName}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+              if (section === PageSection.FORM) {
+                return (
+                  <div key={section} style={{ width: "100%" }}>
+                    {error && (
+                      <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "center", fontWeight: "500" }}>
+                        {error}
+                      </div>
+                    )}
+                    {isVerifying ? (
+                      <div
+                        className="fade-in"
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minHeight: "200px",
+                        }}
+                      >
+                        <div className="premium-loader" />
+                        <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
+                      </div>
+                    ) : step === TrialFormStep.INPUT ? (
+                      <FreeTrialForm
+                        onSubmit={handleInputSubmit}
+                        confirmButtonLabel={confirmButtonLabel}
+                        disclaimerText={disclaimerText}
+                        footerNote={footerNote}
+                      />
+                    ) : step === TrialFormStep.OTP ? (
+                      <OtpVerification
+                        contactInfo={contactInfo}
+                        onSubmit={handleOtpSubmit}
+                        onBack={handleBack}
+                        onResend={handleResendOtp}
+                        disclaimerText={disclaimerText}
+                      />
+                    ) : null}
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         </div>
 
         {/* 2. DESKTOP VIEW (Visible on screens >= 768px) */}
         <div className="desktop-only" style={{ width: "100%" }}>
-          {/* Movie Posters Banner */}
-          <div className="posters-banner-container">
-            <Lottie
-              lottieRef={lottieDesktopRef}
-              animationData={thumbnailsJson}
-              loop={true}
-              style={{ width: "100%", height: "100%" }}
-              rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-            />
-            <div className="posters-banner-mask" />
-          </div>
-
-          {/* Top Header Logo */}
-          <header style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
-            <JojoLogo />
-          </header>
-
-          {/* Header Title Section & Tab Badge */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "3.5rem" }}>
-            <h1
-              className="gold-text-gradient"
-              style={{
-                fontSize: "44px",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "1.5px",
-                textAlign: "center",
-                margin: 0,
-                lineHeight: "48px",
-              }}
-            >
-              {pageTitle || ""}
-            </h1>
-            <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
-              <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
-              <div
-                className="gold-bg-gradient"
-                style={{
-                  color: "#050505",
-                  fontSize: "16px",
-                  fontWeight: "700",
-                  width: "fit-content",
-                  padding: "0 16px",
-                  height: "34px",
-                  borderRadius: "0 0 16px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {badgeText || ""}
-              </div>
-            </div>
-          </div>
-
-          {/* Web Split Columns Layout */}
-          <div className="web-split-layout">
-            {/* Left Column (50%): Form actions, Pricing, Disclaimer */}
-            <div className="web-layout-left">
-              <div style={{ width: "100%" }}>
-                {error && (
-                  <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "left", fontWeight: "500" }}>
-                    {error}
+          {(() => {
+            const renderedColumns = new Set();
+            return Object.values(PageSection).map((section) => {
+              if (section === PageSection.BANNER) {
+                return (
+                  <div key={section} className="posters-banner-container">
+                    <Lottie
+                      lottieRef={lottieDesktopRef}
+                      animationData={thumbnailsJson}
+                      loop={true}
+                      style={{ width: "100%", height: "100%" }}
+                      rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+                    />
+                    <div className="posters-banner-mask" />
                   </div>
-                )}
-                {isVerifying ? (
-                  <div
-                    className="fade-in"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: "150px",
-                      width: "100%"
-                    }}
-                  >
-                    <div className="premium-loader" />
-                    <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
+                );
+              }
+              if (section === PageSection.TOPBAR) {
+                return (
+                  <header key={section} style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
+                    <JojoLogo />
+                  </header>
+                );
+              }
+              if (section === PageSection.HEADING) {
+                return (
+                  <div key={section} style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "3.5rem" }}>
+                    <h1
+                      className="gold-text-gradient"
+                      style={{
+                        fontSize: "44px",
+                        fontWeight: "700",
+                        textTransform: "uppercase",
+                        letterSpacing: "1.5px",
+                        textAlign: "center",
+                        margin: 0,
+                        lineHeight: "48px",
+                      }}
+                    >
+                      {pageTitle || ""}
+                    </h1>
+                    <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
+                      <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
+                      <div
+                        className="gold-bg-gradient"
+                        style={{
+                          color: "#050505",
+                          fontSize: "16px",
+                          fontWeight: "700",
+                          width: "fit-content",
+                          padding: "0 16px",
+                          height: "34px",
+                          borderRadius: "0 0 16px 16px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {badgeText || ""}
+                      </div>
+                    </div>
                   </div>
-                ) : step === "input" ? (
-                  <FreeTrialForm
-                    onSubmit={handleInputSubmit}
-                    confirmButtonLabel={confirmButtonLabel}
-                    disclaimerText={disclaimerText}
-                    footerNote={footerNote}
-                  />
-                ) : (
-                  <OtpVerification
-                    contactInfo={contactInfo}
-                    onSubmit={handleOtpSubmit}
-                    onBack={handleBack}
-                    onResend={handleResendOtp}
-                    disclaimerText={disclaimerText}
-                  />
-                )}
-              </div>
-            </div>
+                );
+              }
+              
+              if (section === PageSection.FORM || section === PageSection.FEATURES) {
+                if (renderedColumns.has(section)) return null;
 
-            {/* Right Column (50%): Gold Features Separator & 2x2 Feature Grid */}
-            <div className="web-layout-right">
-              <div className="web-features-header">
-                <div className="web-features-header-line" />
-                <span className="web-features-header-text gold-text-gradient">GOLD FEATURES</span>
-                <div className="web-features-header-line" />
-              </div>
+                const columns = Object.values(PageSection).filter(
+                  (s) => s === PageSection.FORM || s === PageSection.FEATURES
+                );
+                
+                columns.forEach((c) => renderedColumns.add(c));
 
-              <div className="web-features-grid">
-                {activeFeatures.map((feature: any) => (
-                  <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card">
-                    <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
-                    <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600", textAlign: "center" }}>
-                      {feature.sFeatureName}
-                    </span>
+                return (
+                  <div key="split-layout" className="web-split-layout">
+                    {columns.map((col) => {
+                      if (col === PageSection.FORM) {
+                        return (
+                          <div key={col} className="web-layout-left">
+                            <div style={{ width: "100%" }}>
+                              {error && (
+                                <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "left", fontWeight: "500" }}>
+                                  {error}
+                                </div>
+                              )}
+                              {isVerifying ? (
+                                <div
+                                  className="fade-in"
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    minHeight: "150px",
+                                    width: "100%"
+                                  }}
+                                >
+                                  <div className="premium-loader" />
+                                  <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
+                                </div>
+                              ) : step === TrialFormStep.INPUT ? (
+                                <FreeTrialForm
+                                  onSubmit={handleInputSubmit}
+                                  confirmButtonLabel={confirmButtonLabel}
+                                  disclaimerText={disclaimerText}
+                                  footerNote={footerNote}
+                                />
+                              ) : step === TrialFormStep.OTP ? (
+                                <OtpVerification
+                                  contactInfo={contactInfo}
+                                  onSubmit={handleOtpSubmit}
+                                  onBack={handleBack}
+                                  onResend={handleResendOtp}
+                                  disclaimerText={disclaimerText}
+                                />
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (col === PageSection.FEATURES) {
+                        return (
+                          <div key={col} className="web-layout-right">
+                            <div className="web-features-header">
+                              <div className="web-features-header-line" />
+                              <span className="web-features-header-text gold-text-gradient">GOLD FEATURES</span>
+                              <div className="web-features-header-line" />
+                            </div>
+
+                            <div className="web-features-grid">
+                              {activeFeatures.map((feature: any) => (
+                                <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card">
+                                  <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+                                  <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600", textAlign: "center" }}>
+                                    {feature.sFeatureName}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                );
+              }
+              return null;
+            });
+          })()}
 
           {/* Footer links at the bottom */}
           <footer className="web-footer-container">
@@ -657,7 +724,7 @@ export default function Home() {
 
         {/* Unified Success State Overlay Modal - outside main so fixed covers full viewport */}
       </main>
-      {step === "success" && (
+      {step === TrialFormStep.SUCCESS && (
         <div className="success-overlay">
           <SuccessScreen onReset={handleReset} />
         </div>

@@ -29,18 +29,7 @@ export enum ApiEndpoint {
   UPDATE_PROFILE = "/profile",
   GET_AVATARS = "/avatar",
 
-  // Player
-  GET_VIDEO_DETAILS = "/playback",
-  SAVE_WATCH_PROGRESS = "/v3/content/watch-progress",
 
-  // Content — Asset, Episodes, Playback
-  GET_ASSET = "/asset",
-  GET_EPISODES = "/v3/content/episodes",
-  GET_PLAYBACK = "/playback",
-  GET_ASSET_PRICING = "/v3/subscription/get-one-time-product",
-  UPDATE_ENTITLEMENT = "/v3/subscription/tvod/update-user-entitlement",
-  GET_APP_NAVIGATION = "/getAppNavigation",
-  SEARCH_API = "/search",
 
   // Speacial offer plan
   SPECIAL_OFFER_PLAN = "/subscription/guest/special-offer-plan",

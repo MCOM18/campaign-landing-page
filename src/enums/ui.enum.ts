@@ -136,3 +136,19 @@ export enum ErrorMessage {
   PERMISSION_DENIED_ENABLE_IN_BROWSER = "Permission denied. Please enable it in browser settings.",
   FAILED_TO_REQUEST_PERMISSION = "Failed to request permission",
 }
+
+// ---------------- TRIAL FLOW STEPS ----------------
+export enum TrialFormStep {
+  INPUT = "input",
+  OTP = "otp",
+  SUCCESS = "success",
+}
+
+// ---------------- PAGE SECTIONS ----------------
+export enum PageSection {
+  BANNER = "banner",
+  TOPBAR = "topbar",
+  HEADING = "heading",
+  FEATURES = "features",
+  FORM = "form",
+}
