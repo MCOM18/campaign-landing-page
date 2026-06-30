@@ -6,6 +6,7 @@ interface SubscriptionPlanCardProps {
   isActive?: boolean;
   onClick?: () => void;
   landscapeUrl?: string | null;
+  isSelectionScreen?: boolean;
 }
 
 const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
@@ -13,6 +14,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   isActive = false,
   onClick,
   landscapeUrl = null,
+  isSelectionScreen = false,
 }) => {
   const getPlanDisplayData = (plan: any) => {
     if (!plan) return {
@@ -28,17 +30,6 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       const product  = plan.oSubscriptionGroup.aSubscriptionProducts[0];
       const providerSku = product?.aProviderSkus?.[0];
       const offer    = product?.oOfferDetails;
-
-      // Direct API keys:
-      // product.sSubProductLabel   → "12 Months"
-      // product.nValidityDays      → 365
-      // providerSku.oPricing.nPrice         → 499
-      // providerSku.oPricing.sCurrencySymbol → "₹"
-      // providerSku.sProviderOfferId         → "7d_free_trial_12m_in"
-      // offer.sOfferId             → "gold_7days_free_trial_Ind"
-      // offer.eOfferDiscountType   → "FREE_TRIAL"
-      // offer.nValidityCount       → 7
-      // offer.sValidityDuration    → "day"
 
       return {
         name:            plan.oSubscriptionGroup.oGroupTranslation?.sName,
@@ -63,7 +54,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     if (plan.providerSku?.oPricing) {
       return {
         name:            plan.oProductTranslation?.sName || plan.sName || "Subscription Plan",
-        subLabel:        null,
+        subLabel:        plan.sSubProductLabel || plan.providerSku?.sSubProductLabel || null,
         price:           plan.sAltPrice || plan.sFormattedPrice ||
                            `${plan.providerSku.oPricing.sCurrencySymbol}${plan.providerSku.oPricing.nPrice}`,
         priceRaw:        plan.providerSku.oPricing.nPrice,
@@ -135,27 +126,12 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         {/* Plan name + price row */}
         <div className="spc-row" style={{ alignItems: "center" }}>
           <div className="spc-left">
-            {isFreeTrial ? (
-              <span className="spc-main-title">{displayData.subLabel || displayData.name}</span>
-            ) : (
-              <>
-                <span className="spc-name">{displayData.name}</span>
-                {displayData.subLabel && (
-                  <span className="spc-sub-label">{displayData.subLabel}</span>
-                )}
-                {displayData.discount && (
-                  <span className="spc-badge">{displayData.discount}</span>
-                )}
-              </>
-            )}
+            <span className="spc-name" style={{ fontSize: "17px", fontWeight: "700" }}>
+              {displayData.subLabel || displayData.name}
+            </span>
           </div>
           <div className="spc-right" style={{ alignItems: "center" }}>
             <span className="spc-price">{displayData.price}</span>
-            {!isFreeTrial && displayData.validity && (
-              <span className="spc-validity">
-                /{displayData.validity} days
-              </span>
-            )}
           </div>
         </div>
 

@@ -116,8 +116,8 @@
 }
 
 .payment-input:-webkit-autofill,
-.payment-input:-webkit-autofill:hover, 
-.payment-input:-webkit-autofill:focus, 
+.payment-input:-webkit-autofill:hover,
+.payment-input:-webkit-autofill:focus,
 .payment-input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px #050505 inset !important;
   box-shadow: 0 0 0 1000px #050505 inset !important;
@@ -638,7 +638,6 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px;
 }
 
 /* Optional landscape image above the card */
@@ -801,4 +800,33 @@
 
 .spc-box--default .spc-trial-note {
   color: rgba(255, 255, 255, 0.6);
+}
+
+/* Selection page specific plan card overrides */
+.plans-selection-container .spc-box--active {
+  border-radius: 16px !important;
+  border: 1px solid var(--GOLD-GRADIENT, #FAAF3F) !important;
+  background: var(--theme_10_80, rgba(25, 25, 25, 0.80)) !important;
+  color: #ffffff !important;
+}
+
+.plans-selection-container .spc-box--default {
+  border-radius: 16px !important;
+  border: 1px solid transparent !important;
+  background: var(--theme_15_15_samecolor, rgba(250, 175, 63, 0.15)) !important;
+  color: #ffffff !important;
+}
+
+.plans-selection-container .spc-box--default .spc-name,
+.plans-selection-container .spc-box--default .spc-price,
+.plans-selection-container .spc-box--default .spc-validity,
+.plans-selection-container .spc-box--default .spc-sub-label {
+  color: #ffffff !important;
+}
+
+.plans-selection-container .spc-box--active .spc-name,
+.plans-selection-container .spc-box--active .spc-price,
+.plans-selection-container .spc-box--active .spc-validity,
+.plans-selection-container .spc-box--active .spc-sub-label {
+  color: #ffffff !important;
 }

@@ -21,6 +21,7 @@ import { AppConfig } from "@/lib/config/app.config";
 import Lottie from "lottie-react";
 import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 import { TrialFormStep, PageSection } from "@/enums/ui.enum";
+import SubscriptionPlanCard from "./payment/SubscriptionPlanCard";
 
 /** Map each platform id → the SVG asset filename */
 const SOCIAL_ICON_MAP: Record<string, string> = {
@@ -35,6 +36,8 @@ export default function Home() {
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
   logger.info("countries", countries)
+
+  const [freshPlans, setFreshPlans] = useState<any>(null);
 
   const lottieMobileRef = useRef<any>(null);
   const lottieDesktopRef = useRef<any>(null);
@@ -51,29 +54,29 @@ export default function Home() {
     }
   }, [lottieDesktopRef.current]);
 
-  // Extract and log special offer plan data
+  // Extract and log plans config data
   const specialOffer = AppConfig.specialOfferPlan;
-  console.log("Special Offer Plan Data:", specialOffer);
-  logger.info("[Home] Special Offer Plan Data:", specialOffer);
+  console.log("Subscription Plans Config Data:", specialOffer);
+  logger.info("[Home] Subscription Plans Config Data:", specialOffer);
 
   // Apply theme dynamically to document.body
   useEffect(() => {
-    const theme = specialOffer?.sTheme || specialOffer?.theme || "theme-default";
-    
+    const firstGroup = specialOffer?.aAllSubscriptionPlans?.[0];
+    const theme = specialOffer?.sTheme || specialOffer?.theme || firstGroup?.sTheme || firstGroup?.theme || "theme-default";
+
     // Clean up existing theme classes on body
     document.body.classList.forEach((cls) => {
       if (cls.startsWith("theme-")) {
         document.body.classList.remove(cls);
       }
     });
-    
+
     document.body.classList.add(theme);
-    
+
     return () => {
       document.body.classList.remove(theme);
     };
   }, [specialOffer]);
-
 
   const subscriptionGroup = specialOffer?.oSubscriptionGroup;
   const product = subscriptionGroup?.aSubscriptionProducts?.[0];
@@ -119,6 +122,52 @@ export default function Home() {
   const [showGoldPopup, setShowGoldPopup] = useState(false);
 
   const setAuth = useAuthStore((state) => state.setAuth);
+
+  const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
+
+  // Flatten all products/skus from the fetched plans list for display in the selection list
+  const flatPlansList: any[] = [];
+  if (freshPlans?.aAllSubscriptionPlans) {
+    for (const group of freshPlans.aAllSubscriptionPlans) {
+      if (group.aSubscriptionProducts) {
+        for (const product of group.aSubscriptionProducts) {
+          if (product.aProviderSkus) {
+            for (const sku of product.aProviderSkus) {
+              const planObj = {
+                ...group,
+                oSubscriptionGroup: {
+                  ...group,
+                  oGroupTranslation: group.oGroupTranslation,
+                  aSubscriptionProducts: [
+                    {
+                      ...product,
+                      aProviderSkus: [sku],
+                      oOfferDetails: sku.oOfferDetails
+                    }
+                  ]
+                }
+              };
+              flatPlansList.push({
+                uniqueKey: `${group.sGroupId}-${product.sProductId}-${sku.sUniqueSkuId}`,
+                plan: planObj,
+                product: product,
+                sku: sku,
+                group: group
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const handleSelectPlanAndContinue = () => {
+    const selected = flatPlansList[selectedPlanIndex];
+    if (selected) {
+      sessionStorage.setItem("selectedPlan", JSON.stringify(selected.plan));
+      router.push("/payment");
+    }
+  };
 
   const handleInputSubmit = async (contact: string) => {
     setError(null);
@@ -204,7 +253,7 @@ export default function Home() {
       // Save plain keys needed by usePaymentHandler (it reads "session_id" and "user_id" directly)
       if (response.session_id) localStorage.setItem("session_id", response.session_id);
       if (response.user_id) localStorage.setItem("user_id", response.user_id);
-      
+
       // Save userData in localStorage
       localStorage.setItem("userData", JSON.stringify(user));
 
@@ -224,20 +273,24 @@ export default function Home() {
         localStorage.removeItem("user_phone_code");
       }
 
-      if (specialOffer) sessionStorage.setItem("selectedPlan", JSON.stringify(specialOffer));
-
       // Check if the user has an active Gold (SVOD) subscription
       let isGoldUser = false;
+      let freshPlansData: any = null;
       try {
         const geoData = getUserGeoLocation();
-        const subResponse = await api.post("subscription/verify-subscription", {
-          countryCode: geoData?.country_code || "IN"
-        }, {
-          headers: { sessionid: response.session_id }
+        const payloadVerify = { countryCode: geoData?.country_code || "IN" };
+        const headersVerify = { sessionid: response.session_id };
+
+        logger.info("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
+        console.log("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
+
+        const subResponse = await api.post("subscription/verify-subscription", payloadVerify, {
+          headers: headersVerify
         });
-        
-        console.log("[Verify Subscription] Response:", subResponse.data);
-        
+
+        logger.info("[Verify Subscription] Response:", subResponse.data);
+        console.log("[Verify Subscription] Response (Stringified):", JSON.stringify(subResponse.data, null, 2));
+
         const subData = subResponse.data?.data;
         if (subData?.planType === "SVOD") {
           isGoldUser = true;
@@ -245,15 +298,90 @@ export default function Home() {
           setShowGoldPopup(true);
           setIsVerifying(false);
           handleReset();
+        } else {
+          // If not a gold user, fetch the fresh plans list with the session ID header
+          const payloadPlans = {
+            country: geoData?.country_code || "IN",
+            deviceTypeId: 3,
+            languageId: 1
+          };
+          const headersPlans = { sessionid: response.session_id };
+
+          logger.info("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
+          console.log("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
+
+          const plansResponse = await api.post("subscription/allplans", payloadPlans, {
+            headers: headersPlans
+          });
+          freshPlansData = plansResponse.data?.data;
+          logger.info("[Verify Subscription] Fresh plans loaded successfully:", plansResponse.data);
+          console.log("[Verify Subscription] Fresh plans loaded successfully (Stringified):", JSON.stringify(plansResponse.data, null, 2));
         }
       } catch (subErr) {
-        console.error("Failed to verify subscription status:", subErr);
+        logger.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
+        console.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
       }
 
       if (!isGoldUser) {
-        console.log("[OTP] Navigating to /payment...");
-        // Use hard navigation to guarantee route change (router.push can be blocked mid-render)
-        window.location.href = "/payment";
+        // Find if any product has offer details in the fresh plans data
+        const allPlansListFresh = freshPlansData?.aAllSubscriptionPlans || [];
+        let offerProduct: any = null;
+        let offerSku: any = null;
+        let offerGroup: any = null;
+
+        for (const g of allPlansListFresh) {
+          if (g.aSubscriptionProducts) {
+            for (const p of g.aSubscriptionProducts) {
+              if (p.aProviderSkus) {
+                for (const s of p.aProviderSkus) {
+                  if (s.oOfferDetails) {
+                    offerProduct = p;
+                    offerSku = s;
+                    offerGroup = g;
+                    break;
+                  }
+                }
+              }
+              if (offerProduct) break;
+            }
+          }
+          if (offerProduct) break;
+        }
+
+        // Store the fresh plans data in state
+        setFreshPlans(freshPlansData);
+
+        if (offerProduct) {
+          // Store selected plan with offer in sessionStorage
+          const selectedPlanObj = {
+            ...offerGroup,
+            oSubscriptionGroup: {
+              ...offerGroup,
+              oGroupTranslation: offerGroup.oGroupTranslation,
+              aSubscriptionProducts: [
+                {
+                  ...offerProduct,
+                  aProviderSkus: [
+                    {
+                      ...offerSku,
+                      sProviderOfferId: offerSku.sProviderOfferId || offerSku.oOfferDetails?.sProviderOfferId,
+                      oOfferDetails: offerSku.oOfferDetails
+                    }
+                  ]
+                }
+              ]
+            }
+          };
+          sessionStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj));
+          console.log("[OTP] Free trial offer found in fresh plans, navigating direct to /payment...");
+          router.push("/payment");
+        } else {
+          // If no offer details is found (it is null)
+          // Set step to PLANS to show the plan selection screen
+          console.log("[OTP] No trial offer found in fresh plans, showing plans selection...");
+          setStep(TrialFormStep.PLANS);
+          setIsVerifying(false);
+        }
       }
     } catch (err: any) {
       console.error("[OTP] Verification error:", err);
@@ -339,6 +467,7 @@ export default function Home() {
                 );
               }
               if (section === PageSection.HEADING) {
+                if (step === TrialFormStep.PLANS) return null;
                 return (
                   <div key={section} style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2.5rem" }}>
                     <h1
@@ -448,6 +577,37 @@ export default function Home() {
                         onResend={handleResendOtp}
                         disclaimerText={disclaimerText}
                       />
+                    ) : step === TrialFormStep.PLANS ? (
+                      <div className="fade-in" style={{ width: "100%" }}>
+
+
+                        <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
+                          {flatPlansList.map((planObj, idx) => (
+                            <SubscriptionPlanCard
+                              key={planObj.uniqueKey}
+                              plan={planObj.plan}
+                              isActive={selectedPlanIndex === idx}
+                              onClick={() => setSelectedPlanIndex(idx)}
+                              isSelectionScreen={true}
+                            />
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={handleSelectPlanAndContinue}
+                          className="btn-primary active btn-start-trial"
+                          style={{
+                            width: "80%",
+                            display: "block",
+                            marginLeft: "auto",
+                            marginRight: "auto",
+                            padding: "12px",
+                            fontWeight: "700"
+                          }}
+                        >
+                          {`Proceed to pay ${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.sCurrencySymbol || "₹"}${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.nPrice !== undefined ? flatPlansList[selectedPlanIndex].sku.oPricing.nPrice : "499"}`}
+                        </button>
+                      </div>
                     ) : null}
                   </div>
                 );
@@ -484,6 +644,7 @@ export default function Home() {
                 );
               }
               if (section === PageSection.HEADING) {
+                if (step === TrialFormStep.PLANS) return null;
                 return (
                   <div key={section} style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "3.5rem" }}>
                     <h1
@@ -525,14 +686,14 @@ export default function Home() {
                   </div>
                 );
               }
-              
+
               if (section === PageSection.FORM || section === PageSection.FEATURES) {
                 if (renderedColumns.has(section)) return null;
 
                 const columns = Object.values(PageSection).filter(
                   (s) => s === PageSection.FORM || s === PageSection.FEATURES
                 );
-                
+
                 columns.forEach((c) => renderedColumns.add(c));
 
                 return (
@@ -577,6 +738,37 @@ export default function Home() {
                                   onResend={handleResendOtp}
                                   disclaimerText={disclaimerText}
                                 />
+                              ) : step === TrialFormStep.PLANS ? (
+                                <div className="fade-in" style={{ width: "100%" }}>
+
+
+                                  <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
+                                    {flatPlansList.map((planObj, idx) => (
+                                      <SubscriptionPlanCard
+                                        key={planObj.uniqueKey}
+                                        plan={planObj.plan}
+                                        isActive={selectedPlanIndex === idx}
+                                        onClick={() => setSelectedPlanIndex(idx)}
+                                        isSelectionScreen={true}
+                                      />
+                                    ))}
+                                  </div>
+
+                                  <button
+                                    onClick={handleSelectPlanAndContinue}
+                                    className="btn-primary active btn-start-trial"
+                                    style={{
+                                      width: "80%",
+                                      display: "block",
+                                      marginLeft: "auto",
+                                      marginRight: "auto",
+                                      padding: "12px",
+                                      fontWeight: "700"
+                                    }}
+                                  >
+                                    {`Proceed to pay ${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.sCurrencySymbol || "₹"}${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.nPrice !== undefined ? flatPlansList[selectedPlanIndex].sku.oPricing.nPrice : "499"}`}
+                                  </button>
+                                </div>
                               ) : null}
                             </div>
                           </div>

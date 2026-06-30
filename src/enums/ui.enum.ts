@@ -142,6 +142,7 @@ export enum TrialFormStep {
   INPUT = "input",
   OTP = "otp",
   SUCCESS = "success",
+  PLANS = "plans",
 }
 
 // ---------------- PAGE SECTIONS ----------------

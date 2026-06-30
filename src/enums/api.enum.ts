@@ -31,6 +31,7 @@ export enum ApiEndpoint {
 
 
 
-  // Speacial offer plan
+  // All plans endpoint
+  ALL_PLANS = "/subscription/allplans",
   SPECIAL_OFFER_PLAN = "/subscription/guest/special-offer-plan",
 }

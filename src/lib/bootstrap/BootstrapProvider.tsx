@@ -6,6 +6,7 @@ import { fetchGeoData } from "@lib/geo/geo.service";
 import { getCachedGeo, setCachedGeo } from "@lib/geo/geo.cache";
 import { logger } from "@lib/logger/logger";
 import { BootstrapContext } from "./BootstrapContext";
+import { getAllPlans } from "@/features/subscription/api/getAllPlans";
 import { getSpecialOfferPlan } from "@/features/subscription/api/getSpecialOfferPlan";
 
 interface BootstrapProviderProps {
@@ -103,10 +104,10 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
         try {
           logger.info("[Bootstrap] Fetching special offer plan...");
           const offerResponse = await getSpecialOfferPlan({
-            country: config.geoLocationData.countryCode,
-            countryCode: config.geoLocationData.countryCode,
-            sState: config.geoLocationData.region,
-            city: config.geoLocationData.city,
+            country: config.geoLocationData.countryCode || "IN",
+            countryCode: config.geoLocationData.countryCode || "IN",
+            sState: config.geoLocationData.region || "",
+            city: config.geoLocationData.city || "",
             bIsRegistered: false,
             fcmToken: ""
           });
