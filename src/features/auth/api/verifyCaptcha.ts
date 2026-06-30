@@ -13,21 +13,21 @@ export async function verifyCaptcha(
   request: RecaptchaVerifyRequest,
   sessionId?: string
 ): Promise<ApiResponse<RecaptchaVerifyResponse>> {
-  logger.info('[Verify Captcha API] Request:', { 
+  logger.info('[Verify Captcha API] Request:', {
     action: request.action,
     hasSessionId: !!sessionId,
     sessionIdPreview: sessionId ? sessionId.substring(0, 10) + '...' : 'none'
   });
-  console.log('[Verify Captcha API] 📤 Sending to backend:', {
+  logger.info('[Verify Captcha API] 📤 Sending to backend:', {
     action: request.action,
     hasToken: !!request.token,
     hasSessionId: !!sessionId
   });
-  
+
   return apiClient.post<ApiResponse<RecaptchaVerifyResponse>>(
     ApiEndpoint.VERIFY_CAPTCHA,
     request,
-    { 
+    {
       encrypt: true,
       headers: sessionId ? { sessionid: sessionId } : {}
     }

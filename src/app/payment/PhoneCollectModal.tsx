@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { decryptAES } from "../../utils/decryptAES";
 import { env } from "../../lib/config/env";
+import { appConfig } from "@/lib/config/app.config";
 
 const secretKey = env.secretKey;
 const ivKey = env.ivKey;
@@ -37,7 +38,7 @@ const PhoneCollectModal: React.FC<PhoneCollectModalProps> = ({ onComplete }) => 
           if (Array.isArray(list) && list.length > 0) {
             setCountries(list);
             // Default to India (+91) or first entry
-            const india = list.find((c: any) => c.country_code === "IN") || list[0];
+            const india = list.find((c: any) => c.country_code === appConfig.DEFAULT_COUNTRY_NAME) || list[0];
             setSelectedCountry(india);
             return;
           }
@@ -67,7 +68,7 @@ const PhoneCollectModal: React.FC<PhoneCollectModalProps> = ({ onComplete }) => 
     }
     setPhoneError("");
 
-    const phoneCode = selectedCountry?.phone_code || "+91";
+    const phoneCode = selectedCountry?.phone_code || appConfig.DEFAULT_MOBILE_NUMBER_CODE;
     localStorage.setItem("user_phone", digitsOnly);
     localStorage.setItem("user_phone_code", phoneCode);
 
@@ -88,9 +89,9 @@ const PhoneCollectModal: React.FC<PhoneCollectModalProps> = ({ onComplete }) => 
             className="phone-modal-country-btn"
             onClick={() => setIsDropdownOpen((v) => !v)}
           >
-            <span>{getFlagEmoji(selectedCountry?.country_code || "IN")}</span>
+            <span>{getFlagEmoji(selectedCountry?.country_code || appConfig.DEFAULT_COUNTRY_NAME)}</span>
             <span className="phone-modal-code">
-              {selectedCountry?.phone_code || "+91"}
+              {selectedCountry?.phone_code || appConfig.DEFAULT_MOBILE_NUMBER_CODE}
             </span>
             <svg
               className={`phone-modal-chevron ${isDropdownOpen ? "open" : ""}`}
@@ -139,11 +140,10 @@ const PhoneCollectModal: React.FC<PhoneCollectModalProps> = ({ onComplete }) => 
                 {filteredCountries.map((country: any, i: number) => (
                   <div
                     key={i}
-                    className={`phone-modal-dropdown-item ${
-                      selectedCountry?.country_code === country.country_code
-                        ? "active"
-                        : ""
-                    }`}
+                    className={`phone-modal-dropdown-item ${selectedCountry?.country_code === country.country_code
+                      ? "active"
+                      : ""
+                      }`}
                     onClick={() => {
                       setSelectedCountry(country);
                       setIsDropdownOpen(false);

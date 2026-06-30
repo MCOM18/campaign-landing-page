@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { Country } from "@/features/auth/model/types";
+import { trackLoginStarted } from "@/services/analytics/events";
+import { LoginIdentifierType } from "@/enums/ui.enum";
+
+import { REGEX } from "@/lib/constants/regex";
+import { appConfig } from "@/lib/config/app.config";
 
 interface FreeTrialFormProps {
   onSubmit: (contactInfo: string) => void;
@@ -32,8 +37,8 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
 
   // Default to India
   const [selectedCountry, setSelectedCountry] = useState<Country>({
-    countryCode: "IN",
-    phoneCode: "+91",
+    countryCode: appConfig.DEFAULT_COUNTRY_NAME,
+    phoneCode: appConfig.DEFAULT_MOBILE_NUMBER_CODE,
     countryName: "India",
     flag: "🇮🇳"
   });
@@ -52,10 +57,9 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
     };
   }, []);
 
-  // Update default selected country based on fetched data if available
   useEffect(() => {
     if (countries.length > 0) {
-      const india = countries.find(c => c.countryCode === "IN");
+      const india = countries.find(c => c.countryCode === appConfig.DEFAULT_COUNTRY_NAME);
       if (india) {
         setSelectedCountry(india);
       } else {
@@ -70,7 +74,10 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
     if (!trimmed) return;
 
     // Detect if input is email
-    const isEmailInput = trimmed.includes("@") || /[a-zA-Z]/.test(trimmed);
+    const isEmailInput = trimmed.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(trimmed);
+
+    trackLoginStarted(isEmailInput ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE);
+
     if (isEmailInput) {
       onSubmit(trimmed);
     } else {
@@ -79,13 +86,14 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
         onSubmit(trimmed);
       } else {
         // Strip non-digits and append selected country code
-        const cleanPhone = trimmed.replace(/\D/g, "");
+        const cleanPhone = trimmed.replace(REGEX.NON_DIGIT, "");
         onSubmit(`${selectedCountry.phoneCode}${cleanPhone}`);
       }
     }
   };
 
-  const isEmail = inputValue.includes("@") || /[a-zA-Z]/.test(inputValue);
+
+  const isEmail = inputValue.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(inputValue);
   const showCountryPicker = !isEmail && inputValue.trim().length > 0;
   const isActive = inputValue.trim().length > 0;
 
@@ -173,7 +181,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           padding: "10px 10px 10px 10px",
         }}
       >
-        {confirmButtonLabel || "Start Free Trial"}
+        {confirmButtonLabel}
       </button>
 
       {/* Helper text under button */}

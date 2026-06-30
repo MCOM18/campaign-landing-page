@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import { ReactQueryProvider } from "@/lib/react-query/provider";
 import { BootstrapProvider } from "@/lib/bootstrap/BootstrapProvider";
 import { ToasterProvider } from "@/components/ToasterProvider";
+import { AnalyticsProvider } from "@/shared/analytics";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -22,11 +23,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={poppins.variable}>
-      <body className="antialiased">
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
         <ReactQueryProvider>
           <BootstrapProvider>
-            {children}
+            <AnalyticsProvider>
+              {children}
+            </AnalyticsProvider>
           </BootstrapProvider>
         </ReactQueryProvider>
         <ToasterProvider />

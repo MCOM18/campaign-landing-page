@@ -11,6 +11,7 @@ import { logger } from "@/lib/logger/logger";
 import { LoginIdentifierType } from "@/enums/ui.enum";
 import { AppError } from "@/lib/error/types";
 import { HttpStatus } from "@/enums/http.enum";
+import { isConfigLoaded } from "@/lib/config/app.config";
 
 /**
  * Hook for OTP Login Flow
@@ -174,5 +175,6 @@ export function useGetCountries() {
       return res.data || [];
     },
     staleTime: 24 * 60 * 60 * 1000, // 24 hours cache
+    enabled: isConfigLoaded(),
   });
 }
