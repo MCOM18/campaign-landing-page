@@ -142,7 +142,7 @@ body {
   position: relative;
   width: 100%;
   margin-bottom: 1.5rem;
-  background: transparent !important;
+  background: var(--theme_10_50, rgba(25, 25, 25, 0.50)) !important;
   border-radius: 16px;
   padding: 1.5px;
   padding-left: 12px;
@@ -155,26 +155,13 @@ body {
   inset: 0;
   border-radius: 16px;
   padding: 1.5px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.form-input-container:hover::before {
-  background: linear-gradient(135deg, rgba(var(--gradient-start-rgb), 0.3), rgba(var(--gold-primary-rgb), 0.15), rgba(var(--gradient-start-rgb), 0.3));
-}
-
-.form-input-container:focus-within::before {
-  background: linear-gradient(44.13deg, var(--gradient-start) 21.63%, var(--gradient-middle) 49.52%, var(--gradient-end) 81.68%);
-}
-
-.form-input-container:focus-within {
-  box-shadow: 0 0 12px var(--gold-glow);
 }
 
 .form-input {
@@ -210,7 +197,7 @@ body {
   height: 48px;
   border-radius: 16px;
   position: relative;
-  background: transparent !important;
+  background: var(--theme_10_50, rgba(25, 25, 25, 0.50)) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,30 +209,13 @@ body {
   inset: 0;
   border-radius: 16px;
   padding: 1.5px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.otp-input-wrapper:hover::before {
-  background: linear-gradient(135deg, rgba(var(--gradient-start-rgb), 0.3), rgba(var(--gold-primary-rgb), 0.15), rgba(var(--gradient-start-rgb), 0.3));
-}
-
-.otp-input-wrapper:focus-within::before {
-  background: linear-gradient(44.13deg, var(--gradient-start) 21.63%, var(--gradient-middle) 49.52%, var(--gradient-end) 81.68%);
-}
-
-.otp-input-wrapper:focus-within {
-  box-shadow: 0 0 12px var(--gold-glow);
-}
-
-.otp-input-wrapper.filled::before {
-  background: linear-gradient(135deg, rgba(var(--gradient-start-rgb), 0.4), rgba(var(--gold-primary-rgb), 0.2), rgba(var(--gradient-start-rgb), 0.4));
 }
 
 .otp-input {
@@ -382,24 +352,16 @@ body {
 
 /* Movie Posters Banner */
 .posters-banner-container {
+  border-radius: 0;
   width: calc(100% + 3rem);
-  /* break out of 1.5rem padding on both sides */
-  height: 192px;
+  height: 225px;
+  margin: -2.5rem 42.5rem -30px;
   position: relative;
   overflow: hidden;
-  margin-top: -2.5rem;
-  /* cancel container top padding */
-  margin-left: -1.5rem;
-  /* cancel container left padding */
-  margin-right: -1.5rem;
-  /* cancel container right padding */
-  margin-bottom: -43px;
-  border-radius: 0;
-  /* no radius — Figma shows edge-to-edge */
-  -webkit-mask-image: url("/assets/mask_mobile.svg");
-  mask-image: url("/assets/mask_mobile.svg");
+  -webkit-mask-image: url(/assets/mask_mobile.svg);
+  mask-image: url(/assets/mask_mobile.svg);
   -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
+  mask-size: 100% 90%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 }

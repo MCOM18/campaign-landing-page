@@ -344,7 +344,7 @@ export default function Home() {
                     <h1
                       className="gold-text-gradient"
                       style={{
-                        fontSize: "44px",
+                        fontSize: "30px",
                         fontWeight: "700",
                         textTransform: "uppercase",
                         letterSpacing: "1.5px",
@@ -355,8 +355,8 @@ export default function Home() {
                     >
                       {pageTitle || ""}
                     </h1>
-                    <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
-                      <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
+                    <div style={{ width: "280px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
+                      <div className="gold-bg-gradient" style={{ width: "100%", height: "1.5px" }} />
                       <div
                         className="gold-bg-gradient"
                         style={{
@@ -489,7 +489,7 @@ export default function Home() {
                     <h1
                       className="gold-text-gradient"
                       style={{
-                        fontSize: "44px",
+                        fontSize: "30px",
                         fontWeight: "700",
                         textTransform: "uppercase",
                         letterSpacing: "1.5px",
@@ -500,8 +500,8 @@ export default function Home() {
                     >
                       {pageTitle || ""}
                     </h1>
-                    <div style={{ width: "231px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
-                      <div className="gold-bg-gradient" style={{ width: "100%", height: "2px" }} />
+                    <div style={{ width: "280px", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "6px" }}>
+                      <div className="gold-bg-gradient" style={{ width: "100%", height: "1.5px" }} />
                       <div
                         className="gold-bg-gradient"
                         style={{

@@ -143,12 +143,13 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
             style={{
               background: "none",
               border: "none",
-              color: "var(--gold-primary)",
               fontWeight: "600",
               cursor: "pointer",
+              padding: 0,
+              outline: "none",
             }}
           >
-            Resend OTP
+            <span className="gold-text-gradient">Resend OTP</span>
           </button>
         )}
       </div>
