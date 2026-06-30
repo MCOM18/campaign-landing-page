@@ -110,31 +110,48 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
 
   const displayData = getPlanDisplayData(plan);
 
+  const isFreeTrial = displayData.isFreeTrial && displayData.trialDays;
+
+  // Normalize billing period for subtitle
+  let period = displayData.subLabel || `${displayData.validity} days`;
+  if (period === "12 Months" || displayData.validity === 365) {
+    period = "year";
+  }
+
   return (
     <div className="spc-wrapper">
       <div
         onClick={onClick}
-        className={`spc-box${isActive ? " spc-box--active" : " spc-box--default"}${landscapeUrl ? "" : ""}`}
+        className={`spc-box${isActive ? " spc-box--active" : " spc-box--default"}`}
       >
+        {isFreeTrial && (
+          <div style={{ marginBottom: "12px", display: "flex" }}>
+            <span className="spc-badge-trial">
+              {displayData.trialDays} {displayData.trialUnit === "day" ? "DAYS" : displayData.trialUnit.toUpperCase()} FREE
+            </span>
+          </div>
+        )}
+
         {/* Plan name + price row */}
-        <div className="spc-row">
+        <div className="spc-row" style={{ alignItems: "center" }}>
           <div className="spc-left">
-            <span className="spc-name">{displayData.name}</span>
-            {displayData.subLabel && (
-              <span className="spc-sub-label">{displayData.subLabel}</span>
-            )}
-            {displayData.discount && (
-              <span className="spc-badge">{displayData.discount}</span>
-            )}
-            {displayData.isFreeTrial && displayData.trialDays && (
-              <span className="spc-badge">
-                {displayData.trialDays} {displayData.trialUnit} FREE
-              </span>
+            {isFreeTrial ? (
+              <span className="spc-main-title">{displayData.subLabel || displayData.name}</span>
+            ) : (
+              <>
+                <span className="spc-name">{displayData.name}</span>
+                {displayData.subLabel && (
+                  <span className="spc-sub-label">{displayData.subLabel}</span>
+                )}
+                {displayData.discount && (
+                  <span className="spc-badge">{displayData.discount}</span>
+                )}
+              </>
             )}
           </div>
-          <div className="spc-right">
+          <div className="spc-right" style={{ alignItems: "center" }}>
             <span className="spc-price">{displayData.price}</span>
-            {displayData.validity && (
+            {!isFreeTrial && displayData.validity && (
               <span className="spc-validity">
                 /{displayData.validity} days
               </span>
@@ -143,10 +160,9 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         </div>
 
         {/* Free trial subtitle */}
-        {displayData.isFreeTrial && displayData.trialDays && (
+        {isFreeTrial && (
           <p className="spc-trial-note">
-            Free for {displayData.trialDays} {displayData.trialUnit}s, then {displayData.price}/
-            {displayData.subLabel || `${displayData.validity} days`}. Cancel anytime.
+            Free for {displayData.trialDays} {displayData.trialUnit}s, then {displayData.price}/{period}. Cancel anytime.
           </p>
         )}
       </div>
