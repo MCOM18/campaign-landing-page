@@ -407,12 +407,7 @@ export const usePaymentHandler = () => {
         setTimeout(() => {
           setShowProcessingOverlay(false);
           setOverlayError(null);
-          sessionStorage.setItem("payment_failed_state", JSON.stringify({ error: errorMessage, planModel: selectedPlan }));
-          router.push("/payment-failed");
         }, 2000);
-      } else {
-        sessionStorage.setItem("payment_failed_state", JSON.stringify({ error: errorMessage, planModel: selectedPlan }));
-        router.push("/payment-failed");
       }
       return { success: false, error: errorMessage };
 
@@ -426,14 +421,9 @@ export const usePaymentHandler = () => {
         setTimeout(() => {
           setShowProcessingOverlay(false);
           setOverlayError(null);
-          toast.error(errorMessage);
-          sessionStorage.setItem("payment_failed_state", JSON.stringify({ error: errorMessage, planModel: selectedPlan }));
-          router.push("/payment-failed");
         }, 2000);
       } else {
         toast.error(errorMessage);
-        sessionStorage.setItem("payment_failed_state", JSON.stringify({ error: errorMessage, planModel: selectedPlan }));
-        router.push("/payment-failed");
       }
       return { success: false, error: errorMessage };
     }

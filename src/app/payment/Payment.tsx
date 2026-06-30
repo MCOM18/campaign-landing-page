@@ -10,6 +10,7 @@ import { PAYMENT_METHOD } from "@/enums/enums";
 import PhoneCollectModal from "./PhoneCollectModal";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import { SuccessScreen } from "@/components/SuccessScreen";
+import { FailureScreen } from "@/components/FailureScreen";
 import "./payment.css";
 
 function PaymentPage() {
@@ -86,6 +87,8 @@ function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [showGoldPopup, setShowGoldPopup] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showFailedPopup, setShowFailedPopup] = useState(false);
+  const [failedErrorMsg, setFailedErrorMsg] = useState<string | null>(null);
 
   // Overseas users can't use UPI — default to card
   useEffect(() => {
@@ -244,11 +247,15 @@ function PaymentPage() {
       .then((res: any) => {
         if (res?.success) {
           setShowSuccessPopup(true);
+        } else {
+          setFailedErrorMsg(res?.error || "Payment verification failed. Please try again.");
+          setShowFailedPopup(true);
         }
       })
       .catch((err: any) => {
         console.error("Payment failed:", err);
-        toast.error(err?.message || "Payment failed. Please try again.");
+        setFailedErrorMsg(err?.message || "Payment failed. Please try again.");
+        setShowFailedPopup(true);
       });
   };
 
@@ -323,6 +330,17 @@ function PaymentPage() {
             onReset={() => {
               setShowSuccessPopup(false);
               router.push("/");
+            }}
+          />
+        </div>
+      )}
+
+      {showFailedPopup && (
+        <div className="success-overlay">
+          <FailureScreen
+            errorMsg={failedErrorMsg}
+            onClose={() => {
+              setShowFailedPopup(false);
             }}
           />
         </div>
