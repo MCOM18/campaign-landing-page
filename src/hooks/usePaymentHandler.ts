@@ -77,7 +77,7 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
         billingCycle: providerSku?.sBillingCycle || "yearly",
         duration: providerSku?.nDuration || 12,
         maxAmount: providerSku?.nMaxAmount || pricing.nPrice,
-        offerId: product?.oOfferDetails?.sOfferId || null,
+        offerId: product?.oOfferDetails?.sOfferId || providerSku?.oOfferDetails?.sOfferId || null,
       };
     }
   }
@@ -474,6 +474,7 @@ export const usePaymentHandler = () => {
         sOfferId: pricingData.offerId ||
           selectedPlan?.providerSku?.oOfferDetails?.sOfferId ||
           selectedPlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]?.oOfferDetails?.sOfferId ||
+          selectedPlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]?.aProviderSkus?.[0]?.oOfferDetails?.sOfferId ||
           null,
         sEmail: localStorage.getItem("user_email") || null,
       };

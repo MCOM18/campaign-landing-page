@@ -11,15 +11,15 @@ export const env = {
   configUrl: process.env.NEXT_PUBLIC_CONFIG_URL!,
   secretKey: process.env.NEXT_PUBLIC_SECRET_KEY!,
   ivKey: process.env.NEXT_PUBLIC_SECRET_IV!,
-  
+
   // Development mode flags
   skipConfig: process.env.NEXT_PUBLIC_SKIP_CONFIG === "true",
-  
+
   // Fallback config (used if skipConfig=true or fetch fails)
   fallbackApiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "",
   fallbackSocketUrl: process.env.NEXT_PUBLIC_SOCKET_URL || "",
   fallbackEnvType: (process.env.NEXT_PUBLIC_ENV_TYPE || "stage") as "stage" | "prod",
-  
+
   // reCAPTCHA v3
   recaptchaSiteKey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "",
 } as const;

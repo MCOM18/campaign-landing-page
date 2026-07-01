@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   JojoLogo,
@@ -38,7 +38,7 @@ const SOCIAL_ICON_MAP: Record<string, string> = {
 };
 
 export default function Home() {
-  const router = useRouter()
+  const router = useRouter();
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
   // logger.info("countries", countries)
@@ -170,31 +170,13 @@ export default function Home() {
     } catch (err) {
       logger.error("[Campaign] Error parsing campaign URL:", err);
     }
-  }, []);
+  }, [lottieMobileRef.current]);
 
-  // Step 2: Fire campaign_landing_entry once analyticsService is available
-  // Polls briefly to handle async Firebase initialization (same pattern as screen_viewed)
   useEffect(() => {
-    if (!pendingCampaignData.current) return;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 20; // up to 2 seconds
-    const timer = setInterval(() => {
-      attempts++;
-      const data = pendingCampaignData.current;
-      if (!data) { clearInterval(timer); return; }
-
-      // Fire once service is enabled (same isEnabled=true that screen_viewed uses)
-      analyticsService.track("campaign_landing_entry", data);
-      pendingCampaignData.current = null;
-      clearInterval(timer);
-
-      if (attempts >= MAX_ATTEMPTS) {
-        logger.error("[Campaign] Analytics service not ready after 2s, event dropped.");
-        clearInterval(timer);
-      }
-    }, 100);
-    return () => clearInterval(timer);
-  }, []);
+    if (lottieDesktopRef.current) {
+      lottieDesktopRef.current.setSpeed(0.3);
+    }
+  }, [lottieDesktopRef.current]);
 
   const specialOffer = AppConfig.specialOfferPlan;
   // console.log("Subscription Plans Config Data:", specialOffer);
@@ -219,7 +201,7 @@ export default function Home() {
 
   const subscriptionGroup = specialOffer?.oSubscriptionGroup;
   const product = subscriptionGroup?.aSubscriptionProducts?.[0];
-  const offer = product?.oOfferDetails;
+  const offer = product?.oOfferDetails || product?.aProviderSkus?.[0]?.oOfferDetails;
   const offerTranslation = offer?.oOfferTranslation;
   const features = product?.aFeatures || [];
   const pricing = product?.aProviderSkus?.[0]?.oPricing;
@@ -615,7 +597,6 @@ export default function Home() {
                       loop={true}
                       style={{ width: "100%", height: "100%" }}
                       rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-                      onDOMLoaded={() => lottieMobileRef.current?.setSpeed(0.2)}
                     />
                     <div className="posters-banner-mask" />
                   </div>
@@ -825,7 +806,6 @@ export default function Home() {
                       loop={true}
                       style={{ width: "100%", height: "100%" }}
                       rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-                      onDOMLoaded={() => lottieDesktopRef.current?.setSpeed(0.2)}
                     />
                     <div className="posters-banner-mask" />
                   </div>
@@ -1145,28 +1125,7 @@ export default function Home() {
       </main>
       {step === TrialFormStep.SUCCESS && (
         <div className="success-overlay">
-          <SuccessScreen onReset={() => {
-            const finalRedirectUrl = sessionStorage.getItem("campaign_redirect_url");
-            if (finalRedirectUrl) {
-              sessionStorage.removeItem("campaign_redirect_url");
-
-              // Track campaign purchase success if data exists
-              const campaignDataRaw = sessionStorage.getItem("campaign_decoded_data");
-              if (campaignDataRaw) {
-                try {
-                  const campaignData = JSON.parse(campaignDataRaw);
-                  analyticsService.track("campaign_purchase_success", campaignData);
-                  sessionStorage.removeItem("campaign_decoded_data");
-                } catch (e) {
-                  logger.error("Failed to parse/track campaign success:", e);
-                }
-              }
-
-              window.location.href = finalRedirectUrl;
-            } else {
-              handleReset();
-            }
-          }} />
+          <SuccessScreen onReset={handleReset} />
         </div>
       )}
 
@@ -1178,14 +1137,7 @@ export default function Home() {
             description="An active subscription is already running on your account."
             onClose={() => {
               setShowGoldPopup(false);
-              const finalRedirectUrl = sessionStorage.getItem("campaign_redirect_url");
-              if (finalRedirectUrl) {
-                sessionStorage.removeItem("campaign_redirect_url");
-                sessionStorage.removeItem("campaign_decoded_data");
-                window.location.href = finalRedirectUrl;
-              } else {
-                handleReset();
-              }
+              handleReset();
             }}
           />
         </div>

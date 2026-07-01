@@ -22,6 +22,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       priceRaw: null, currencySymbol: "₹", validity: null,
       isFreeTrial: false, trialDays: null, trialUnit: null,
       offerId: null, providerOfferId: null, discount: null, features: [],
+      offerDisclaimer: null,
     };
 
     // ── Special offer plan shape ──────────────────────────────────────────────
@@ -29,7 +30,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     if (plan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]) {
       const product  = plan.oSubscriptionGroup.aSubscriptionProducts[0];
       const providerSku = product?.aProviderSkus?.[0];
-      const offer    = product?.oOfferDetails;
+      const offer    = product?.oOfferDetails || providerSku?.oOfferDetails;
 
       return {
         name:            plan.oSubscriptionGroup.oGroupTranslation?.sName,
@@ -40,18 +41,20 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         priceRaw:        providerSku?.oPricing?.nPrice ?? null,
         currencySymbol:  providerSku?.oPricing?.sCurrencySymbol || "₹",
         validity:        product.nValidityDays,
-        isFreeTrial:     offer?.eOfferDiscountType === "FREE_TRIAL",
+        isFreeTrial:     !!offer,
         trialDays:       offer?.nValidityCount ?? null,
         trialUnit:       offer?.sValidityDuration || "day",
         offerId:         offer?.sOfferId || null,
         providerOfferId: providerSku?.sProviderOfferId || null,
         discount:        null,
         features:        product?.aFeatures || [],
+        offerDisclaimer: offer?.oOfferTranslation?.sOfferDisclaimer || null,
       };
     }
 
     // ── SVOD plan with providerSku ────────────────────────────────────────────
     if (plan.providerSku?.oPricing) {
+      const offer = plan.providerSku?.oOfferDetails;
       return {
         name:            plan.oProductTranslation?.sName || plan.sName || "Subscription Plan",
         subLabel:        plan.sSubProductLabel || plan.providerSku?.sSubProductLabel || null,
@@ -60,13 +63,14 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         priceRaw:        plan.providerSku.oPricing.nPrice,
         currencySymbol:  plan.providerSku.oPricing.sCurrencySymbol || "₹",
         validity:        plan.nValidity || null,
-        isFreeTrial:     false,
-        trialDays:       null,
-        trialUnit:       null,
-        offerId:         null,
-        providerOfferId: null,
+        isFreeTrial:     !!offer,
+        trialDays:       offer?.nValidityCount ?? null,
+        trialUnit:       offer?.sValidityDuration || "day",
+        offerId:         offer?.sOfferId || null,
+        providerOfferId: plan.providerSku?.sProviderOfferId || null,
         discount:        plan.sDiscount || null,
         features:        plan.aFeatures || [],
+        offerDisclaimer: offer?.oOfferTranslation?.sOfferDisclaimer || null,
       };
     }
 
@@ -88,6 +92,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         providerOfferId: null,
         discount:        null,
         features:        plan.aFeatures || [],
+        offerDisclaimer: null,
       };
     }
 
@@ -96,12 +101,13 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       priceRaw: null, currencySymbol: "₹", validity: null,
       isFreeTrial: false, trialDays: null, trialUnit: null,
       offerId: null, providerOfferId: null, discount: null, features: [],
+      offerDisclaimer: null,
     };
   };
 
   const displayData = getPlanDisplayData(plan);
 
-  const isFreeTrial = displayData.isFreeTrial && displayData.trialDays;
+  const isFreeTrial = !!(displayData.isFreeTrial && displayData.trialDays);
 
   // Normalize billing period for subtitle
   let period = displayData.subLabel || `${displayData.validity} days`;
@@ -109,15 +115,82 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     period = "year";
   }
 
+  let disclaimerText = "";
+  if (isFreeTrial) {
+    if (displayData.offerDisclaimer) {
+      disclaimerText = displayData.offerDisclaimer
+        .replace("{sCurrencySymbol}", displayData.currencySymbol || "₹")
+        .replace("{nPrice}", displayData.priceRaw?.toString() || "");
+    } else {
+      disclaimerText = `Free for ${displayData.trialDays} ${displayData.trialUnit}s, then ${displayData.price}/${period}. Cancel anytime.`;
+    }
+  }
+
+  // Determine styles for free trial card
+  const trialBoxStyle: React.CSSProperties = isFreeTrial
+    ? {
+        background: isActive
+          ? "linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%)"
+          : "rgba(30, 30, 30, 0.9)",
+        border: isActive ? "none" : "1.5px solid rgba(255, 255, 255, 0.08)",
+        borderRadius: "24px",
+        padding: "24px 26px",
+        boxShadow: isActive ? "0 10px 30px rgba(250, 175, 63, 0.3)" : "none",
+        transition: "all 0.2s ease",
+      }
+    : {};
+
+  const nameStyle: React.CSSProperties = isFreeTrial
+    ? {
+        fontSize: "24px",
+        fontWeight: "800",
+        color: isActive ? "#111111" : "#ffffff",
+        fontFamily: "inherit",
+      }
+    : {
+        fontSize: "17px",
+        fontWeight: "700",
+      };
+
+  const priceStyle: React.CSSProperties = isFreeTrial
+    ? {
+        fontSize: "24px",
+        fontWeight: "800",
+        color: isActive ? "#111111" : "#ffffff",
+        fontFamily: "inherit",
+      }
+    : {};
+
+  const trialBadgeStyle: React.CSSProperties = {
+    backgroundColor: isActive ? "#111111" : "rgba(255, 255, 255, 0.08)",
+    color: isActive ? "#FAAF3F" : "#FAAF3F",
+    borderRadius: "100px",
+    padding: "6px 14px",
+    fontSize: "12px",
+    fontWeight: "800",
+    letterSpacing: "0.5px",
+    textTransform: "uppercase",
+    display: "inline-block",
+  };
+
+  const trialNoteStyle: React.CSSProperties = {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: isActive ? "rgba(17, 17, 17, 0.85)" : "rgba(255, 255, 255, 0.6)",
+    marginTop: "12px",
+    lineHeight: "1.4",
+  };
+
   return (
     <div className="spc-wrapper">
       <div
         onClick={onClick}
         className={`spc-box${isActive ? " spc-box--active" : " spc-box--default"}`}
+        style={trialBoxStyle}
       >
         {isFreeTrial && (
           <div style={{ marginBottom: "12px", display: "flex" }}>
-            <span className="spc-badge-trial">
+            <span style={trialBadgeStyle}>
               {displayData.trialDays} {displayData.trialUnit === "day" ? "DAYS" : displayData.trialUnit.toUpperCase()} FREE
             </span>
           </div>
@@ -126,19 +199,19 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         {/* Plan name + price row */}
         <div className="spc-row" style={{ alignItems: "center" }}>
           <div className="spc-left">
-            <span className="spc-name" style={{ fontSize: "17px", fontWeight: "700" }}>
+            <span className="spc-name" style={nameStyle}>
               {displayData.subLabel || displayData.name}
             </span>
           </div>
           <div className="spc-right" style={{ alignItems: "center" }}>
-            <span className="spc-price">{displayData.price}</span>
+            <span className="spc-price" style={priceStyle}>{displayData.price}</span>
           </div>
         </div>
 
         {/* Free trial subtitle */}
         {isFreeTrial && (
-          <p className="spc-trial-note">
-            Free for {displayData.trialDays} {displayData.trialUnit}s, then {displayData.price}/{period}. Cancel anytime.
+          <p style={trialNoteStyle}>
+            {disclaimerText}
           </p>
         )}
       </div>
