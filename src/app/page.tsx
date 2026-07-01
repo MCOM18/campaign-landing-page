@@ -195,7 +195,6 @@ export default function Home() {
 
   // Extract and log plans config data
   const specialOffer = AppConfig.specialOfferPlan;
-  console.log("Subscription Plans Config Data:", specialOffer);
   logger.info("[Home] Subscription Plans Config Data:", specialOffer);
 
   // Apply theme dynamically to document.body
@@ -420,14 +419,12 @@ export default function Home() {
         const headersVerify = { sessionid: response.session_id };
 
         logger.info("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
-        console.log("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
 
         const subResponse = await api.post("subscription/verify-subscription", payloadVerify, {
           headers: headersVerify
         });
 
         logger.info("[Verify Subscription] Response:", subResponse.data);
-        console.log("[Verify Subscription] Response (Stringified):", JSON.stringify(subResponse.data, null, 2));
 
         const subData = subResponse.data?.data;
         if (subData?.planType === "SVOD") {
@@ -446,14 +443,12 @@ export default function Home() {
           const headersPlans = { sessionid: response.session_id };
 
           logger.info("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
-          console.log("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
 
           const plansResponse = await api.post("subscription/allplans", payloadPlans, {
             headers: headersPlans
           });
           freshPlansData = plansResponse.data?.data;
           logger.info("[Verify Subscription] Fresh plans loaded successfully:", plansResponse.data);
-          console.log("[Verify Subscription] Fresh plans loaded successfully (Stringified):", JSON.stringify(plansResponse.data, null, 2));
         }
       } catch (subErr) {
         logger.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
@@ -521,12 +516,8 @@ export default function Home() {
             }
           };
           sessionStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj));
-          console.log("[OTP] Free trial offer found in fresh plans, navigating direct to /payment...");
           router.push("/payment");
         } else {
-          // If no offer details is found (it is null)
-          // Set step to PLANS to show the plan selection screen
-          console.log("[OTP] No trial offer found in fresh plans, showing plans selection...");
           setStep(TrialFormStep.PLANS);
           setIsVerifying(false);
         }
