@@ -87,7 +87,6 @@ export default function Home() {
         if (linkParam) redirectUrl = linkParam;
       }
 
-      // Fix single-slash protocol: https:/foo → https://foo
       if (redirectUrl) {
         redirectUrl = redirectUrl.replace(/^(https?):\/([^/])/, "$1://$2");
       }
@@ -181,9 +180,16 @@ export default function Home() {
 
   useEffect(() => {
     if (lottieDesktopRef.current) {
-      lottieDesktopRef.current.setSpeed(0.3);
+      lottieDesktopRef.current.setSpeed(0.15);
     }
   }, [lottieDesktopRef.current]);
+
+  useEffect(() => {
+    if (lottieMobileRef.current) {
+      lottieMobileRef.current.setSpeed(0.15);
+    }
+  }, [lottieMobileRef.current]);
+
   const specialOffer = AppConfig.specialOfferPlan;
   // console.log("Subscription Plans Config Data:", specialOffer);
   // logger.info("[Home] Subscription Plans Config Data:", specialOffer);
