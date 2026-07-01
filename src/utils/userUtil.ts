@@ -1,7 +1,7 @@
 export const getUserGeoLocation = () => {
   try {
     if (typeof window === "undefined") return {};
-    
+
     // Check the new Next.js app geo cache first
     const newGeoRaw = localStorage.getItem("ott_geo_cache");
     if (newGeoRaw) {
@@ -12,7 +12,7 @@ export const getUserGeoLocation = () => {
           region: parsed.geoData.region || null,
           country_code: parsed.geoData.country_code || null,
           lat: parsed.geoData.latitude || parsed.geoData.lat || null,
-          Long: parsed.geoData.longitude || parsed.geoData.lng || parsed.geoData.lon || null,
+          lng: parsed.geoData.longitude || parsed.geoData.lng || parsed.geoData.lon || null,
         };
       }
     }
@@ -25,14 +25,14 @@ export const getUserGeoLocation = () => {
     const region = geoData?.data?.region || null;
     const country_code = geoData?.data?.country_code || null;
     const lat = geoData?.data?.latitude || geoData?.data?.lat || null;
-    const Long = geoData?.data?.longitude || geoData?.data?.lng || geoData?.data?.lon || null;
+    const lng = geoData?.data?.longitude || geoData?.data?.lng || geoData?.data?.lon || null;
 
     return {
       city,
       region,
       country_code,
       lat,
-      Long,
+      lng,
     };
   } catch (error) {
     return {};
@@ -94,12 +94,12 @@ export const getUserProfiles = () => {
 
     const rawProfiles = localStorage.getItem("persist:profile");
     const parsedProfiles = rawProfiles ? JSON.parse(rawProfiles) : {};
-    
+
     let profilesList = [];
     if (parsedProfiles && typeof parsedProfiles === 'object' && parsedProfiles.profiles) {
       try {
         profilesList = JSON.parse(parsedProfiles.profiles);
-      } catch {}
+      } catch { }
     }
 
     const rawSelectedProfile = localStorage.getItem("selectedProfile");

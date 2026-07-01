@@ -44,7 +44,7 @@ export interface SendOtpRequest {
   state?: string;
   city?: string;
   lat?: string;
-  long?: string
+  lng?: string
 }
 
 export interface VerifyOtpRequest {

@@ -1,33 +1,33 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { FreeTrialForm } from "@/components/FreeTrialForm";
+import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import {
   JojoLogo,
 } from "@/components/Icons";
-import { FreeTrialForm } from "@/components/FreeTrialForm";
 import { OtpVerification } from "@/components/OtpVerification";
 import { SuccessScreen } from "@/components/SuccessScreen";
-import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
-import api from "../utils/apiClient";
-import { getUserGeoLocation } from "../utils/userUtil";
-import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
-import { useAuthStore } from "@/store/useAuthStore";
-import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/services/auth.service";
+import { slugMap } from "@/enums/enums";
+import { LoginIdentifierType, PageSection, TrialFormStep } from "@/enums/ui.enum";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
+import { completeOtpVerification, initiateOtpFlow } from "@/features/auth/services/auth.service";
+import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
+import { appConfig, AppConfig } from "@/lib/config/app.config";
+import { REGEX } from "@/lib/constants/regex";
 import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
-import { appConfig, AppConfig } from "@/lib/config/app.config";
-import { DEFAULT_HEADER_VALUES } from "@lib/constants/headers";
-import Lottie from "lottie-react";
-import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
-import SubscriptionPlanCard from "./payment/SubscriptionPlanCard";
-import { TrialFormStep, PageSection, LoginIdentifierType } from "@/enums/ui.enum";
-import { decrypt } from "@lib/crypto/decrypt";
-import { analyticsService } from "@/shared/analytics";
 import { trackCampaignLandingImpression, trackLoginCompleted } from "@/services/analytics/events";
-import { slugMap } from "@/enums/enums";
-import { REGEX } from "@/lib/constants/regex";
+import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
+import { useAuthStore } from "@/store/useAuthStore";
+import { decrypt } from "@lib/crypto/decrypt";
+import Lottie from "lottie-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
+import api from "../utils/apiClient";
+import { getUserGeoLocation } from "../utils/userUtil";
+import SubscriptionPlanCard from "./payment/SubscriptionPlanCard";
+import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 
 /** Map each platform id → the SVG asset filename */
 const SOCIAL_ICON_MAP: Record<string, string> = {
@@ -56,22 +56,6 @@ export default function Home() {
     if (typeof window === "undefined" || !isAppReady || impressionTracked.current) return;
     impressionTracked.current = true;
 
-    const payload = {
-      source_link: window.location.href,
-      timestamp: Date.now(),
-      lat: getUserGeoLocation()?.lat || null,
-      Long: getUserGeoLocation()?.Long || null,
-      city: getUserGeoLocation()?.city || null,
-      country: getUserGeoLocation()?.country_code || null,
-      device_type: Number(DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE),
-    };
-    logger.info("campaign_landing_impression", payload)
-    trackCampaignLandingImpression(payload)
-  }, [isAppReady])
-
-  // Step 1: Parse + decrypt URL on mount (synchronous, no analytics dependency)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
     try {
       const url = new URL(window.location.href);
       const dataParam = url.searchParams.get("data");
@@ -97,30 +81,20 @@ export default function Home() {
         if (key !== "data" && key !== "link") queryParams[key] = value;
       });
 
-      if (!dataParam && !redirectUrl) {
-        localStorage.removeItem("campaign_redirect_url");
-        localStorage.removeItem("campaign_decoded_data");
-        logger.info("[Campaign] Clean URL detected. Removed campaign data from localStorage.");
-        return;
-      }
-
-      if (!dataParam) return;
-
-      logger.info("[Campaign] Found data parameter:", dataParam);
       let decoded: any = null;
-
-      // Attempt 1: AES Decryption
-      try {
-        const decryptedText = decrypt(dataParam, true);
-        if (decryptedText) {
-          decoded = JSON.parse(decryptedText);
-          logger.info("[Campaign] Decrypted via AES:", decoded);
+      if (dataParam) {
+        logger.info("[Campaign] Found data parameter:", dataParam);
+        // Attempt 1: AES Decryption
+        try {
+          const decryptedText = decrypt(dataParam, true);
+          if (decryptedText) {
+            decoded = JSON.parse(decryptedText);
+            logger.info("[Campaign] Decrypted via AES:", decoded);
+          }
+        } catch (e) {
+          logger.info("[Campaign] AES decryption failed, trying hex decode.");
         }
-      } catch (e) {
-        logger.info("[Campaign] AES decryption failed, trying hex decode.");
       }
-
-      if (!decoded) return;
 
       /** Convert a display name like "Jai Kanhaiyalal Ki" → "jai-kanhaiyalal-ki" */
       function toSlug(name: string): string {
@@ -134,7 +108,7 @@ export default function Home() {
 
       // Build final redirect URL
       let finalRedirectUrl = "";
-      if (redirectUrl) {
+      if (decoded && redirectUrl) {
         try {
           const redirectUrlObj = new URL(redirectUrl);
           const contentPath = String(decoded.path || "");
@@ -160,23 +134,63 @@ export default function Home() {
         }
       }
 
+      if (!dataParam && !redirectUrl) {
+        localStorage.removeItem("campaign_redirect_url");
+        localStorage.removeItem("campaign_decoded_data");
+        logger.info("[Campaign] Clean URL detected. Removed campaign data from localStorage.");
+      } else {
+        // Build structured payload
+        const enrichedData = {
+          decoded_data: decoded,       // { path, type, nameAnalytic } or { pricing_plan, ... }
+          link: redirectUrl,
+          redirectUrl,
+          finalRedirectUrl,
+          ...queryParams,              // utm_source, utm_medium, source, source_link, other_info, etc.
+        };
+        localStorage.setItem("campaign_decoded_data", JSON.stringify(enrichedData));
+        pendingCampaignData.current = enrichedData;
+        logger.info("[Campaign] Campaign data ready, waiting for analytics service.");
+      }
 
-      // Build structured payload
-      const enrichedData = {
-        decoded_data: decoded,       // { path, type, nameAnalytic } or { pricing_plan, ... }
-        link: redirectUrl,
-        redirectUrl,
-        finalRedirectUrl,
-        ...queryParams,              // utm_source, utm_medium, source, source_link, other_info, etc.
+      // Build and send the requested detailed campaign impression payload
+      const devicePayload = buildDevicePayload();
+      const storeState = useAuthStore.getState();
+
+      const impressionPayload = {
+        event_name: "campaign_landing_impression",
+        campaign_id: decoded?.campaign_id || decoded?.id || url.searchParams.get("campaign_id") || "",
+        campaign_name: decoded?.campaign_name || decoded?.name || decoded?.nameAnalytic || url.searchParams.get("campaign_name") || "",
+        campaign_type: decoded?.campaign_type || url.searchParams.get("campaign_type") || "landing_page",
+        device_type: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
+        platform: "web",
+        os: devicePayload.os || "unknown",
+        browser: devicePayload.browser || "unknown",
+        page_url: window.location.href,
+        referrer: document.referrer || "",
+        utm_source: url.searchParams.get("utm_source") || queryParams.utm_source || "",
+        utm_medium: url.searchParams.get("utm_medium") || queryParams.utm_medium || "",
+        utm_campaign: url.searchParams.get("utm_campaign") || queryParams.utm_campaign || "",
+        utm_content: url.searchParams.get("utm_content") || queryParams.utm_content || "",
+        ad_id: url.searchParams.get("ad_id") || queryParams.ad_id || "",
+        ad_type: url.searchParams.get("ad_type") || queryParams.ad_type || "",
+        ad_placement: url.searchParams.get("ad_placement") || queryParams.ad_placement || "",
+        cta_type: url.searchParams.get("cta_type") || queryParams.cta_type || "",
+        target_screen: url.searchParams.get("target_screen") || queryParams.target_screen || "",
+        language: DEFAULT_HEADER_VALUES.LANGUAGE,
+        lat: getUserGeoLocation()?.lat || null,
+        lng: getUserGeoLocation()?.lng || null,
+        country: getUserGeoLocation()?.country_code || "IN",
+        timestamp: new Date().toISOString(),
+        ...queryParams
       };
-      localStorage.setItem("campaign_decoded_data", JSON.stringify(enrichedData));
 
-      pendingCampaignData.current = enrichedData;
-      logger.info("[Campaign] Campaign data ready, waiting for analytics service.");
+      logger.info("[Analytics] Sending campaign_landing_impression payload:", impressionPayload);
+      trackCampaignLandingImpression(impressionPayload);
+
     } catch (err) {
-      logger.error("[Campaign] Error parsing campaign URL:", err);
+      logger.error("[Campaign] Error in campaign initialization/impression:", err);
     }
-  }, [lottieMobileRef.current]);
+  }, [isAppReady]);
 
   useEffect(() => {
     if (lottieDesktopRef.current) {
@@ -460,6 +474,28 @@ export default function Home() {
         localStorage.removeItem("user_phone_code");
       }
 
+      // Track Login Completed event (runs asynchronously on success, regardless of Gold subscription status)
+      try {
+        const finalPhoneCode = response.phone_code || parsedPhoneCode || "";
+        const finalPhoneOnly = response.phone || parsedPhone || "";
+        const phoneCode = finalPhoneCode ? `+${finalPhoneCode.replace(REGEX.NON_DIGIT, '')}` : "";
+        const phoneOnly = finalPhoneOnly ? finalPhoneOnly.replace(REGEX.NON_DIGIT, '') : "";
+        const identifier = isEmail ? (response.email || contactInfo) : `${phoneCode}${phoneOnly}`;
+        if (otpCode) useAuthStore.getState().setLoginOtp(otpCode);
+
+        trackLoginCompleted(
+          isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE,
+          identifier,
+          otpCode,
+          phoneCode,
+          phoneOnly
+        ).catch((err) => {
+          logger.error("[OTP] Failed to track login completed", err);
+        });
+      } catch (err) {
+        logger.error("[OTP] Error in preparing trackLoginCompleted", err);
+      }
+
       // Check if the user has an active Gold (SVOD) subscription
       let isGoldUser = false;
       let freshPlansData: any = null;
@@ -509,25 +545,9 @@ export default function Home() {
         // console.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
       }
 
-      if (!isGoldUser) {
-        try {
-          const finalPhoneCode = response.phone_code || parsedPhoneCode || "";
-          const finalPhoneOnly = response.phone || parsedPhone || "";
-          const phoneCode = finalPhoneCode ? `+${finalPhoneCode.replace(REGEX.NON_DIGIT, '')}` : "";
-          const phoneOnly = finalPhoneOnly ? finalPhoneOnly.replace(REGEX.NON_DIGIT, '') : "";
-          const identifier = isEmail ? (response.email || contactInfo) : `${phoneCode}${phoneOnly}`;
-          if (otpCode) useAuthStore.getState().setLoginOtp(otpCode);
 
-          await trackLoginCompleted(
-            isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE,
-            identifier,
-            otpCode,
-            phoneCode,
-            phoneOnly
-          );
-        } catch (err) {
-          logger.error("[OTP] Failed to track login completed", err);
-        }
+
+      if (!isGoldUser) {
         logger.info("[OTP] Navigating to /payment...");
         router.push("/payment");
       }

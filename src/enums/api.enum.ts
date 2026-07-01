@@ -29,8 +29,6 @@ export enum ApiEndpoint {
   UPDATE_PROFILE = "/profile",
   GET_AVATARS = "/avatar",
 
-
-
   // All plans endpoint
   ALL_PLANS = "/subscription/allplans",
   SPECIAL_OFFER_PLAN = "/subscription/guest/special-offer-plan",

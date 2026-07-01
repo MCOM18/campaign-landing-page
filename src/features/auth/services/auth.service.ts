@@ -170,8 +170,8 @@ export async function completeOtpVerification(
     country: finalCountry,
     state: finalState,
     city: finalCity,
-    lat: geoData?.lat?.toString(),
-    lng: geoData?.Long?.toString()
+    lat: geoData?.lat,
+    lng: geoData?.lng
   }, sessionId) as ApiResponse<any>;
 
   // Step 2: Validate metaData status
