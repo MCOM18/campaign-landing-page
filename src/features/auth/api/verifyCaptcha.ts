@@ -13,7 +13,7 @@ export async function verifyCaptcha(
   request: RecaptchaVerifyRequest,
   sessionId?: string
 ): Promise<ApiResponse<RecaptchaVerifyResponse>> {
-  logger.info('[Verify Captcha API] Request:', { 
+  logger.info('[Verify Captcha API] Request:', {
     action: request.action,
     hasSessionId: !!sessionId,
     sessionIdPreview: sessionId ? sessionId.substring(0, 10) + '...' : 'none'
@@ -22,7 +22,7 @@ export async function verifyCaptcha(
   return apiClient.post<ApiResponse<RecaptchaVerifyResponse>>(
     ApiEndpoint.VERIFY_CAPTCHA,
     request,
-    { 
+    {
       encrypt: true,
       headers: sessionId ? { sessionid: sessionId } : {}
     }

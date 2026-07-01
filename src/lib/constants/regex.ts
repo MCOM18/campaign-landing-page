@@ -41,5 +41,9 @@ export const REGEX = {
   SPECIAL_CHARS: /[!@#$%^&*()_+={}[\]|\\:;"<>,.?/0-9]/,
   LEADING_DIGIT_REGEX: /^\d/,
   NON_ALPHANUMERIC_REGEX: /[^a-z0-9]+/g,
-  TRIM_HYPHENS_REGEX: /^-+|-+$/g
+  TRIM_HYPHENS_REGEX: /^-+|-+$/g,
+  AT_SYMBOL: "@",
+  ALPHABET_REGEX: /[a-zA-Z]/,
+  IS_PHONE_NUMBER_REGEX: /^[\d+\-\s()]+$/,
+  INTERNATIONAL_PHONE_NUMBER_REGEX: /^\+?\d{10,15}$/
 } as const;

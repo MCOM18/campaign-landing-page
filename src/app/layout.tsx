@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import { ReactQueryProvider } from "@/lib/react-query/provider";
 import { BootstrapProvider } from "@/lib/bootstrap/BootstrapProvider";
 import { ToasterProvider } from "@/components/ToasterProvider";
+import { AnalyticsProvider } from "@/shared/analytics";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -120,7 +121,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className={poppins.variable}>
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -131,10 +132,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProduct) }}
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning> 
         <ReactQueryProvider>
           <BootstrapProvider>
-            {children}
+            <AnalyticsProvider>
+              {children}
+            </AnalyticsProvider>
           </BootstrapProvider>
         </ReactQueryProvider>
         <ToasterProvider />

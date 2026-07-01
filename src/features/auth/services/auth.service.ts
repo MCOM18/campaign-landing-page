@@ -24,6 +24,7 @@ import type { ApiResponse, VerifyOtpResponse, SocialLoginRequest, SocialLoginRes
 import { logger } from "@/lib/logger/logger";
 import { LoginIdentifierType } from "@/enums/ui.enum";
 import { analyticsService } from "@/shared/analytics";
+import { trackEvent } from "@/services/analytics/events";
 
 /**
  * Initiate OTP Flow
@@ -104,6 +105,7 @@ export async function initiateOtpFlow(
     // Track OTP failure
     analyticsService.trackOtpFailed({
       phone_code: phoneCode,
+      phone: phone,
       source: source,
       error_code: String(otpResponse.metaData?.status || 'unknown'),
       error_message: otpResponse.metaData?.message || 'Send OTP failed',
@@ -125,6 +127,7 @@ export async function initiateOtpFlow(
     // Track OTP failure
     analyticsService.trackOtpFailed({
       phone_code: phoneCode,
+      phone: phone,
       source: source,
       error_code: 'otp_not_sent',
       error_message: 'Failed to send OTP',
@@ -137,6 +140,7 @@ export async function initiateOtpFlow(
   // Track OTP sent successfully
   analyticsService.trackOtpSent({
     phone_code: phoneCode,
+    phone: phone,
     source: source,
     is_register: isRegistration,
   });
@@ -188,6 +192,7 @@ export async function completeOtpVerification(
     // Track OTP verification failure
     analyticsService.trackOtpFailed({
       phone_code: phoneCode,
+      phone: phone,
       source: source,
       error_code: String(status || 'unknown'),
       error_message: response.metaData?.message || 'OTP verification failed',
@@ -209,6 +214,7 @@ export async function completeOtpVerification(
   // Track OTP verification success
   analyticsService.trackOtpVerified({
     phone_code: phoneCode,
+    phone: phone,
     source: source,
     is_register: isRegister,
     verification_time_seconds: verificationTime,
@@ -219,7 +225,15 @@ export async function completeOtpVerification(
     method: 'otp',
     is_new_user: status === 201,
     phone_code: phoneCode,
+    phone: phone,
     source: source,
+  });
+
+  // Track backend login event
+  trackEvent("login", {
+    method: "otp",
+    source: source,
+    user_id: mapped.user_id,
   });
   
   return mapped;
@@ -277,6 +291,13 @@ export async function socialLoginService(
     method: request.source as 'google' | 'facebook' | 'apple',
     is_new_user: isNewUser,
     source: 'phone', // Social login doesn't use email/phone source
+  });
+
+  // Track backend login event
+  trackEvent("login", {
+    method: request.source as 'google' | 'facebook' | 'apple',
+    source: 'phone',
+    user_id: mapped.user_id,
   });
   
   return {

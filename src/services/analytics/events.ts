@@ -1,5 +1,10 @@
-import { appConfig } from "@/lib/config/app.config";
+import { ApiEndpoint } from "@/enums/api.enum";
+import { appConfig, getAppConfig, isConfigLoaded } from "@/lib/config/app.config";
+import { encrypt } from "@/lib/crypto/encrypt";
+import { useAuthStore } from "@/store/useAuthStore";
 import { logger } from "@lib/logger/logger";
+import { apiClient } from "@/lib/api/client";
+import { LoginIdentifierType } from "@/enums/ui.enum";
 
 export type AnalyticsEvent =
   | "video_play"
@@ -15,6 +20,129 @@ export function trackEvent(event: AnalyticsEvent, properties?: Record<string, un
 
   logger.info(`[Analytics] ${event}`, properties);
 
-  // TODO: Replace with your real analytics provider (Segment, Mixpanel, etc.)
-  // window.analytics?.track(event, properties);
+  if (isConfigLoaded()) {
+    try {
+      const config = getAppConfig();
+      const analyticsUrl = config.analyticsUrl;
+
+      if (analyticsUrl) {
+        const payloadObject = {
+          event,
+          properties: {
+            ...properties,
+            self_link: appConfig.ANALYTICS_SELF_LINK,
+            timestamp: new Date().toISOString(),
+          },
+        };
+
+        const storeState = useAuthStore.getState();
+        const sessionId = storeState.token || "";
+
+        apiClient.post<any>(
+          analyticsUrl,
+          payloadObject,
+          {
+            encrypt: true,
+            headers: {
+              "Content-Type": "application/json",
+              ...(sessionId ? { sessionid: sessionId } : {})
+            }
+          }
+        ).catch((err) => {
+          logger.error(`[Analytics] Failed to send event to backend: ${err instanceof Error ? err.message : String(err)}`);
+        });
+      }
+    } catch (err) {
+      logger.error(`[Analytics] Error resolving config for tracking: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+}
+
+export function trackLoginStarted(method: LoginIdentifierType.PHONE | LoginIdentifierType.EMAIL): void {
+  logger.info(`[Analytics] login_started`, { method });
+
+  try {
+    const analyticsUrl = process.env.NEXT_PUBLIC_ANALYTICS_URL;
+
+    if (analyticsUrl) {
+      const storeState = useAuthStore.getState();
+      const user = storeState.user;
+      const sessionId = storeState.token || "";
+      const userId = user?.id || "";
+
+      const baseUrl = analyticsUrl.endsWith('/') ? analyticsUrl.slice(0, -1) : analyticsUrl;
+      const endpoint = `${baseUrl}${ApiEndpoint.LOGIN_STARTED_EVENT}`;
+
+      const payloadObject = {
+        payload: {
+          method: method,
+        },
+        timestamp: Date.now(),
+        sessionid: sessionId,
+        user_id: userId,
+        profile_id: "",
+      };
+
+      apiClient.post<any>(
+        endpoint,
+        payloadObject,
+        {
+          encrypt: true,
+          headers: {
+            "Content-Type": "application/json",
+            ...(sessionId ? { sessionid: sessionId } : {})
+          }
+        }
+      ).catch((err) => {
+        logger.error(`[Analytics] Failed to send login_started event to backend: ${err instanceof Error ? err.message : String(err)}`);
+      });
+    }
+  } catch (err) {
+    logger.error(`[Analytics] Error in trackLoginStarted: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+export function trackLoginCompleted(method: LoginIdentifierType.PHONE | LoginIdentifierType.EMAIL): Promise<any> {
+  logger.info(`[Analytics] login_completed`, { method });
+
+  try {
+    const analyticsUrl = process.env.NEXT_PUBLIC_ANALYTICS_URL;
+
+    if (analyticsUrl) {
+      const storeState = useAuthStore.getState();
+      const user = storeState.user;
+      const sessionId = storeState.token || "";
+      const userId = user?.id || "";
+
+      const baseUrl = analyticsUrl.endsWith('/') ? analyticsUrl.slice(0, -1) : analyticsUrl;
+      const endpoint = `${baseUrl}${ApiEndpoint.LOGIN_COMPLETED_EVENT}`;
+
+      const payloadObject = {
+        payload: {
+          method: method,
+        },
+        timestamp: Date.now(),
+        sessionid: sessionId,
+        user_id: userId,
+        profile_id: "",
+      };
+
+      return apiClient.post<any>(
+        endpoint,
+        payloadObject,
+        {
+          encrypt: true,
+          headers: {
+            "Content-Type": "application/json",
+            ...(sessionId ? { sessionid: sessionId } : {})
+          }
+        }
+      ).catch((err) => {
+        logger.error(`[Analytics] Failed to send login_completed event to backend: ${err instanceof Error ? err.message : String(err)}`);
+      });
+    }
+  } catch (err) {
+    logger.error(`[Analytics] Error in trackLoginCompleted: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  return Promise.resolve();
 }

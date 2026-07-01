@@ -37,6 +37,7 @@ export interface RuntimeConfig {
     apiBaseUrl: string;
     socketUrl: string;
     envType: "stage" | "prod";
+    analyticsUrl?: string;
     publicIp?: string;
     apiUpdates?: ApiUpdate[];
     geoLocationData?: {
@@ -90,10 +91,12 @@ async function performFetch(): Promise<RuntimeConfig> {
     // Skip config fetch in development mode
     if (env.skipConfig) {
         logger.info("[Config] Skipping config fetch (development mode)");
+        const envType = env.fallbackEnvType;
         return {
             apiBaseUrl: env.fallbackApiBaseUrl,
             socketUrl: env.fallbackSocketUrl,
-            envType: env.fallbackEnvType,
+            envType: envType,
+            analyticsUrl: process.env.NEXT_PUBLIC_ANALYTICS_URL
         };
     }
 
@@ -175,10 +178,12 @@ async function performFetch(): Promise<RuntimeConfig> {
     // If all attempts failed, use fallback config
     if (env.fallbackApiBaseUrl) {
         logger.warn("[Config] Using fallback config from environment variables");
+        const envType = env.fallbackEnvType;
         return {
             apiBaseUrl: env.fallbackApiBaseUrl,
             socketUrl: env.fallbackSocketUrl,
-            envType: env.fallbackEnvType,
+            envType: envType,
+            analyticsUrl: process.env.NEXT_PUBLIC_ANALYTICS_URL
         };
     }
 
@@ -218,6 +223,7 @@ function decryptConfig(encrypted: string): RuntimeConfig {
         const config: RuntimeConfig = {
             apiBaseUrl: envType === "prod" ? api.prodBaseUrl : api.stageBaseUrl,
             socketUrl: envType === "prod" ? api.socketProdUrl : api.socketBaseUrl,
+            analyticsUrl: envType === "prod" ? api.analyticProdUrl : api.analyticStageUrl,
             envType: envType,
             publicIp: data.publicIp,
             apiUpdates: apiUpdates,
@@ -361,5 +367,7 @@ export const appConfig = {
     AUTOSCROLL_TIME: 6000,
     USE_APP_NAVIGATION_STALETIME: 10 * 60 * 1000,
     USE_APP_NAVIGATION_RETRY: 2,
-
+    ANALYTICS_SUFFIX_TEXT: "7 days Free Trial",
+    ANALYTICS_SELF_LINK: "https://subscription.jojoapp.in",
+    DEFAULT_MOBILE_NUMBER_CODE: "+91"
 }

@@ -5,6 +5,7 @@ import api from "../utils/apiClient";
 import { AnalyticEvents } from "../analytics/AnalyticEvents";
 import { getUserGeoLocation } from "../utils/userUtil";
 import { logger } from "@/lib/logger/logger";
+import { appConfig } from "@/lib/config/app.config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -456,14 +457,14 @@ export const usePaymentHandler = () => {
       setPaymentInitData(null);
 
       const userPhone = localStorage.getItem("user_phone") || selectedProfile?.sPhone || "";
-      const userPhoneCode = localStorage.getItem("user_phone_code") || selectedProfile?.sPhoneCode || "+91";
+      const userPhoneCode = localStorage.getItem("user_phone_code") || selectedProfile?.sPhoneCode || appConfig.DEFAULT_MOBILE_NUMBER_CODE;
       const currentGeoData = getUserGeoLocation();
 
       const payload = {
         iProviderSkuId: pricingData.skuId,
         nAmount: pricingData.price,
         sCity: currentGeoData?.city || "",
-        sCountryCode2: currentGeoData?.country_code || "IN",
+        sCountryCode2: currentGeoData?.country_code || appConfig.DEFAULT_COUNTRY_NAME,
         sCurrencyCode: pricingData.currency || "INR",
         sState: currentGeoData?.region || "",
         sUserId: userId || "",
@@ -647,11 +648,11 @@ export const usePaymentHandler = () => {
     pollingAttempt,
     cleanupPaymentState,
     showPaymentDetailsModal: false,
-    setShowPaymentDetailsModal: () => {},
+    setShowPaymentDetailsModal: () => { },
     showCardTypeMismatchModal: false,
-    setShowCardTypeMismatchModal: () => {},
+    setShowCardTypeMismatchModal: () => { },
     mismatchCardType: "",
-    setMismatchCardType: () => {},
+    setMismatchCardType: () => { },
     showProcessingOverlay,
     overlayError,
   };

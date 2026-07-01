@@ -11,14 +11,16 @@ import PhoneCollectModal from "./PhoneCollectModal";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { FailureScreen } from "@/components/FailureScreen";
+import { analyticsService } from "@/shared/analytics";
 import "./payment.css";
+import { appConfig } from "@/lib/config/app.config";
 
 function PaymentPage() {
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [countryCode, setCountryCode] = useState("IN");
+  const [countryCode, setCountryCode] = useState(appConfig.DEFAULT_COUNTRY_NAME);
 
   const {
     preparePayment,
@@ -44,6 +46,9 @@ function PaymentPage() {
 
       setIsAuthorized(true);
 
+      // Removed trackLoginCompleted from here
+
+
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
@@ -56,14 +61,14 @@ function PaymentPage() {
       if (geo) {
         try {
           const parsed = JSON.parse(geo);
-          setCountryCode(parsed?.data?.country_code || "IN");
+          setCountryCode(parsed?.data?.country_code || appConfig.DEFAULT_COUNTRY_NAME);
         } catch { }
       }
     }
     setIsMounted(true);
   }, [router]);
 
-  const isOverseasUser = countryCode !== "IN";
+  const isOverseasUser = countryCode !== appConfig.DEFAULT_COUNTRY_NAME;
 
   const [upiId, setUpiId] = useState("");
   const [card, setCard] = useState({
@@ -332,7 +337,38 @@ function PaymentPage() {
             isTrial={!!pricingData?.offerId}
             onReset={() => {
               setShowSuccessPopup(false);
-              router.push("/");
+              const storedRedirectUrl = sessionStorage.getItem("campaign_redirect_url");
+
+              // Validate it's a real jojoapp.in URL
+              const isCampaignUrl = storedRedirectUrl && (() => {
+                try {
+                  return new URL(storedRedirectUrl).hostname.endsWith("jojoapp.in");
+                } catch { return false; }
+              })();
+
+              if (isCampaignUrl) {
+                sessionStorage.removeItem("campaign_redirect_url");
+
+                // Track campaign purchase success if data exists
+                const campaignDataRaw = sessionStorage.getItem("campaign_decoded_data");
+                if (campaignDataRaw) {
+                  try {
+                    const campaignData = JSON.parse(campaignDataRaw);
+                    analyticsService.track("campaign_purchase_success", campaignData);
+                    sessionStorage.removeItem("campaign_decoded_data");
+                  } catch (e) {
+                    console.error("Failed to parse/track campaign success:", e);
+                  }
+                }
+
+                // Open the campaign deep-link in a new tab
+                window.open(storedRedirectUrl!, '_blank', 'noopener,noreferrer');
+              } else {
+                // No campaign redirect URL stored — clean up and open jojoapp.in homepage in new tab
+                sessionStorage.removeItem("campaign_redirect_url");
+                sessionStorage.removeItem("campaign_decoded_data");
+                window.open("https://jojoapp.in", "_blank", "noopener,noreferrer");
+              }
             }}
           />
         </div>

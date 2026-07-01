@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   JojoLogo,
@@ -17,11 +17,15 @@ import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/servic
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
-import { AppConfig } from "@/lib/config/app.config";
+import { appConfig, AppConfig } from "@/lib/config/app.config";
 import Lottie from "lottie-react";
 import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
-import { TrialFormStep, PageSection } from "@/enums/ui.enum";
 import SubscriptionPlanCard from "./payment/SubscriptionPlanCard";
+import { TrialFormStep, PageSection, LoginIdentifierType } from "@/enums/ui.enum";
+import { decrypt } from "@lib/crypto/decrypt";
+import { analyticsService } from "@/shared/analytics";
+import { trackLoginCompleted } from "@/services/analytics/events";
+import { slugMap } from "@/enums/enums";
 
 /** Map each platform id → the SVG asset filename */
 const SOCIAL_ICON_MAP: Record<string, string> = {
@@ -32,7 +36,7 @@ const SOCIAL_ICON_MAP: Record<string, string> = {
 };
 
 export default function Home() {
-  const router = useRouter();
+  const router = useRouter()
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
   // logger.info("countries", countries)
@@ -42,17 +46,152 @@ export default function Home() {
   const lottieMobileRef = useRef<any>(null);
   const lottieDesktopRef = useRef<any>(null);
 
-  useEffect(() => {
-    if (lottieMobileRef.current) {
-      lottieMobileRef.current.setSpeed(0.3);
-    }
-  }, [lottieMobileRef.current]);
+  // Lottie refs (speed is set via onDOMLoaded on the component)
 
+  // Ref to hold parsed campaign data so event fires after analytics is ready
+  const pendingCampaignData = useRef<Record<string, any> | null>(null);
+
+  // Step 1: Parse + decrypt URL on mount (synchronous, no analytics dependency)
   useEffect(() => {
-    if (lottieDesktopRef.current) {
-      lottieDesktopRef.current.setSpeed(0.3);
+    if (typeof window === "undefined") return;
+    try {
+      const url = new URL(window.location.href);
+      const dataParam = url.searchParams.get("data");
+
+      // Extract redirect URL from /link=<url> in pathname, or from ?link= query param
+      let redirectUrl = "";
+      const pathname = window.location.pathname;
+      const linkPathMatch = pathname.match(/\/link=(.+)/);
+      if (linkPathMatch) {
+        redirectUrl = decodeURIComponent(linkPathMatch[1]);
+      } else {
+        const linkParam = url.searchParams.get("link");
+        if (linkParam) redirectUrl = linkParam;
+      }
+
+      // Fix single-slash protocol: https:/foo → https://foo
+      if (redirectUrl) {
+        redirectUrl = redirectUrl.replace(/^(https?):\/([^/])/, "$1://$2");
+      }
+
+      // Collect all other query params (UTMs, source, other_info, etc.)
+      const queryParams: Record<string, string> = {};
+      url.searchParams.forEach((value, key) => {
+        if (key !== "data" && key !== "link") queryParams[key] = value;
+      });
+
+      if (!dataParam) return;
+
+      logger.info("[Campaign] Found data parameter:", dataParam);
+      let decoded: any = null;
+
+      // Attempt 1: AES Decryption
+      try {
+        const decryptedText = decrypt(dataParam, true);
+        if (decryptedText) {
+          decoded = JSON.parse(decryptedText);
+          logger.info("[Campaign] Decrypted via AES:", decoded);
+        }
+      } catch (e) {
+        logger.info("[Campaign] AES decryption failed, trying hex decode.");
+      }
+
+      // Attempt 2: Raw Hex Decode
+      // if (!decoded) {
+      //   try {
+      //     let hexDecoded = "";
+      //     for (let i = 0; i < dataParam.length; i += 2) {
+      //       hexDecoded += String.fromCharCode(parseInt(dataParam.substring(i, i + 2), 16));
+      //     }
+      //     decoded = JSON.parse(hexDecoded);
+      //     logger.info("[Campaign] Decoded via raw hex:", decoded);
+      //   } catch (e) {
+      //     logger.error("[Campaign] Both decode methods failed:", e);
+      //   }
+      // }
+
+      if (!decoded) return;
+
+      /** Convert a display name like "Jai Kanhaiyalal Ki" → "jai-kanhaiyalal-ki" */
+      function toSlug(name: string): string {
+        return name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, "")  // remove special chars
+          .replace(/\s+/g, "-")           // spaces → hyphens
+          .replace(/-+/g, "-");           // collapse multiple hyphens
+      }
+
+      // Build final redirect URL
+      let finalRedirectUrl = "";
+      if (redirectUrl) {
+        try {
+          const redirectUrlObj = new URL(redirectUrl);
+          const contentPath = String(decoded.path || "");
+          const contentType = Number(decoded.type || 0);
+          const contentName = String(decoded.nameAnalytic || "");
+          const typeSlug = slugMap[contentType];
+
+          if (contentPath && typeSlug && contentName) {
+            redirectUrlObj.pathname = `/${typeSlug}/${toSlug(contentName)}/${contentPath}`;
+            finalRedirectUrl = redirectUrlObj.toString();
+          } else {
+            Object.keys(decoded).forEach((key) => {
+              if (decoded[key] !== undefined)
+                redirectUrlObj.searchParams.set(key, String(decoded[key]));
+            });
+            finalRedirectUrl = redirectUrlObj.toString();
+          }
+
+          sessionStorage.setItem("campaign_redirect_url", finalRedirectUrl);
+          logger.info("[Campaign] Stored redirect URL:", finalRedirectUrl);
+        } catch (urlErr) {
+          logger.error("[Campaign] Failed to construct redirect URL:", urlErr);
+        }
+      }
+
+
+      // Build structured payload
+      const enrichedData = {
+        decoded_data: decoded,       // { path, type, nameAnalytic } or { pricing_plan, ... }
+        link: redirectUrl,
+        redirectUrl,
+        finalRedirectUrl,
+        ...queryParams,              // utm_source, utm_medium, source, source_link, other_info, etc.
+      };
+      sessionStorage.setItem("campaign_decoded_data", JSON.stringify(enrichedData));
+
+      // Store in ref — event will be fired in Step 2 once analytics is ready
+      pendingCampaignData.current = enrichedData;
+      logger.info("[Campaign] Campaign data ready, waiting for analytics service.");
+    } catch (err) {
+      logger.error("[Campaign] Error parsing campaign URL:", err);
     }
-  }, [lottieDesktopRef.current]);
+  }, []);
+
+  // Step 2: Fire campaign_landing_entry once analyticsService is available
+  // Polls briefly to handle async Firebase initialization (same pattern as screen_viewed)
+  useEffect(() => {
+    if (!pendingCampaignData.current) return;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 20; // up to 2 seconds
+    const timer = setInterval(() => {
+      attempts++;
+      const data = pendingCampaignData.current;
+      if (!data) { clearInterval(timer); return; }
+
+      // Fire once service is enabled (same isEnabled=true that screen_viewed uses)
+      analyticsService.track("campaign_landing_entry", data);
+      pendingCampaignData.current = null;
+      clearInterval(timer);
+
+      if (attempts >= MAX_ATTEMPTS) {
+        logger.error("[Campaign] Analytics service not ready after 2s, event dropped.");
+        clearInterval(timer);
+      }
+    }, 100);
+    return () => clearInterval(timer);
+  }, []);
 
   // Extract and log plans config data
   const specialOffer = AppConfig.specialOfferPlan;
@@ -207,7 +346,7 @@ export default function Home() {
         }
       } else {
         const clean = phone.replace(/\D/g, "");
-        phoneCode = "+91"; // Default to India country code
+        phoneCode = appConfig.DEFAULT_MOBILE_NUMBER_CODE; // Default to India country code
         phone = clean;
       }
     }
@@ -320,6 +459,16 @@ export default function Home() {
       } catch (subErr) {
         logger.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
         // console.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
+      }
+
+      if (!isGoldUser) {
+        try {
+          await trackLoginCompleted(isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE);
+        } catch (err) {
+          logger.error("[OTP] Failed to track login completed", err);
+        }
+        logger.info("[OTP] Navigating to /payment...");
+        window.location.href = "/payment";
       }
 
       if (!isGoldUser) {
@@ -454,6 +603,7 @@ export default function Home() {
                       loop={true}
                       style={{ width: "100%", height: "100%" }}
                       rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+                      onDOMLoaded={() => lottieMobileRef.current?.setSpeed(0.2)}
                     />
                     <div className="posters-banner-mask" />
                   </div>
@@ -663,6 +813,7 @@ export default function Home() {
                       loop={true}
                       style={{ width: "100%", height: "100%" }}
                       rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+                      onDOMLoaded={() => lottieDesktopRef.current?.setSpeed(0.2)}
                     />
                     <div className="posters-banner-mask" />
                   </div>
@@ -982,7 +1133,28 @@ export default function Home() {
       </main>
       {step === TrialFormStep.SUCCESS && (
         <div className="success-overlay">
-          <SuccessScreen onReset={handleReset} />
+          <SuccessScreen onReset={() => {
+            const finalRedirectUrl = sessionStorage.getItem("campaign_redirect_url");
+            if (finalRedirectUrl) {
+              sessionStorage.removeItem("campaign_redirect_url");
+
+              // Track campaign purchase success if data exists
+              const campaignDataRaw = sessionStorage.getItem("campaign_decoded_data");
+              if (campaignDataRaw) {
+                try {
+                  const campaignData = JSON.parse(campaignDataRaw);
+                  analyticsService.track("campaign_purchase_success", campaignData);
+                  sessionStorage.removeItem("campaign_decoded_data");
+                } catch (e) {
+                  logger.error("Failed to parse/track campaign success:", e);
+                }
+              }
+
+              window.location.href = finalRedirectUrl;
+            } else {
+              handleReset();
+            }
+          }} />
         </div>
       )}
 
@@ -994,7 +1166,14 @@ export default function Home() {
             description="An active subscription is already running on your account."
             onClose={() => {
               setShowGoldPopup(false);
-              handleReset();
+              const finalRedirectUrl = sessionStorage.getItem("campaign_redirect_url");
+              if (finalRedirectUrl) {
+                sessionStorage.removeItem("campaign_redirect_url");
+                sessionStorage.removeItem("campaign_decoded_data");
+                window.location.href = finalRedirectUrl;
+              } else {
+                handleReset();
+              }
             }}
           />
         </div>

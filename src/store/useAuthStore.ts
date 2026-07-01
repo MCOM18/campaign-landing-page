@@ -3,6 +3,7 @@ import { StorageKey } from "@enums/storage.enum";
 import { localStorageManager } from "@lib/localStorage/localStorage.manager";
 import type { User, AuthState } from "@features/auth/model/types";
 import { analyticsService } from "@/shared/analytics";
+import { trackEvent } from "@/services/analytics/events";
 
 interface AuthStore extends AuthState {
   setAuth: (user: User, token: string, refreshToken: string) => void;
@@ -60,17 +61,34 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       token,
       refreshToken: null,
     });
+
+    // Track backend login event (guest)
+    trackEvent("login", {
+      method: "guest",
+      source: "phone",
+      user_id: guestId,
+    });
   },
 
   /**
    * Clear authentication
    */
   clearAuth: () => {
+    const currentUser = get().user;
+
     // Track logout
     analyticsService.trackLogout({
       reason: 'user_initiated',
     });
     
+    // Track backend logout event
+    if (currentUser) {
+      trackEvent("logout", {
+        reason: "user_initiated",
+        user_id: currentUser.id,
+      });
+    }
+
     // Reset analytics user
     analyticsService.resetUser();
     

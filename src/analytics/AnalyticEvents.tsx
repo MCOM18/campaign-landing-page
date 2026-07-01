@@ -12,6 +12,7 @@ export const AnalyticEvents = {
   },
   svodPurchaseFailure: (planModel: any, userData: any, paymentType: string, sToken: string, upiAppName: any, error: any) => {
     logger.error("[Analytics] svod_purchase_failure", { planModel, userData, paymentType, sToken, upiAppName, error });
+    logger.info("[Analytics] svod_purchase_started", { planModel, userData })
   }
 };
 

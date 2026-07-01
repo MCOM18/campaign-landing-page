@@ -34,4 +34,8 @@ export enum ApiEndpoint {
   // All plans endpoint
   ALL_PLANS = "/subscription/allplans",
   SPECIAL_OFFER_PLAN = "/subscription/guest/special-offer-plan",
+
+  // Events
+  LOGIN_STARTED_EVENT = "/v1/jojoevents/login_started",
+  LOGIN_COMPLETED_EVENT = "/v1/jojoevents/login_completed",
 }
