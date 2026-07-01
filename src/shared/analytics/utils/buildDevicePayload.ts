@@ -19,7 +19,12 @@ function parseUserAgent() {
   const ua = navigator.userAgent;
   let browser = 'unknown', browser_version = 'unknown', os = 'unknown', os_version = 'unknown';
 
-  if (ua.includes('Chrome') && !ua.includes('Edg')) {
+  const isBrave = typeof navigator !== 'undefined' && !!(navigator as unknown as Record<string, unknown>).brave;
+
+  if (isBrave) {
+    browser = 'Brave';
+    browser_version = ua.match(/Chrome\/(\d+\.\d+)/)?.[1] || ua.match(/Brave\/(\d+\.\d+)/)?.[1] || 'unknown';
+  } else if (ua.includes('Chrome') && !ua.includes('Edg')) {
     browser = 'Chrome';
     browser_version = ua.match(/Chrome\/(\d+\.\d+)/)?.[1] || 'unknown';
   } else if (ua.includes('Safari') && !ua.includes('Chrome')) {

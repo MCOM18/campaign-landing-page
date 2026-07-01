@@ -154,7 +154,6 @@ export default function Home() {
 
       // Build and send the requested detailed campaign impression payload
       const devicePayload = buildDevicePayload();
-      const storeState = useAuthStore.getState();
 
       const impressionPayload = {
         event_name: "campaign_landing_impression",
@@ -166,7 +165,6 @@ export default function Home() {
         os: devicePayload.os || "unknown",
         browser: devicePayload.browser || "unknown",
         page_url: window.location.href,
-        referrer: document.referrer || "",
         utm_source: url.searchParams.get("utm_source") || queryParams.utm_source || "",
         utm_medium: url.searchParams.get("utm_medium") || queryParams.utm_medium || "",
         utm_campaign: url.searchParams.get("utm_campaign") || queryParams.utm_campaign || "",
@@ -205,8 +203,6 @@ export default function Home() {
   }, [lottieMobileRef.current]);
 
   const specialOffer = AppConfig.specialOfferPlan;
-  // console.log("Subscription Plans Config Data:", specialOffer);
-  // logger.info("[Home] Subscription Plans Config Data:", specialOffer);
 
   useEffect(() => {
     const firstGroup = specialOffer?.aAllSubscriptionPlans?.[0];
@@ -439,8 +435,6 @@ export default function Home() {
         geoData?.city || undefined,
       );
 
-      // console.log("[OTP] Verification response:", response);
-
       const user = {
         id: response.user_id,
         phone: response.phone || "",
@@ -505,14 +499,12 @@ export default function Home() {
         const headersVerify = { sessionid: response.session_id };
 
         logger.info("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
-        // console.log("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
 
         const subResponse = await api.post("subscription/verify-subscription", payloadVerify, {
           headers: headersVerify
         });
 
         logger.info("[Verify Subscription] Response:", subResponse.data);
-        // console.log("[Verify Subscription] Response (Stringified):", JSON.stringify(subResponse.data, null, 2));
 
         const subData = subResponse.data?.data;
         if (subData?.planType === "SVOD") {
@@ -531,18 +523,15 @@ export default function Home() {
           const headersPlans = { sessionid: response.session_id };
 
           logger.info("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
-          // console.log("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
 
           const plansResponse = await api.post("subscription/allplans", payloadPlans, {
             headers: headersPlans
           });
           freshPlansData = plansResponse.data?.data;
           logger.info("[Verify Subscription] Fresh plans loaded successfully:", plansResponse.data);
-          // console.log("[Verify Subscription] Fresh plans loaded successfully (Stringified):", JSON.stringify(plansResponse.data, null, 2));
         }
       } catch (subErr) {
         logger.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
-        // console.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
       }
 
 
@@ -607,13 +596,11 @@ export default function Home() {
         } else {
           // If no offer details is found (it is null)
           // Set step to PLANS to show the plan selection screen
-          // console.log("[OTP] No trial offer found in fresh plans, showing plans selection...");
           setStep(TrialFormStep.PLANS);
           setIsVerifying(false);
         }
       }
     } catch (err: any) {
-      // console.error("[OTP] Verification error:", err);
       setError(err.message || "Invalid OTP code. Please try again.");
       setIsVerifying(false);
     }

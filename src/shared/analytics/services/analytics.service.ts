@@ -52,7 +52,6 @@ class AnalyticsService {
         };
       }
 
-      // Log event to console for developers
       analyticsLogger.info(`[Analytics] ${enrichedEvent.name}`, {
         properties: enrichedEvent.properties,
         context: enrichedEvent.context

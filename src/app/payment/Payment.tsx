@@ -357,7 +357,7 @@ function PaymentPage() {
                     analyticsService.track("campaign_purchase_success", campaignData);
                     localStorage.removeItem("campaign_decoded_data");
                   } catch (e) {
-                    console.error("Failed to parse/track campaign success:", e);
+                    // console.error("Failed to parse/track campaign success:", e);
                   }
                 }
 
