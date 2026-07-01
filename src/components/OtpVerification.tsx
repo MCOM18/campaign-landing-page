@@ -104,7 +104,20 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         <p style={{ color: "#ffffff", fontSize: "16px", marginBottom: "0.5rem" }}>
           Enter the OTP sent on <strong style={{ color: "#ffffff" }}>{contactInfo}</strong>
         </p>
-
+        <button
+          onClick={onBack}
+          style={{
+            background: "none",
+            border: "none",
+            fontWeight: "600",
+            cursor: "pointer",
+            padding: 0,
+            outline: "none",
+            textDecoration: "underline",
+          }}
+        >
+          <span className="gold-text-gradient">Change Phone Number</span>
+        </button>
       </div>
 
       {/* OTP Boxes Wrapper */}

@@ -177,7 +177,6 @@ export default function Home() {
       lottieDesktopRef.current.setSpeed(0.3);
     }
   }, [lottieDesktopRef.current]);
-
   const specialOffer = AppConfig.specialOfferPlan;
   // console.log("Subscription Plans Config Data:", specialOffer);
   // logger.info("[Home] Subscription Plans Config Data:", specialOffer);
@@ -245,6 +244,25 @@ export default function Home() {
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
+
+  // Handle browser back button when in OTP step to return to phone/email input step
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (step !== TrialFormStep.OTP) return;
+
+    // Push dummy history entry for OTP step
+    window.history.pushState({ step: "otp" }, "");
+
+    const handlePopState = (event: PopStateEvent) => {
+      setStep(TrialFormStep.INPUT);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [step]);
 
   // Flatten all products/skus from the fetched plans list for display in the selection list
   const flatPlansList: any[] = [];
@@ -535,7 +553,11 @@ export default function Home() {
 
   const handleBack = () => {
     setError(null);
-    setStep(TrialFormStep.INPUT);
+    if (step === TrialFormStep.OTP) {
+      window.history.back();
+    } else {
+      setStep(TrialFormStep.INPUT);
+    }
   };
 
   const handleReset = () => {
