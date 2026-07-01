@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { AnalyticEvents } from "../../analytics/AnalyticEvents";
+import { AnalyticEvents } from "../../services/analytics/AnalyticEvents";
 
 import { logger } from "@/lib/logger/logger";
 

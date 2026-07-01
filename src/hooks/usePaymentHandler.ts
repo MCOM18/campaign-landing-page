@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import api from "../utils/apiClient";
-import { AnalyticEvents } from "../analytics/AnalyticEvents";
+import { AnalyticEvents } from "../services/analytics/AnalyticEvents";
 import { getUserGeoLocation } from "../utils/userUtil";
 import { logger } from "@/lib/logger/logger";
 import { appConfig } from "@/lib/config/app.config";
