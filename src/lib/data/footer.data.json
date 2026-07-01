@@ -21,8 +21,8 @@
       "id": "col2",
       "links": [
         {
-          "label": "Advertise with us",
-          "href": "https://jojolimited.com"
+          "label": "Careers",
+          "href": "https://jojolimited.com/career"
         },
         {
           "label": "Contact Us",
@@ -35,10 +35,6 @@
         {
           "label": "Assets",
           "href": ""
-        },
-        {
-          "label": "Careers",
-          "href": "https://jojolimited.com/career"
         }
       ]
     }
@@ -61,7 +57,7 @@
       {
         "id": "youtube",
         "label": "YouTube",
-        "href": "https://www.youtube.com/@JoJoGujaratiott/videos",
+        "href": "https://www.youtube.com/@JOJOPARJOJO",
         "iconKey": "YOUTUBE_ICON"
       },
       {

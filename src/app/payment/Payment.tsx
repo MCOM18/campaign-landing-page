@@ -361,13 +361,13 @@ function PaymentPage() {
                   }
                 }
 
-                // Open the campaign deep-link in a new tab
-                window.open(storedRedirectUrl!, '_blank', 'noopener,noreferrer');
+                // Redirect to the campaign deep-link in the same tab
+                window.location.href = storedRedirectUrl!;
               } else {
-                // No campaign redirect URL stored — clean up and open jojoapp.in homepage in new tab
+                // No campaign redirect URL stored — clean up and redirect to jojoapp.in homepage in the same tab
                 sessionStorage.removeItem("campaign_redirect_url");
                 sessionStorage.removeItem("campaign_decoded_data");
-                window.open("https://jojoapp.in", "_blank", "noopener,noreferrer");
+                window.location.href = "https://jojoapp.in";
               }
             }}
           />

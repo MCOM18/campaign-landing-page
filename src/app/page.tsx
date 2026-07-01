@@ -1082,7 +1082,7 @@ export default function Home() {
               </div>
 
               <div className="web-footer-column">
-                <a href="https://appjojo.in/#contactUs" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Advertise with us</a>
+                <a href="https://jojolimited.com/career" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Careers</a>
                 <a href="https://jojolimited.com/contact" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Contact us</a>
                 <a href="mailto:support@appjojo.in" className="web-footer-link" style={{ textDecoration: "none" }}>Support</a>
               </div>
