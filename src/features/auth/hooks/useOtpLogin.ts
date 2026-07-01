@@ -170,9 +170,34 @@ export function useGetCountries() {
   return useQuery({
     queryKey: ["countries"],
     queryFn: async () => {
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("jojo_country_list");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              logger.info("[useGetCountries] Returning cached country list from localStorage");
+              return parsed;
+            }
+          }
+        } catch (e) {
+          logger.warn("[useGetCountries] Failed to parse cached country list", e);
+        }
+      }
+
       const sessionId = useAuthStore.getState().token ?? undefined;
       const res = await getCountries(sessionId);
-      return res.data || [];
+      const data = res.data || [];
+
+      if (typeof window !== "undefined" && data.length > 0) {
+        try {
+          localStorage.setItem("jojo_country_list", JSON.stringify(data));
+        } catch (e) {
+          logger.warn("[useGetCountries] Failed to cache country list in localStorage", e);
+        }
+      }
+
+      return data;
     },
     staleTime: 24 * 60 * 60 * 1000, // 24 hours cache
     enabled: isConfigLoaded(),

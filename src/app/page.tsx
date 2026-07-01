@@ -245,6 +245,36 @@ export default function Home() {
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
 
+  // Selective cleanup of session and payment states on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const keysToRemove = [
+        "selectedPlan",
+        "payment_init_data",
+        "payment_sToken",
+        "payment_sProviderToken",
+        "session_id",
+        "user_id",
+        "userData"
+      ];
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+      const sessionKeysToRemove = [
+        "payment_status",
+        "payment_success_state",
+        "payment_razorpay_id",
+        "payment_subscription_id",
+        "payment_order_id"
+      ];
+      sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
+
+      logger.info("[Storage Cleanup] Stale session and payment details cleared.");
+    } catch (e) {
+      logger.error("[Storage Cleanup] Failed to clear storage", e);
+    }
+  }, []);
+
   // Handle browser back button when in OTP step to return to phone/email input step
   useEffect(() => {
     if (typeof window === "undefined") return;
