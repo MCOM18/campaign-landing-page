@@ -76,6 +76,11 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
     // Detect if input is email
     const isEmailInput = trimmed.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(trimmed);
 
+    // Validation check before submission
+    const isValidEmail = isEmailInput && REGEX.EMAIL.test(trimmed);
+    const isValidPhone = !isEmailInput && trimmed.replace(REGEX.NON_DIGIT, "").length > 5;
+    if (!isValidEmail && !isValidPhone) return;
+
     let fullIdentifier = trimmed;
     if (!isEmailInput && !trimmed.startsWith("+")) {
       const cleanPhone = trimmed.replace(REGEX.NON_DIGIT, "");
@@ -104,7 +109,12 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
 
   const isEmail = inputValue.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(inputValue);
   const showCountryPicker = !isEmail && inputValue.trim().length > 0;
-  const isActive = inputValue.trim().length > 0;
+
+  // Validation: Email format validation, and phone number validation after 5 digits
+  const cleanValue = inputValue.trim();
+  const isValidEmail = isEmail && REGEX.EMAIL.test(cleanValue);
+  const isValidPhone = !isEmail && cleanValue.replace(REGEX.NON_DIGIT, "").length > 5;
+  const isActive = isValidEmail || isValidPhone;
 
   const filteredCountries = countries.filter(c =>
     c.countryName.toLowerCase().includes(searchQuery.toLowerCase()) ||

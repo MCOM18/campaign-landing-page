@@ -100,10 +100,13 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
         </p>
       </div>
 
-      {/* Button: Close / Start Watching */}
+      {/* Button: Explore Gold */}
       <div style={{ width: "100%" }}>
         <button
-          onClick={onClose}
+          onClick={() => {
+            window.open("https://jojoapp.in", "_blank", "noopener,noreferrer");
+            onClose();
+          }}
           style={{
             width: "100%",
             height: "44px",
@@ -125,7 +128,7 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          Close
+          Explore Gold
         </button>
       </div>
     </div>
