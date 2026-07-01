@@ -1,5 +1,7 @@
 export enum AnalyticsProvider {
+  CLEVERTAP = 'clevertap',
   FIREBASE = 'firebase',
+  BACKEND = 'backend',
 }
 
 export enum EventCriticality {

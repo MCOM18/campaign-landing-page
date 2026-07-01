@@ -54,7 +54,7 @@ export function decrypt(value: string, enabled: boolean = false): string {
     const result = decrypted.toString(CryptoJS.enc.Utf8);
 
     if (!result) {
-      logger.error("[Crypto] Decryption produced empty result");
+      logger.warn("[Crypto] Decryption produced empty result");
       throw new Error("Decryption produced empty result - likely wrong key or corrupted data");
     }
     
@@ -64,7 +64,7 @@ export function decrypt(value: string, enabled: boolean = false): string {
     });
     return result;
   } catch (error) {
-    logger.error("[Crypto] Decryption failed", { error });
+    logger.warn("[Crypto] Decryption failed", { error });
     throw error;
   }
 }

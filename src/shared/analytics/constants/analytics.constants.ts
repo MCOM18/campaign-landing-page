@@ -13,6 +13,9 @@ export const EVENT_NAMES = {
   OTP_FAILED: 'otp_failed',
   LOGOUT: 'logout',
   SCREEN_VIEWED: 'screen_viewed',
+  CAMPAIGN_LANDING_IMPRESSION: 'campaign_landing_impression',
+  LOGIN_STARTED: 'login_started',
+  LOGIN_COMPLETED: 'login_completed',
 } as const;
 
 export const GA4_LIMITS = {

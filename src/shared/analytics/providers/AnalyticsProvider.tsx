@@ -4,18 +4,26 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { analyticsService } from '../services/analytics.service';
 import { useAuthStore } from '@/store/useAuthStore'; // Match your store path
+import { useBootstrap } from '@/lib/bootstrap/BootstrapContext';
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isInitialized, setIsInitialized] = useState(false);
   const lastPathname = useRef<string | null>(null);
   const { user, isAuthenticated } = useAuthStore();
+  const { isAppReady } = useBootstrap();
 
   // Initialize Service
   useEffect(() => {
-    if (isInitialized) return;
-    
+    if (!isAppReady || isInitialized) return;
+
     analyticsService.initialize({
+      clevertap: process.env.NEXT_PUBLIC_CLEVERTAP_ACCOUNT_ID
+        ? {
+          accountId: process.env.NEXT_PUBLIC_CLEVERTAP_ACCOUNT_ID,
+          region: process.env.NEXT_PUBLIC_CLEVERTAP_REGION || 'in1',
+        }
+        : undefined,
       firebase: {
         apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
         authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
@@ -26,7 +34,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
       }
     }).then(() => setIsInitialized(true));
-  }, [isInitialized]);
+  }, [isAppReady, isInitialized]);
 
   // Sync User Identity
   useEffect(() => {
