@@ -12,12 +12,13 @@ import { checkUser } from "../api/checkUser";
 import { sendOtp } from "../api/sendOtp";
 import { verifyOtp } from "../api/verifyOtp";
 import { socialLogin } from "../api/socialLogin";
-import { 
-  mapCheckUserResponse, 
-  mapSendOtpResponse, 
+import {
+  mapCheckUserResponse,
+  mapSendOtpResponse,
   mapVerifyOtpResponse,
   mapSocialLoginResponse
 } from "../model/mapper";
+import { getUserGeoLocation } from "@/utils/userUtil";
 import { AppError } from "@lib/error/types";
 import { HttpStatus } from "@enums/http.enum";
 import type { ApiResponse, VerifyOtpResponse, SocialLoginRequest, SocialLoginResponse } from "../model/types";
@@ -44,22 +45,22 @@ export async function initiateOtpFlow(
   // Detect if input is email or phone
   const isEmail = phone.includes('@');
   const source = isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE;
-  
+
   logger.info('[Auth Service] initiateOtpFlow', { phone, phoneCode, isEmail, source });
-  
+
   // Step 1: Check user (raw response)
   // Handle 404 gracefully - it means user doesn't exist (new registration)
   let userCheckResponse: ApiResponse<any>;
   let isRegistration = false;
   let isSpecialUser = false;
-  
+
   try {
     userCheckResponse = await checkUser({
       phone_code: phoneCode,
       phone: phone,
       source: source,
     }, sessionId) as ApiResponse<any>;
-    
+
     // Step 2: Validate metaData status
     if (userCheckResponse.metaData?.status !== 200) {
       throw new AppError(
@@ -67,12 +68,12 @@ export async function initiateOtpFlow(
         userCheckResponse.metaData?.status as HttpStatus || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
-    
+
     // Step 3: Map response
     const userCheck = mapCheckUserResponse(userCheckResponse);
     isRegistration = !userCheck.is_exists;
     isSpecialUser = userCheck.is_special_user;
-    
+
   } catch (error) {
     // Handle 404 - user doesn't exist, proceed with registration
     if (error instanceof AppError && error.status === HttpStatus.NOT_FOUND) {
@@ -93,13 +94,20 @@ export async function initiateOtpFlow(
   }
 
   // Step 5: Send OTP (raw response) - for both existing and new users
+  const geoData = getUserGeoLocation();
+
   const otpResponse = await sendOtp({
     phone_code: phoneCode,
     phone: phone,
     is_register: isRegistration, // true for new users, false for existing
     source: source,
+    country: geoData?.country_code || undefined,
+    state: geoData?.region || undefined,
+    city: geoData?.city || undefined,
+    lat: geoData?.lat?.toString() || undefined,
+    long: geoData?.Long?.toString() || undefined,
   }, sessionId) as ApiResponse<any>;
-  
+
   // Step 6: Validate metaData status
   if (otpResponse.metaData?.status !== 200) {
     // Track OTP failure
@@ -111,13 +119,13 @@ export async function initiateOtpFlow(
       error_message: otpResponse.metaData?.message || 'Send OTP failed',
       attempts: 1,
     });
-    
+
     throw new AppError(
       otpResponse.metaData?.message || 'Send OTP failed',
       otpResponse.metaData?.status as HttpStatus || HttpStatus.INTERNAL_SERVER_ERROR
     );
   }
-  
+
   // Step 7: If metaData status is 200, consider it success even if data is null
   // Some APIs return data: null with success message
   const otp = mapSendOtpResponse(otpResponse);
@@ -133,7 +141,7 @@ export async function initiateOtpFlow(
       error_message: 'Failed to send OTP',
       attempts: 1,
     });
-    
+
     throw new AppError("Failed to send OTP", HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
@@ -173,9 +181,9 @@ export async function completeOtpVerification(
   // Detect if input is email or phone
   const isEmail = phone.includes('@');
   const source = isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE;
-  
+
   const startTime = Date.now();
-  
+
   // Step 1: Verify OTP (raw response)
   const response = await verifyOtp({
     phone_code: phoneCode,
@@ -184,7 +192,7 @@ export async function completeOtpVerification(
     is_register: isRegister,
     source: source,
   }, sessionId) as ApiResponse<any>;
-  
+
   // Step 2: Validate metaData status
   // Accept both 200 (existing user) and 201 (new user registration)
   const status = response.metaData?.status;
@@ -198,19 +206,19 @@ export async function completeOtpVerification(
       error_message: response.metaData?.message || 'OTP verification failed',
       attempts: 1,
     });
-    
+
     throw new AppError(
       response.metaData?.message || 'OTP verification failed',
       status as HttpStatus || HttpStatus.BAD_REQUEST
     );
   }
-  
+
   // Step 3: Map response
   const mapped = mapVerifyOtpResponse(response);
-  
+
   // Calculate verification time
   const verificationTime = Math.floor((Date.now() - startTime) / 1000);
-  
+
   // Track OTP verification success
   analyticsService.trackOtpVerified({
     phone_code: phoneCode,
@@ -219,7 +227,7 @@ export async function completeOtpVerification(
     is_register: isRegister,
     verification_time_seconds: verificationTime,
   });
-  
+
   // Track login success
   analyticsService.trackLoginSuccess({
     method: 'otp',
@@ -235,7 +243,7 @@ export async function completeOtpVerification(
     source: source,
     user_id: mapped.user_id,
   });
-  
+
   return mapped;
 }
 
@@ -254,7 +262,7 @@ export async function socialLoginService(
 ): Promise<SocialLoginResponse> {
   // Step 1: Call social login API
   const response = await socialLogin(request, sessionId) as ApiResponse<any>;
-  
+
   // Step 2: Validate metaData status
   // Accept both 200 (existing user) and 201 (new user registration)
   const status = response.metaData?.status;
@@ -266,26 +274,26 @@ export async function socialLoginService(
       error_message: response.metaData?.message || 'Social login failed',
       source: 'phone', // Social login doesn't use email/phone source
     });
-    
+
     throw new AppError(
       response.metaData?.message || 'Social login failed',
       status as HttpStatus || HttpStatus.INTERNAL_SERVER_ERROR
     );
   }
-  
+
   // Step 3: Map response
   const mapped = mapSocialLoginResponse(response);
-  
+
   // Step 4: Add isNewUser flag based on status code
   const isNewUser = status === 201;
-  
+
   // Step 5: Log the status for debugging
   if (isNewUser) {
     logger.info('[Auth Service] New user registered via social login');
   } else {
     logger.info('[Auth Service] Existing user logged in via social login');
   }
-  
+
   // Track login success
   analyticsService.trackLoginSuccess({
     method: request.source as 'google' | 'facebook' | 'apple',
@@ -299,7 +307,7 @@ export async function socialLoginService(
     source: 'phone',
     user_id: mapped.user_id,
   });
-  
+
   return {
     ...mapped,
     isNewUser,

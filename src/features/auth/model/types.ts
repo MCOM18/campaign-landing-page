@@ -40,6 +40,11 @@ export interface SendOtpRequest {
   phone: string;
   is_register: boolean;
   source: "phone" | "email";
+  country?: string;
+  state?: string;
+  city?: string;
+  lat?: string;
+  long?: string
 }
 
 export interface VerifyOtpRequest {

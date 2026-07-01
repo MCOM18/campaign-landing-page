@@ -76,7 +76,16 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
     // Detect if input is email
     const isEmailInput = trimmed.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(trimmed);
 
-    trackLoginStarted(isEmailInput ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE);
+    let fullIdentifier = trimmed;
+    if (!isEmailInput && !trimmed.startsWith("+")) {
+      const cleanPhone = trimmed.replace(REGEX.NON_DIGIT, "");
+      fullIdentifier = `${selectedCountry.phoneCode}${cleanPhone}`;
+    }
+
+    trackLoginStarted(
+      isEmailInput ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE,
+      fullIdentifier
+    );
 
     if (isEmailInput) {
       onSubmit(trimmed);

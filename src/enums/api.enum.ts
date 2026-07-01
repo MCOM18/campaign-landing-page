@@ -38,4 +38,5 @@ export enum ApiEndpoint {
   // Events
   LOGIN_STARTED_EVENT = "/v1/jojoevents/login_started",
   LOGIN_COMPLETED_EVENT = "/v1/jojoevents/login_completed",
+  CAMPAIGN_IMPRESSION = "/v1/jojoevents/campaign_landing_impression",
 }

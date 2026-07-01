@@ -11,6 +11,8 @@ export const getUserGeoLocation = () => {
           city: parsed.geoData.city || null,
           region: parsed.geoData.region || null,
           country_code: parsed.geoData.country_code || null,
+          lat: parsed.geoData.latitude || parsed.geoData.lat || null,
+          Long: parsed.geoData.longitude || parsed.geoData.lng || parsed.geoData.lon || null,
         };
       }
     }
@@ -22,11 +24,15 @@ export const getUserGeoLocation = () => {
     const city = geoData?.data?.city || null;
     const region = geoData?.data?.region || null;
     const country_code = geoData?.data?.country_code || null;
+    const lat = geoData?.data?.latitude || geoData?.data?.lat || null;
+    const Long = geoData?.data?.longitude || geoData?.data?.lng || geoData?.data?.lon || null;
 
     return {
       city,
       region,
       country_code,
+      lat,
+      Long,
     };
   } catch (error) {
     return {};

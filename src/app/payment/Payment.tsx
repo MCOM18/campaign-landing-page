@@ -36,7 +36,7 @@ function PaymentPage() {
     if (typeof window !== "undefined") {
       const sessionId = localStorage.getItem("session_id");
       const userId = localStorage.getItem("user_id");
-      const stored = sessionStorage.getItem("selectedPlan");
+      const stored = localStorage.getItem("selectedPlan");
 
       if (!sessionId || !userId || !stored) {
         toast.error("Please log in first.");

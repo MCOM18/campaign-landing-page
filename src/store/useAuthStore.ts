@@ -10,6 +10,8 @@ interface AuthStore extends AuthState {
   setGuestAuth: (token: string, guestId: string) => void;
   clearAuth: () => void;
   updateUser: (user: Partial<User>) => void;
+  loginOtp: string | null;
+  setLoginOtp: (otp: string | null) => void;
 }
 
 /**
@@ -24,6 +26,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   token: null,
   refreshToken: null,
+  loginOtp: null,
+
+  setLoginOtp: (otp) => set({ loginOtp: otp }),
 
   /**
    * Set authenticated user

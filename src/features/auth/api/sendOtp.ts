@@ -17,8 +17,13 @@ export async function sendOtp(
   const body: any = {
     is_register: request.is_register,
     source: request.source,
+    ...(request.country ? { country: request.country } : {}),
+    ...(request.state ? { state: request.state } : {}),
+    ...(request.city ? { city: request.city } : {}),
+    ...(request.lat ? { lat: request.lat } : {}),
+    ...(request.long ? { long: request.long } : {}),
   };
-  
+
   if (request.source === LoginIdentifierType.PHONE) {
     // For phone: use phone and phone_code fields
     body.phone = request.phone;
@@ -27,13 +32,13 @@ export async function sendOtp(
     // For email: use email field instead of phone
     body.email = request.phone; // API expects 'email' field for email source
   }
-  
+
   logger.info('[Send OTP API] Request body:', body);
-  
+
   return apiClient.post<any>(
     ApiEndpoint.SEND_OTP,
     body,
-    { 
+    {
       encrypt: true,
       headers: sessionId ? { sessionid: sessionId } : {}
     }

@@ -45,5 +45,13 @@ export const REGEX = {
   AT_SYMBOL: "@",
   ALPHABET_REGEX: /[a-zA-Z]/,
   IS_PHONE_NUMBER_REGEX: /^[\d+\-\s()]+$/,
-  INTERNATIONAL_PHONE_NUMBER_REGEX: /^\+?\d{10,15}$/
+  INTERNATIONAL_PHONE_NUMBER_REGEX: /^\+?\d{10,15}$/,
+  
+  // Slug formatting regexes
+  SLUG_SPECIAL_CHARS: /[^a-z0-9\s-]/g,
+  SLUG_SPACES: /\s+/g,
+  SLUG_MULTIPLE_HYPHENS: /-+/g,
+  
+  // Phone parsing
+  COUNTRY_CODE_SPLIT: /^\+(\d{1,3})(.*)$/
 } as const;

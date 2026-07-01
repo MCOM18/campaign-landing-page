@@ -18,14 +18,16 @@ import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
 import { appConfig, AppConfig } from "@/lib/config/app.config";
+import { DEFAULT_HEADER_VALUES } from "@lib/constants/headers";
 import Lottie from "lottie-react";
 import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 import SubscriptionPlanCard from "./payment/SubscriptionPlanCard";
 import { TrialFormStep, PageSection, LoginIdentifierType } from "@/enums/ui.enum";
 import { decrypt } from "@lib/crypto/decrypt";
 import { analyticsService } from "@/shared/analytics";
-import { trackLoginCompleted } from "@/services/analytics/events";
+import { trackCampaignLandingImpression, trackLoginCompleted } from "@/services/analytics/events";
 import { slugMap } from "@/enums/enums";
+import { REGEX } from "@/lib/constants/regex";
 
 /** Map each platform id → the SVG asset filename */
 const SOCIAL_ICON_MAP: Record<string, string> = {
@@ -46,10 +48,26 @@ export default function Home() {
   const lottieMobileRef = useRef<any>(null);
   const lottieDesktopRef = useRef<any>(null);
 
-  // Lottie refs (speed is set via onDOMLoaded on the component)
-
-  // Ref to hold parsed campaign data so event fires after analytics is ready
   const pendingCampaignData = useRef<Record<string, any> | null>(null);
+
+  const impressionTracked = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isAppReady || impressionTracked.current) return;
+    impressionTracked.current = true;
+
+    const payload = {
+      source_link: window.location.href,
+      timestamp: Date.now(),
+      lat: getUserGeoLocation()?.lat || null,
+      Long: getUserGeoLocation()?.Long || null,
+      city: getUserGeoLocation()?.city || null,
+      country: getUserGeoLocation()?.country_code || null,
+      device_type: Number(DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE),
+    };
+    logger.info("campaign_landing_impression", payload)
+    trackCampaignLandingImpression(payload)
+  }, [isAppReady])
 
   // Step 1: Parse + decrypt URL on mount (synchronous, no analytics dependency)
   useEffect(() => {
@@ -96,20 +114,6 @@ export default function Home() {
         logger.info("[Campaign] AES decryption failed, trying hex decode.");
       }
 
-      // Attempt 2: Raw Hex Decode
-      // if (!decoded) {
-      //   try {
-      //     let hexDecoded = "";
-      //     for (let i = 0; i < dataParam.length; i += 2) {
-      //       hexDecoded += String.fromCharCode(parseInt(dataParam.substring(i, i + 2), 16));
-      //     }
-      //     decoded = JSON.parse(hexDecoded);
-      //     logger.info("[Campaign] Decoded via raw hex:", decoded);
-      //   } catch (e) {
-      //     logger.error("[Campaign] Both decode methods failed:", e);
-      //   }
-      // }
-
       if (!decoded) return;
 
       /** Convert a display name like "Jai Kanhaiyalal Ki" → "jai-kanhaiyalal-ki" */
@@ -117,9 +121,9 @@ export default function Home() {
         return name
           .toLowerCase()
           .trim()
-          .replace(/[^a-z0-9\s-]/g, "")  // remove special chars
-          .replace(/\s+/g, "-")           // spaces → hyphens
-          .replace(/-+/g, "-");           // collapse multiple hyphens
+          .replace(REGEX.SLUG_SPECIAL_CHARS, "")  // remove special chars
+          .replace(REGEX.SLUG_SPACES, "-")        // spaces → hyphens
+          .replace(REGEX.SLUG_MULTIPLE_HYPHENS, "-"); // collapse multiple hyphens
       }
 
       // Build final redirect URL
@@ -161,7 +165,6 @@ export default function Home() {
       };
       sessionStorage.setItem("campaign_decoded_data", JSON.stringify(enrichedData));
 
-      // Store in ref — event will be fired in Step 2 once analytics is ready
       pendingCampaignData.current = enrichedData;
       logger.info("[Campaign] Campaign data ready, waiting for analytics service.");
     } catch (err) {
@@ -193,17 +196,14 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Extract and log plans config data
   const specialOffer = AppConfig.specialOfferPlan;
   // console.log("Subscription Plans Config Data:", specialOffer);
   // logger.info("[Home] Subscription Plans Config Data:", specialOffer);
 
-  // Apply theme dynamically to document.body
   useEffect(() => {
     const firstGroup = specialOffer?.aAllSubscriptionPlans?.[0];
     const theme = specialOffer?.sTheme || specialOffer?.theme || firstGroup?.sTheme || firstGroup?.theme || "theme-default";
 
-    // Clean up existing theme classes on body
     document.body.classList.forEach((cls) => {
       if (cls.startsWith("theme-")) {
         document.body.classList.remove(cls);
@@ -303,7 +303,7 @@ export default function Home() {
   const handleSelectPlanAndContinue = () => {
     const selected = flatPlansList[selectedPlanIndex];
     if (selected) {
-      sessionStorage.setItem("selectedPlan", JSON.stringify(selected.plan));
+      localStorage.setItem("selectedPlan", JSON.stringify(selected.plan));
       router.push("/payment");
     }
   };
@@ -338,15 +338,15 @@ export default function Home() {
           phone = clean.substring(bestMatchLength);
         } else {
           // Fallback if no matching code is found
-          const match = phone.match(/^\+(\d{1,3})(.*)$/);
+          const match = phone.match(REGEX.COUNTRY_CODE_SPLIT);
           if (match) {
             phoneCode = `+${match[1]}`;
-            phone = match[2].replace(/\D/g, "");
+            phone = match[2].replace(REGEX.NON_DIGIT, "");
           }
         }
       } else {
-        const clean = phone.replace(/\D/g, "");
-        phoneCode = appConfig.DEFAULT_MOBILE_NUMBER_CODE; // Default to India country code
+        const clean = phone.replace(REGEX.NON_DIGIT, "");
+        phoneCode = appConfig.DEFAULT_MOBILE_NUMBER_CODE;
         phone = clean;
       }
     }
@@ -463,12 +463,25 @@ export default function Home() {
 
       if (!isGoldUser) {
         try {
-          await trackLoginCompleted(isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE);
+          const finalPhoneCode = response.phone_code || parsedPhoneCode || "";
+          const finalPhoneOnly = response.phone || parsedPhone || "";
+          const phoneCode = finalPhoneCode ? `+${finalPhoneCode.replace(REGEX.NON_DIGIT, '')}` : "";
+          const phoneOnly = finalPhoneOnly ? finalPhoneOnly.replace(REGEX.NON_DIGIT, '') : "";
+          const identifier = isEmail ? (response.email || contactInfo) : `${phoneCode}${phoneOnly}`;
+          if (otpCode) useAuthStore.getState().setLoginOtp(otpCode);
+
+          await trackLoginCompleted(
+            isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE,
+            identifier,
+            otpCode,
+            phoneCode,
+            phoneOnly
+          );
         } catch (err) {
           logger.error("[OTP] Failed to track login completed", err);
         }
         logger.info("[OTP] Navigating to /payment...");
-        window.location.href = "/payment";
+        router.push("/payment");
       }
 
       if (!isGoldUser) {
@@ -521,8 +534,7 @@ export default function Home() {
               ]
             }
           };
-          sessionStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj));
-          // console.log("[OTP] Free trial offer found in fresh plans, navigating direct to /payment...");
+          localStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj));
           router.push("/payment");
         } else {
           // If no offer details is found (it is null)
