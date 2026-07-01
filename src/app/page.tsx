@@ -537,11 +537,6 @@ export default function Home() {
 
 
       if (!isGoldUser) {
-        logger.info("[OTP] Navigating to /payment...");
-        router.push("/payment");
-      }
-
-      if (!isGoldUser) {
         // Find if any product has offer details in the fresh plans data
         const allPlansListFresh = freshPlansData?.aAllSubscriptionPlans || [];
         let offerProduct: any = null;

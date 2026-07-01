@@ -116,7 +116,9 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
             textDecoration: "underline",
           }}
         >
-          <span className="gold-text-gradient">Change Phone Number</span>
+          <span className="gold-text-gradient">
+            {contactInfo.includes("@") ? "Change Email ID" : "Change Phone Number"}
+          </span>
         </button>
       </div>
 

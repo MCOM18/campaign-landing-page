@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { FiChevronUp, FiChevronDown, FiChevronLeft, FiEye, FiEyeOff } from "react-icons/fi";
 import SubscriptionPlanCard from "./SubscriptionPlanCard";
 import { usePaymentHandler, getPricingData, checkCardRecurringEligibility } from "../../hooks/usePaymentHandler";
+import { getUserGeoLocation } from "../../utils/userUtil";
 import { PAYMENT_METHOD } from "@/enums/enums";
 import PhoneCollectModal from "./PhoneCollectModal";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
@@ -57,12 +58,9 @@ function PaymentPage() {
           // console.error("Failed to parse selected plan:", e);
         }
       }
-      const geo = localStorage.getItem("geoLocationData");
-      if (geo) {
-        try {
-          const parsed = JSON.parse(geo);
-          setCountryCode(parsed?.data?.country_code || appConfig.DEFAULT_COUNTRY_NAME);
-        } catch { }
+      const geoData = getUserGeoLocation();
+      if (geoData?.country_code) {
+        setCountryCode(geoData.country_code);
       }
     }
     setIsMounted(true);
