@@ -174,7 +174,7 @@ export function trackCampaignLandingImpression(payloadData: any): void {
   logger.info(`[Analytics] campaign_landing_impression`, payloadData);
 
   try {
-    const analyticsUrl = process.env.NEXT_PUBLIC_ANALYTICS_URL || "https://events.jojoapp.in";
+    const analyticsUrl = process.env.NEXT_PUBLIC_ANALYTICS_URL;
 
     if (analyticsUrl) {
       const storeState = useAuthStore.getState();
