@@ -1,7 +1,19 @@
 import type { NextConfig } from "next";
 
+const isStaticExport = process.env.NEXT_PUBLIC_DYNAMIC_BUILD !== "true" && process.env.NODE_ENV !== "development";
+
 const nextConfig: NextConfig = {
-  output: process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production" || process.env.NODE_ENV === "test" ? undefined : "export",
+  output: isStaticExport ? "export" : undefined,
+  ...(isStaticExport ? {} : {
+    async rewrites() {
+      return [
+        {
+          source: "/link=:path(.*)",
+          destination: "/",
+        },
+      ];
+    },
+  }),
 };
 
 export default nextConfig;
