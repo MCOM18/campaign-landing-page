@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import api from "../utils/apiClient";
 import { AnalyticEvents } from "../analytics/AnalyticEvents";
 import { getUserGeoLocation } from "../utils/userUtil";
+import { logger } from "@/lib/logger/logger";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
     const providerSku = selectedPlan?.aProviderSkus?.[0];
     const skuId = providerSku?.sUniqueSkuId;
     if (!skuId) {
-      console.warn("TVOD: sUniqueSkuId not found");
+      logger.warn("TVOD: sUniqueSkuId not found");
       return null;
     }
     return {
@@ -131,7 +132,7 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
     };
   }
 
-  console.warn("No valid pricing structure found");
+  logger.warn("No valid pricing structure found");
   return null;
 };
 
@@ -197,7 +198,7 @@ export const usePaymentHandler = () => {
         localStorage.removeItem("payment_init_data");
       }
     } catch (error) {
-      console.error("Failed to store payment data:", error);
+      logger.error("Failed to store payment data:", error);
     }
   };
 
@@ -216,7 +217,7 @@ export const usePaymentHandler = () => {
       }
       return parsed;
     } catch (error) {
-      console.error("Failed to retrieve payment data:", error);
+      logger.error("Failed to retrieve payment data:", error);
       localStorage.removeItem("payment_init_data");
       return null;
     }
@@ -234,7 +235,7 @@ export const usePaymentHandler = () => {
       sessionStorage.removeItem("payment_subscription_id");
       sessionStorage.removeItem("payment_order_id");
     } catch (error) {
-      console.error("Error during payment state cleanup:", error);
+      logger.error("Error during payment state cleanup:", error);
     }
     setIsProcessing(false);
     setIsPreparing(false);
@@ -281,7 +282,7 @@ export const usePaymentHandler = () => {
           continue;
         }
       } catch (error) {
-        console.error(`Polling attempt ${attempt} failed:`, error);
+        logger.error(`Polling attempt ${attempt} failed:`, error);
         if (attempt < maxAttempts) {
           await sleep(delayMs);
           continue;
@@ -361,7 +362,7 @@ export const usePaymentHandler = () => {
               paymentId,
             }));
           } catch (error) {
-            console.warn("Optimistic TVOD update failed:", error);
+            logger.warn("Optimistic TVOD update failed:", error);
           }
         }
 
@@ -371,7 +372,7 @@ export const usePaymentHandler = () => {
             AnalyticEvents.svodPurchaseSuccess(selectedPlan, { user_id: userId }, "RAZORPAY", sToken, null);
           }
         } catch (error) {
-          console.warn("Analytics error:", error);
+          logger.warn("Analytics error:", error);
         }
 
         localStorage.removeItem("payment_sToken");
@@ -412,7 +413,7 @@ export const usePaymentHandler = () => {
       return { success: false, error: errorMessage };
 
     } catch (err: unknown) {
-      console.error("Payment handling error:", err);
+      logger.error("Payment handling error:", err);
       sessionStorage.setItem("payment_status", "ERROR");
       const errorMessage = err instanceof Error ? err.message : "Payment verification failed";
 
@@ -499,7 +500,7 @@ export const usePaymentHandler = () => {
       setIsPreparing(false);
       return data;
     } catch (err: unknown) {
-      console.error("preparePayment failed:", err);
+      logger.error("preparePayment failed:", err);
       setIsPreparing(false);
       const isAlreadyActive = err instanceof Error && err.message === "Your subscription plan is already active";
       if (isAlreadyActive) {
@@ -579,7 +580,7 @@ export const usePaymentHandler = () => {
         });
 
         rzp.on("payment.error", (error: any) => {
-          console.error("Payment error:", error);
+          logger.error("Payment error:", error);
           const msg = error?.error?.description || error?.error?.reason || "Payment failed. Please try again.";
           toast.error(msg);
           setIsProcessing(false);
@@ -587,7 +588,7 @@ export const usePaymentHandler = () => {
         });
 
       } catch (error) {
-        console.error("executePayment error:", error);
+        logger.error("executePayment error:", error);
         reject(error);
       }
     });
@@ -629,7 +630,7 @@ export const usePaymentHandler = () => {
       return result;
 
     } catch (err: unknown) {
-      console.error("Payment initiation failed:", err);
+      logger.error("Payment initiation failed:", err);
       toast.error(err instanceof Error ? err.message : "Payment failed");
       setIsProcessing(false);
       return { success: false, error: err instanceof Error ? err.message : "Payment failed" };
@@ -693,7 +694,7 @@ export const checkCardRecurringEligibility = async (
     return { eligible: true, error: null, cardDetails };
 
   } catch (err: unknown) {
-    console.warn("Card eligibility check failed, proceeding with payment:", err instanceof Error ? err.message : err);
+    logger.warn("Card eligibility check failed, proceeding with payment:", err instanceof Error ? err.message : err);
     return { eligible: true, error: null, cardDetails: null };
   }
 };

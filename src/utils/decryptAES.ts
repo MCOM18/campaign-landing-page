@@ -10,6 +10,8 @@ function base64ToWordArray(base64: string) {
   return CryptoJS.enc.Base64.parse(base64);
 }
 
+import { logger } from "@/lib/logger/logger";
+
 export function decryptAES(encryptedHex: string, base64Key: string, hexIV: string) {
   try {
     const key = base64ToWordArray(base64Key);   // 32-byte AES key
@@ -30,7 +32,7 @@ export function decryptAES(encryptedHex: string, base64Key: string, hexIV: strin
     }
     return JSON.parse(plaintext);
   } catch (error) {
-    console.error("AES Decryption failed:", error);
+    logger.error("AES Decryption failed:", error);
     throw error;
   }
 }

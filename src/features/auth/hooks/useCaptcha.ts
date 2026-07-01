@@ -33,19 +33,16 @@ export function useCaptcha() {
             const sessionId = useAuthStore.getState().token ?? undefined;
 
             logger.info("[Captcha Hook] Session token:", sessionId ? "Present" : "Not present");
-            console.log("[Captcha Hook] 🔑 Session token:", sessionId ? `${sessionId.substring(0, 10)}...` : "Not present");
 
             // Pass session to service
             return verifyCaptchaFlow(action, sessionId);
         },
         onSuccess: (data) => {
             logger.info("[Captcha Verify Success]", { message: data.message });
-            console.log("[Captcha Verify Success] ✅", { message: data.message });
         },
         onError: (error) => {
             const message = handleError(error);
             logger.error("[Captcha Verify Error]", { message });
-            console.error("[Captcha Verify Error] ❌", { message });
         },
     });
 }

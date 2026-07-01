@@ -8,6 +8,8 @@ interface GoldRestrictionModalProps {
     end_date?: string;
   } | null;
   onClose: () => void;
+  title?: string;
+  description?: string;
 }
 
 function formatDate(dateString?: string) {
@@ -22,9 +24,17 @@ function formatDate(dateString?: string) {
 export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
   subscription,
   onClose,
+  title,
+  description,
 }) => {
   const planName = subscription?.plan_name || "JOJO Gold Premium";
   const endDate = subscription?.end_date ? formatDate(subscription.end_date) : "";
+
+  const defaultTitle = "You are already a Gold Member!";
+  const defaultDesc = `An active subscription (${planName}) is already running on your account. ${endDate && `It is valid till ${endDate}.`} You cannot purchase another trial at this moment.`;
+
+  const finalTitle = title || defaultTitle;
+  const finalDesc = description || defaultDesc;
 
   return (
     <div
@@ -71,7 +81,7 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
             fontFamily: "'Poppins', sans-serif",
           }}
         >
-          You are already a Gold Member!
+          {finalTitle}
         </p>
 
         <p
@@ -86,7 +96,7 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
             fontFamily: "'Poppins', sans-serif",
           }}
         >
-          An active subscription ({planName}) is already running on your account. {endDate && `It is valid till ${endDate}.`} You cannot purchase another trial at this moment.
+          {finalDesc}
         </p>
       </div>
 

@@ -49,7 +49,7 @@ function PaymentPage() {
           const parsed = JSON.parse(stored);
           setSelectedPlan(parsed);
         } catch (e) {
-          console.error("Failed to parse selected plan:", e);
+          // console.error("Failed to parse selected plan:", e);
         }
       }
       const geo = localStorage.getItem("geoLocationData");
@@ -253,7 +253,7 @@ function PaymentPage() {
         }
       })
       .catch((err: any) => {
-        console.error("Payment failed:", err);
+        // console.error("Payment failed:", err);
         setFailedErrorMsg(err?.message || "Payment failed. Please try again.");
         setShowFailedPopup(true);
       });
@@ -316,6 +316,8 @@ function PaymentPage() {
         <div className="success-overlay">
           <GoldRestrictionModal
             subscription={null}
+            title="You are already a Gold Member!"
+            description="An active subscription (JOJO Gold Premium) is already running on your account. You cannot purchase another trial at this moment."
             onClose={() => {
               setShowGoldPopup(false);
               router.push("/");
@@ -327,6 +329,7 @@ function PaymentPage() {
       {showSuccessPopup && (
         <div className="success-overlay">
           <SuccessScreen
+            isTrial={!!pricingData?.offerId}
             onReset={() => {
               setShowSuccessPopup(false);
               router.push("/");

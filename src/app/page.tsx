@@ -35,7 +35,7 @@ export default function Home() {
   const router = useRouter();
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
-  logger.info("countries", countries)
+  // logger.info("countries", countries)
 
   const [freshPlans, setFreshPlans] = useState<any>(null);
 
@@ -56,8 +56,8 @@ export default function Home() {
 
   // Extract and log plans config data
   const specialOffer = AppConfig.specialOfferPlan;
-  console.log("Subscription Plans Config Data:", specialOffer);
-  logger.info("[Home] Subscription Plans Config Data:", specialOffer);
+  // console.log("Subscription Plans Config Data:", specialOffer);
+  // logger.info("[Home] Subscription Plans Config Data:", specialOffer);
 
   // Apply theme dynamically to document.body
   useEffect(() => {
@@ -238,7 +238,7 @@ export default function Home() {
         !isExists
       );
 
-      console.log("[OTP] Verification response:", response);
+      // console.log("[OTP] Verification response:", response);
 
       const user = {
         id: response.user_id,
@@ -282,14 +282,14 @@ export default function Home() {
         const headersVerify = { sessionid: response.session_id };
 
         logger.info("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
-        console.log("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
+        // console.log("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
 
         const subResponse = await api.post("subscription/verify-subscription", payloadVerify, {
           headers: headersVerify
         });
 
         logger.info("[Verify Subscription] Response:", subResponse.data);
-        console.log("[Verify Subscription] Response (Stringified):", JSON.stringify(subResponse.data, null, 2));
+        // console.log("[Verify Subscription] Response (Stringified):", JSON.stringify(subResponse.data, null, 2));
 
         const subData = subResponse.data?.data;
         if (subData?.planType === "SVOD") {
@@ -308,18 +308,18 @@ export default function Home() {
           const headersPlans = { sessionid: response.session_id };
 
           logger.info("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
-          console.log("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
+          // console.log("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
 
           const plansResponse = await api.post("subscription/allplans", payloadPlans, {
             headers: headersPlans
           });
           freshPlansData = plansResponse.data?.data;
           logger.info("[Verify Subscription] Fresh plans loaded successfully:", plansResponse.data);
-          console.log("[Verify Subscription] Fresh plans loaded successfully (Stringified):", JSON.stringify(plansResponse.data, null, 2));
+          // console.log("[Verify Subscription] Fresh plans loaded successfully (Stringified):", JSON.stringify(plansResponse.data, null, 2));
         }
       } catch (subErr) {
         logger.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
-        console.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
+        // console.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
       }
 
       if (!isGoldUser) {
@@ -373,18 +373,18 @@ export default function Home() {
             }
           };
           sessionStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj));
-          console.log("[OTP] Free trial offer found in fresh plans, navigating direct to /payment...");
+          // console.log("[OTP] Free trial offer found in fresh plans, navigating direct to /payment...");
           router.push("/payment");
         } else {
           // If no offer details is found (it is null)
           // Set step to PLANS to show the plan selection screen
-          console.log("[OTP] No trial offer found in fresh plans, showing plans selection...");
+          // console.log("[OTP] No trial offer found in fresh plans, showing plans selection...");
           setStep(TrialFormStep.PLANS);
           setIsVerifying(false);
         }
       }
     } catch (err: any) {
-      console.error("[OTP] Verification error:", err);
+      // console.error("[OTP] Verification error:", err);
       setError(err.message || "Invalid OTP code. Please try again.");
       setIsVerifying(false);
     }
@@ -888,7 +888,7 @@ export default function Home() {
 
               <div className="web-footer-column">
                 <a href="https://appjojo.in/#contactUs" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Advertise with us</a>
-                <a href="https://appjojo.in/#contactUs" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Contact us</a>
+                <a href="https://jojolimited.com/contact" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Contact us</a>
                 <a href="mailto:support@appjojo.in" className="web-footer-link" style={{ textDecoration: "none" }}>Support</a>
               </div>
 
@@ -970,7 +970,7 @@ export default function Home() {
                 <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "1rem", justifyContent: "flex-end" }}>
                   <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
                   <span style={{ fontSize: "12px", color: "var(--text-footer)", fontWeight: 400 }}>
-                    © {new Date().getFullYear()} JOJO LIMITED. All the Copyrights Reserved.
+                    {new Date().getFullYear()} JOJO LIMITED. All the Copyrights Reserved.
                   </span>
                 </div>
               </div>
@@ -990,6 +990,8 @@ export default function Home() {
         <div className="success-overlay">
           <GoldRestrictionModal
             subscription={goldSubscriptionInfo}
+            title="You’re already enjoying JOJO GOLD!"
+            description="An active subscription is already running on your account."
             onClose={() => {
               setShowGoldPopup(false);
               handleReset();

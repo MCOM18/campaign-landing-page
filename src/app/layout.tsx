@@ -14,15 +14,123 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "JOJO Gold - Start Your 7-Day Free Trial",
   description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p. Start your 7-day free trial now.",
+  keywords: [
+    "JOJO Gold",
+    "JOJO Gold Premium",
+    "7-day free trial",
+    "premium streaming",
+    "no video ads",
+    "watch on 4 devices",
+    "Full HD streaming",
+    "exclusive movies",
+    "JOJO subscription",
+    "unlimited streaming"
+  ],
+  alternates: {
+    canonical: "https://jojoapp.in",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    title: "JOJO Gold - Start Your 7-Day Free Trial",
+    description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p. Start your 7-day free trial now.",
+    url: "https://jojoapp.in",
+    siteName: "JOJO",
+    images: [
+      {
+        url: "https://cdn.thesupercms.com/app_media/sub/Watch-on-upto-4-Devices.png",
+        width: 1200,
+        height: 630,
+        alt: "JOJO Gold Premium Subscription Details",
+      }
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "JOJO Gold - Start Your 7-Day Free Trial",
+    description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p. Start your 7-day free trial now.",
+    images: ["https://cdn.thesupercms.com/app_media/sub/Watch-on-upto-4-Devices.png"],
+  },
 };
 
 export default function RootLayout({
   children,
-  }: Readonly<{
+}: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Structured JSON-LD Data for SEO
+  const jsonLdWebsite = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "JOJO Gold",
+    "url": "https://jojoapp.in",
+    "description": "Start your 7-day free trial of JOJO Gold. Access exclusive premium content, enjoy ad-free videos, stream on up to 4 devices, and watch in 1080p Full HD.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://jojoapp.in/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  const jsonLdProduct = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "JOJO Gold Premium Subscription Plan",
+    "image": "https://cdn.thesupercms.com/app_media/sub/Watch-on-upto-4-Devices.png",
+    "description": "Get unlimited access to JOJO Gold. Enjoy exclusive premium content, no video ads, watch on up to 4 devices simultaneously, and stream in Full HD 1080p.",
+    "brand": {
+      "@type": "Brand",
+      "name": "JOJO"
+    },
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "INR",
+      "lowPrice": "99",
+      "highPrice": "499",
+      "offerCount": "2",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "JOJO Gold 1 Month Plan",
+          "price": "99",
+          "priceCurrency": "INR",
+          "category": "Subscription"
+        },
+        {
+          "@type": "Offer",
+          "name": "JOJO Gold 12 Months Plan",
+          "price": "499",
+          "priceCurrency": "INR",
+          "category": "Subscription"
+        }
+      ]
+    }
+  };
+
   return (
     <html lang="en" className={poppins.variable}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebsite) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProduct) }}
+        />
+      </head>
       <body className="antialiased">
         <ReactQueryProvider>
           <BootstrapProvider>

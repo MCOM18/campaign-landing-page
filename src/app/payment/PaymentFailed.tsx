@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnalyticEvents } from "../../analytics/AnalyticEvents";
 
+import { logger } from "@/lib/logger/logger";
+
 function PaymentFailed() {
   const router = useRouter();
 
@@ -19,7 +21,7 @@ function PaymentFailed() {
         try {
           setErrorData(JSON.parse(stored));
         } catch (e) {
-          console.error("Failed to parse payment failed state:", e);
+          logger.error("Failed to parse payment failed state:", e);
         }
       }
     }

@@ -18,11 +18,6 @@ export async function verifyCaptcha(
     hasSessionId: !!sessionId,
     sessionIdPreview: sessionId ? sessionId.substring(0, 10) + '...' : 'none'
   });
-  console.log('[Verify Captcha API] 📤 Sending to backend:', {
-    action: request.action,
-    hasToken: !!request.token,
-    hasSessionId: !!sessionId
-  });
   
   return apiClient.post<ApiResponse<RecaptchaVerifyResponse>>(
     ApiEndpoint.VERIFY_CAPTCHA,

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { decryptAES } from "../../utils/decryptAES";
 import { env } from "../../lib/config/env";
 
+import { logger } from "@/lib/logger/logger";
+
 const secretKey = env.secretKey;
 const ivKey = env.ivKey;
 
@@ -43,7 +45,7 @@ const PhoneCollectModal: React.FC<PhoneCollectModalProps> = ({ onComplete }) => 
           }
         }
       } catch (err) {
-        console.error("PhoneCollectModal: failed to load countries", err);
+        logger.error("PhoneCollectModal: failed to load countries", err);
       }
     };
 

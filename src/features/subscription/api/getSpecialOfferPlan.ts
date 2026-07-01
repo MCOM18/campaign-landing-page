@@ -13,7 +13,6 @@ export async function getSpecialOfferPlan(
   request: SpecialOfferPlanRequest
 ): Promise<ApiResponse<any>> {
   logger.info('[Special Offer Plan API] Request:', request);
-  console.log('[Special Offer Plan API] Request:', request);
 
   try {
     const response = await apiClient.post<any>(
@@ -26,12 +25,10 @@ export async function getSpecialOfferPlan(
       metaData: response.metaData,
       data: response.data
     });
-    console.log('[Special Offer Plan API] Response:', response);
 
     return response;
   } catch (error) {
     logger.error('[Special Offer Plan API] Error:', error);
-    console.error('[Special Offer Plan API] Error:', error);
     throw error;
   }
 }

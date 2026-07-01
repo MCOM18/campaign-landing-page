@@ -38,7 +38,6 @@ export async function loadRecaptchaScript(): Promise<void> {
   // Check if site key is configured
   if (!env.recaptchaSiteKey) {
     logger.error('[reCAPTCHA] Site key not configured');
-    console.error('[reCAPTCHA] CRITICAL: Site key is missing!', { env: env.recaptchaSiteKey });
     throw new Error('reCAPTCHA site key is not configured');
   }
 
@@ -69,13 +68,11 @@ export async function loadRecaptchaScript(): Promise<void> {
 
     script.onload = () => {
       logger.info('[reCAPTCHA] Script loaded successfully');
-      console.log('[reCAPTCHA] ✅ Script loaded successfully');
       resolve();
     };
 
     script.onerror = (error) => {
       logger.error('[reCAPTCHA] Failed to load script', { error });
-      console.error('[reCAPTCHA] ❌ Failed to load script', error);
       scriptLoadPromise = null; // Reset so it can be retried
       reject(new Error('Failed to load reCAPTCHA script'));
     };
@@ -107,39 +104,32 @@ export async function executeRecaptcha(action: string): Promise<string> {
   }
 
   logger.info('[reCAPTCHA] Executing for action:', action);
-  console.log('[reCAPTCHA] 🔄 Executing for action:', action);
 
   // Ensure script is loaded
   if (!window.grecaptcha) {
     logger.info('[reCAPTCHA] Script not loaded, loading now');
-    console.log('[reCAPTCHA] Script not loaded, loading now...');
     await loadRecaptchaScript();
 
     // Wait for grecaptcha to be ready
     await new Promise<void>((resolve) => {
       window.grecaptcha!.ready(() => {
         logger.info('[reCAPTCHA] grecaptcha ready');
-        console.log('[reCAPTCHA] ✅ grecaptcha ready');
         resolve();
       });
     });
   } else {
     logger.info('[reCAPTCHA] grecaptcha already available');
-    console.log('[reCAPTCHA] ✅ grecaptcha already available');
   }
 
   try {
     logger.info('[reCAPTCHA] Calling grecaptcha.execute...');
-    console.log('[reCAPTCHA] 🔄 Calling grecaptcha.execute...');
 
     const token = await window.grecaptcha!.execute(env.recaptchaSiteKey, { action });
 
     logger.info('[reCAPTCHA] Token generated successfully', { action, tokenLength: token.length });
-    console.log('[reCAPTCHA] ✅ Token generated successfully', { action, tokenLength: token.length });
     return token;
   } catch (error) {
     logger.error('[reCAPTCHA] Failed to execute', { action, error });
-    console.error('[reCAPTCHA] ❌ Failed to execute', { action, error });
     throw new Error('Failed to execute reCAPTCHA');
   }
 }

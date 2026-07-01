@@ -12,7 +12,6 @@ export async function getAllPlans(
   request: any
 ): Promise<ApiResponse<any>> {
   logger.info('[All Plans API] Request:', request);
-  console.log('[All Plans API] Request:', request);
 
   try {
     const response = await apiClient.post<any>(
@@ -25,12 +24,10 @@ export async function getAllPlans(
       metaData: response.metaData,
       data: response.data
     });
-    console.log('[All Plans API] Response:', response);
 
     return response;
   } catch (error) {
     logger.error('[All Plans API] Error:', error);
-    console.error('[All Plans API] Error:', error);
     throw error;
   }
 }

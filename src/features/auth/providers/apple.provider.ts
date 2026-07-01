@@ -17,6 +17,7 @@
 import { StorageKey } from '@/enums/storage.enum';
 import { env } from '@/lib/config/env';
 import { ensureBrowser } from './baseSocialProvider';
+import { logger } from '@/lib/logger/logger';
 
 /**
  * Generate a cryptographically secure state string for CSRF protection.
@@ -52,7 +53,7 @@ export function initiateAppleLogin(): Promise<{ token: string; state: string } |
     // Set flag for overlay
     localStorage.setItem('apple_login_in_progress', 'true');
   } catch {
-    console.warn('[Apple] Could not persist auth state to localStorage');
+    logger.warn('[Apple] Could not persist auth state to localStorage');
   }
 
   return new Promise((resolve, reject) => {

@@ -4,9 +4,10 @@ import React from "react";
 
 interface SuccessScreenProps {
   onReset: () => void;
+  isTrial?: boolean;
 }
 
-export const SuccessScreen: React.FC<SuccessScreenProps> = ({ onReset }) => {
+export const SuccessScreen: React.FC<SuccessScreenProps> = ({ onReset, isTrial = true }) => {
   return (
     <div
       className="fade-in"
@@ -36,7 +37,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ onReset }) => {
           width: "100%",
         }}
       >
-        {/* Title: Free Trial Unlocked! — gold gradient text */}
+        {/* Title: Free Trial Unlocked! / Payment Successful! — gold gradient text */}
         <p
           style={{
             backgroundImage: "linear-gradient(4.9542deg, rgb(250, 175, 63) 21.627%, rgb(255, 214, 145) 49.519%, rgb(250, 175, 63) 81.684%)",
@@ -52,7 +53,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ onReset }) => {
             fontFamily: "'Poppins', sans-serif",
           }}
         >
-          Free Trial Unlocked!
+          {isTrial ? "Free Trial Unlocked!" : "Payment Successful!"}
         </p>
 
         {/* Subtext */}
@@ -68,7 +69,10 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ onReset }) => {
             fontFamily: "'Poppins', sans-serif",
           }}
         >
-          You&apos;ve successfully activated your 7-day JOJO Gold Free Trial. Enjoy!
+          {isTrial 
+            ? "You've successfully activated your 7-day JOJO Gold Free Trial. Enjoy!"
+            : "You've successfully subscribed to JOJO Gold Premium. Enjoy!"
+          }
         </p>
       </div>
 
