@@ -576,7 +576,7 @@ export default function Home() {
         }}
       >
         <div className="premium-loader" />
-        <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Loading settings...</p>
+        <p style={{ color: "#ffffff", fontSize: "15px" }}>Loading settings...</p>
       </div>
     );
   }
@@ -703,7 +703,7 @@ export default function Home() {
                         }}
                       >
                         <div className="premium-loader" />
-                        <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
+                        <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
                       </div>
                     ) : step === TrialFormStep.INPUT ? (
                       <FreeTrialForm
@@ -896,7 +896,7 @@ export default function Home() {
                                   }}
                                 >
                                   <div className="premium-loader" />
-                                  <p style={{ color: "var(--text-secondary)", fontSize: "15px" }}>Verifying OTP...</p>
+                                  <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
                                 </div>
                               ) : step === TrialFormStep.INPUT ? (
                                 <FreeTrialForm
