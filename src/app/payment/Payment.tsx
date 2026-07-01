@@ -337,7 +337,7 @@ function PaymentPage() {
             isTrial={!!pricingData?.offerId}
             onReset={() => {
               setShowSuccessPopup(false);
-              const storedRedirectUrl = sessionStorage.getItem("campaign_redirect_url");
+              const storedRedirectUrl = localStorage.getItem("campaign_redirect_url");
 
               // Validate it's a real jojoapp.in URL
               const isCampaignUrl = storedRedirectUrl && (() => {
@@ -347,15 +347,15 @@ function PaymentPage() {
               })();
 
               if (isCampaignUrl) {
-                sessionStorage.removeItem("campaign_redirect_url");
+                localStorage.removeItem("campaign_redirect_url");
 
                 // Track campaign purchase success if data exists
-                const campaignDataRaw = sessionStorage.getItem("campaign_decoded_data");
+                const campaignDataRaw = localStorage.getItem("campaign_decoded_data");
                 if (campaignDataRaw) {
                   try {
                     const campaignData = JSON.parse(campaignDataRaw);
                     analyticsService.track("campaign_purchase_success", campaignData);
-                    sessionStorage.removeItem("campaign_decoded_data");
+                    localStorage.removeItem("campaign_decoded_data");
                   } catch (e) {
                     console.error("Failed to parse/track campaign success:", e);
                   }
@@ -365,8 +365,8 @@ function PaymentPage() {
                 window.location.href = storedRedirectUrl!;
               } else {
                 // No campaign redirect URL stored — clean up and redirect to jojoapp.in homepage in the same tab
-                sessionStorage.removeItem("campaign_redirect_url");
-                sessionStorage.removeItem("campaign_decoded_data");
+                localStorage.removeItem("campaign_redirect_url");
+                localStorage.removeItem("campaign_decoded_data");
                 window.location.href = "https://jojoapp.in";
               }
             }}

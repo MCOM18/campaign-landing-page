@@ -98,6 +98,13 @@ export default function Home() {
         if (key !== "data" && key !== "link") queryParams[key] = value;
       });
 
+      if (!dataParam && !redirectUrl) {
+        localStorage.removeItem("campaign_redirect_url");
+        localStorage.removeItem("campaign_decoded_data");
+        logger.info("[Campaign] Clean URL detected. Removed campaign data from localStorage.");
+        return;
+      }
+
       if (!dataParam) return;
 
       logger.info("[Campaign] Found data parameter:", dataParam);
@@ -147,7 +154,7 @@ export default function Home() {
             finalRedirectUrl = redirectUrlObj.toString();
           }
 
-          sessionStorage.setItem("campaign_redirect_url", finalRedirectUrl);
+          localStorage.setItem("campaign_redirect_url", finalRedirectUrl);
           logger.info("[Campaign] Stored redirect URL:", finalRedirectUrl);
         } catch (urlErr) {
           logger.error("[Campaign] Failed to construct redirect URL:", urlErr);
@@ -163,7 +170,7 @@ export default function Home() {
         finalRedirectUrl,
         ...queryParams,              // utm_source, utm_medium, source, source_link, other_info, etc.
       };
-      sessionStorage.setItem("campaign_decoded_data", JSON.stringify(enrichedData));
+      localStorage.setItem("campaign_decoded_data", JSON.stringify(enrichedData));
 
       pendingCampaignData.current = enrichedData;
       logger.info("[Campaign] Campaign data ready, waiting for analytics service.");
@@ -267,7 +274,7 @@ export default function Home() {
         "payment_subscription_id",
         "payment_order_id"
       ];
-      sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
+      sessionKeysToRemove.forEach((key) => localStorage.removeItem(key));
 
       logger.info("[Storage Cleanup] Stale session and payment details cleared.");
     } catch (e) {
@@ -410,7 +417,6 @@ export default function Home() {
         geoData?.country_code || undefined,
         geoData?.region || undefined,
         geoData?.city || undefined,
-        (geoData?.lat && geoData?.Long) ? `${geoData.lat},${geoData.Long}` : undefined
       );
 
       // console.log("[OTP] Verification response:", response);
@@ -550,7 +556,7 @@ export default function Home() {
         setFreshPlans(freshPlansData);
 
         if (offerProduct) {
-          // Store selected plan with offer in sessionStorage
+          // Store selected plan with offer in localStorage
           const selectedPlanObj = {
             ...offerGroup,
             oSubscriptionGroup: {

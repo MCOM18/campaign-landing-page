@@ -231,10 +231,10 @@ export const usePaymentHandler = () => {
       setPaymentInitData(null);
       localStorage.removeItem("payment_sToken");
       localStorage.removeItem("payment_sProviderToken");
-      sessionStorage.removeItem("payment_status");
-      sessionStorage.removeItem("payment_razorpay_id");
-      sessionStorage.removeItem("payment_subscription_id");
-      sessionStorage.removeItem("payment_order_id");
+      localStorage.removeItem("payment_status");
+      localStorage.removeItem("payment_razorpay_id");
+      localStorage.removeItem("payment_subscription_id");
+      localStorage.removeItem("payment_order_id");
     } catch (error) {
       logger.error("Error during payment state cleanup:", error);
     }
@@ -309,11 +309,11 @@ export const usePaymentHandler = () => {
     }
 
     setPaymentInitData(null);
-    sessionStorage.setItem("payment_status", "PENDING");
+    localStorage.setItem("payment_status", "PENDING");
 
     const paymentId = razorpayResponse.razorpay_payment_id;
-    sessionStorage.setItem("payment_razorpay_id", paymentId);
-    sessionStorage.setItem("payment_order_id", razorpayResponse.razorpay_order_id);
+    localStorage.setItem("payment_razorpay_id", paymentId);
+    localStorage.setItem("payment_order_id", razorpayResponse.razorpay_order_id);
 
     try {
       const sToken = localStorage.getItem("payment_sToken");
@@ -330,7 +330,7 @@ export const usePaymentHandler = () => {
 
       if (result.success) {
         const verificationData = result.data?.data;
-        sessionStorage.setItem("payment_status", "SUCCESS");
+        localStorage.setItem("payment_status", "SUCCESS");
         if (isSvodPayment) setShowProcessingOverlay(false);
 
         // Match initiated sToken against verify response
@@ -387,7 +387,7 @@ export const usePaymentHandler = () => {
           }));
         }
 
-        sessionStorage.setItem("payment_success_state", JSON.stringify({
+        localStorage.setItem("payment_success_state", JSON.stringify({
           planModel: selectedPlan,
           userData: { user_id: userId },
           paymentType: matchedType,
@@ -401,7 +401,7 @@ export const usePaymentHandler = () => {
       }
 
       // Verification failed
-      sessionStorage.setItem("payment_status", "FAILED");
+      localStorage.setItem("payment_status", "FAILED");
       const errorMessage = (result as any).error || "Payment verification failed";
 
       if (isSvodPayment) {
@@ -415,7 +415,7 @@ export const usePaymentHandler = () => {
 
     } catch (err: unknown) {
       logger.error("Payment handling error:", err);
-      sessionStorage.setItem("payment_status", "ERROR");
+      localStorage.setItem("payment_status", "ERROR");
       const errorMessage = err instanceof Error ? err.message : "Payment verification failed";
 
       if (isSvodPayment) {

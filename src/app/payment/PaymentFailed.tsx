@@ -16,7 +16,7 @@ function PaymentFailed() {
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== "undefined") {
-      const stored = sessionStorage.getItem("payment_failed_state");
+      const stored = localStorage.getItem("payment_failed_state");
       if (stored) {
         try {
           setErrorData(JSON.parse(stored));

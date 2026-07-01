@@ -120,11 +120,11 @@ class AnalyticsService {
   }
 
   private buildContext(additionalContext?: Partial<EventContext>): EventContext {
-    // Read decoded campaign data from sessionStorage (set by page.tsx when URL data= param is decoded)
+    // Read decoded campaign data from localStorage (set by page.tsx when URL data= param is decoded)
     let campaign: Record<string, any> | undefined;
     if (typeof window !== 'undefined') {
       try {
-        const raw = sessionStorage.getItem('campaign_decoded_data');
+        const raw = localStorage.getItem('campaign_decoded_data');
         if (raw) campaign = JSON.parse(raw);
       } catch {
         // ignore parse errors
