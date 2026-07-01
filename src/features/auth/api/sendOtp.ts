@@ -13,7 +13,7 @@ export async function sendOtp(
   request: SendOtpRequest,
   sessionId?: string
 ): Promise<ApiResponse<any>> {
-  // Build request body based on source
+
   const body: any = {
     is_register: request.is_register,
     source: request.source,
@@ -25,12 +25,10 @@ export async function sendOtp(
   };
 
   if (request.source === LoginIdentifierType.PHONE) {
-    // For phone: use phone and phone_code fields
     body.phone = request.phone;
     body.phone_code = request.phone_code;
   } else {
-    // For email: use email field instead of phone
-    body.email = request.phone; // API expects 'email' field for email source
+    body.email = request.phone;
   }
 
   logger.info('[Send OTP API] Request body:', body);

@@ -7,10 +7,6 @@ import { LoginIdentifierType } from "@/enums/ui.enum";
 import { getUserGeoLocation } from "@/utils/userUtil";
 
 export type AnalyticsEvent =
-  | "video_play"
-  | "video_pause"
-  | "video_complete"
-  | "video_seek"
   | "login"
   | "logout"
   | "page_view";

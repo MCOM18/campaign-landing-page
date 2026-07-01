@@ -42,10 +42,7 @@ export async function getCountries(sessionId?: string): Promise<ApiResponse<Coun
       { headers: sessionId ? { sessionid: sessionId } : {} }
     );
     logger.info('[Get Countries API] Requesting country list...', response);
-    // Map response data
     const countries = mapCountryList(response);
-
-    // Add flag emojis if backend flags are missing
     const processedCountries = countries.map(c => ({
       ...c,
       flag: c.flag || getFlagEmoji(c.countryCode)

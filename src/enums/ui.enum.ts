@@ -16,8 +16,7 @@ export enum UIState {
 // Keep explicit naming to avoid confusion at scale
 export enum ModalId {
   LOGIN = "login",
-  LOGOUT_CONFIRM = "logout_confirm",
-  SHARE_VIDEO = "share_video",
+  LOGOUT_CONFIRM = "logout_confirm"
 }
 
 export const SUPPORTED_LOCALES = [appConfig.ENGLISH_LANGUAGE_CODE, appConfig.GUJRATI_LANGUAGE_CODE] as const;
@@ -53,24 +52,6 @@ export const GENDER_LABEL_KEY = {
 export const AGE_RANGES = Object.values(AgeRange);
 export const GENDERS = Object.values(Gender);
 export const DEFAULT_LOCALE: Locale = "en";
-
-// export enum ErrorKey {
-//   REQUIRED = "error_required",
-//   INVALID_EMAIL = "error_invalid_email",
-//   INVALID_PHONE = "error_invalid_phone",
-//   ERR_INVALID = "error_invalid",
-//   ERR_EXPIRED = "error_expired",
-//   ERR_AGE_REQUIRED = "error_age_required",
-//   ERR_GENDER_REQUIRED = "error_gender_required",
-//   ERR_NAME_REQUIRED = "error_name_required",
-//   ERR_NAME_INVALID = "error_name_invalid",
-//   ERR_NAME_TOO_LONG = "error_name_too_long",
-//   USER_NOT_FOUND = "error_user_not_found",
-//   USER_ALREADY_EXISTS = "error_user_already_exists",
-//   NO_EMAIL_FOUND_IN_GOOGLE_TOKEN = 'No email found in Google token',
-//   NO_EMAIL_FOUND_IN_FACEBOOK_RESPONCE = 'No email found in Facebook response',
-//   APPLE_LOGIN_CAN_ONLY_BE_USED_IN_BROWSER = 'Apple login can only be used in browser'
-// }
 
 export enum ErrorKey {
   REQUIRED = "error_required",
@@ -131,7 +112,6 @@ export enum ErrorMessage {
   NO_EMAIL_FOUND_IN_APPLE_RESPONSE = "No email found in Apple response",
   FAILED_TO_COMPLETE_SIGN_IN = "Failed to complete sign-in",
   APPLE_SIGN_IN_WAS_CANCELLED_OR_FAILED = "Apple sign-in was cancelled or failed",
-
   FEATURE_NOT_SUPPORTED_ON_DEVICE = "This feature is not supported on your device.",
   PERMISSION_DENIED_ENABLE_IN_BROWSER = "Permission denied. Please enable it in browser settings.",
   FAILED_TO_REQUEST_PERMISSION = "Failed to request permission",

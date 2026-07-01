@@ -1,8 +1,3 @@
-/**
- * Auth Module Mappers
- * Transforms API responses to UI models
- */
-
 import type {
   ApiResponse,
   CheckUserResponse,
@@ -14,9 +9,6 @@ import type {
   Country,
 } from "./types";
 
-/**
- * Maps API user response to domain User model
- */
 export function mapUser(apiUser: any): User {
   return {
     id: apiUser.user_id || apiUser.id || '',
@@ -29,12 +21,9 @@ export function mapUser(apiUser: any): User {
   };
 }
 
-/**
- * Maps check user API response
- */
 export function mapCheckUserResponse(apiResponse: ApiResponse<any>): CheckUserResponse {
   const data = apiResponse.data;
-  
+
   return {
     is_exists: data?.is_exists || false,
     is_special_user: data?.is_special_user || false,
@@ -42,23 +31,17 @@ export function mapCheckUserResponse(apiResponse: ApiResponse<any>): CheckUserRe
   };
 }
 
-/**
- * Maps send OTP API response
- */
 export function mapSendOtpResponse(apiResponse: ApiResponse<any>): SendOtpResponse {
   const data = apiResponse.data;
-  
+
   return {
     otp_sent: data?.otp_sent || false,
   };
 }
 
-/**
- * Maps verify OTP API response
- */
 export function mapVerifyOtpResponse(apiResponse: ApiResponse<any>): VerifyOtpResponse {
   const data = apiResponse.data;
-  
+
   return {
     session_id: data?.session_id || '',
     user_id: data?.user_id || '',
@@ -68,14 +51,11 @@ export function mapVerifyOtpResponse(apiResponse: ApiResponse<any>): VerifyOtpRe
   };
 }
 
-/**
- * Maps verify special user API response
- */
 export function mapVerifySpecialUserResponse(
   apiResponse: ApiResponse<any>
 ): VerifySpecialUserResponse {
   const data = apiResponse.data;
-  
+
   return {
     session_id: data?.session_id || '',
     user_id: data?.user_id || '',
@@ -84,24 +64,17 @@ export function mapVerifySpecialUserResponse(
   };
 }
 
-/**
- * Maps guest login API response
- */
 export function mapGuestLoginResponse(apiResponse: ApiResponse<any>): GuestLoginResponse {
   const data = apiResponse.data;
-  
+
   return {
     session_id: data?.session_id || '',
   };
 }
 
-
-/**
- * Map Social Login Response
- */
 export function mapSocialLoginResponse(apiResponse: ApiResponse<any>): import("./types").SocialLoginResponse {
   const data = apiResponse.data;
-  
+
   return {
     session_id: data.session_id || '',
     user_id: data.user_id || '',
@@ -110,15 +83,12 @@ export function mapSocialLoginResponse(apiResponse: ApiResponse<any>): import(".
   };
 }
 
-/**
- * Maps country list API response
- */
 export function mapCountryList(apiResponse: ApiResponse<any>): Country[] {
   const data = apiResponse.data;
   if (!Array.isArray(data)) {
     return [];
   }
-  
+
   return data.map((item: any) => ({
     id: item.id,
     countryCode: item.countryCode || item.country_code || item.code || '',

@@ -25,7 +25,7 @@ export async function socialLogin(
   return apiClient.post<any>(
     ApiEndpoint.SOCIAL_LOGIN,
     body,
-    { 
+    {
       encrypt: true,
       headers: sessionId ? { sessionid: sessionId } : {}
     }
