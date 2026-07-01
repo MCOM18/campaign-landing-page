@@ -16,12 +16,7 @@ export async function sendOtp(
 
   const body: any = {
     is_register: request.is_register,
-    source: request.source,
-    ...(request.country ? { country: request.country } : {}),
-    ...(request.state ? { state: request.state } : {}),
-    ...(request.city ? { city: request.city } : {}),
-    ...(request.lat ? { lat: request.lat } : {}),
-    ...(request.long ? { long: request.long } : {}),
+    source: request.source
   };
 
   if (request.source === LoginIdentifierType.PHONE) {

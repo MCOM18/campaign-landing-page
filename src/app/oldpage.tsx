@@ -231,11 +231,17 @@ export default function Home() {
         setIsVerifying(true);
 
         try {
+            const geoData = getUserGeoLocation();
             const response = await completeOtpVerification(
                 parsedPhone,
                 parsedPhoneCode,
                 otpCode,
-                !isExists
+                !isExists,
+                undefined,
+                geoData?.country_code || undefined,
+                geoData?.region || undefined,
+                geoData?.city || undefined,
+                (geoData?.lat && geoData?.Long) ? `${geoData.lat},${geoData.Long}` : undefined
             );
 
             // console.log("[OTP] Verification response:", response);

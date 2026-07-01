@@ -8,48 +8,35 @@
  * Use service ONLY when orchestration is needed (multi-step flows)
  */
 
+import { LoginIdentifierType } from "@/enums/ui.enum";
+import { logger } from "@/lib/logger/logger";
+import { trackEvent } from "@/services/analytics/events";
+import { analyticsService } from "@/shared/analytics";
+import { getUserGeoLocation } from "@/utils/userUtil";
+import { HttpStatus } from "@enums/http.enum";
+import { AppError } from "@lib/error/types";
 import { checkUser } from "../api/checkUser";
 import { sendOtp } from "../api/sendOtp";
-import { verifyOtp } from "../api/verifyOtp";
 import { socialLogin } from "../api/socialLogin";
+import { verifyOtp } from "../api/verifyOtp";
 import {
   mapCheckUserResponse,
   mapSendOtpResponse,
-  mapVerifyOtpResponse,
-  mapSocialLoginResponse
+  mapSocialLoginResponse,
+  mapVerifyOtpResponse
 } from "../model/mapper";
-import { getUserGeoLocation } from "@/utils/userUtil";
-import { AppError } from "@lib/error/types";
-import { HttpStatus } from "@enums/http.enum";
-import type { ApiResponse, VerifyOtpResponse, SocialLoginRequest, SocialLoginResponse } from "../model/types";
-import { logger } from "@/lib/logger/logger";
-import { LoginIdentifierType } from "@/enums/ui.enum";
-import { analyticsService } from "@/shared/analytics";
-import { trackEvent } from "@/services/analytics/events";
+import type { ApiResponse, SocialLoginRequest, SocialLoginResponse, VerifyOtpResponse } from "../model/types";
 
-/**
- * Initiate OTP Flow
- * 
- * Orchestrates: checkUser → sendOtp (for both existing and new users)
- * 
- * @param phone - User's phone number or email
- * @param phoneCode - Country phone code (empty string for email)
- * @param sessionId - Optional session ID
- * @returns isSpecialUser and isExists flags
- */
 export async function initiateOtpFlow(
   phone: string,
   phoneCode: string,
   sessionId?: string
 ): Promise<{ isSpecialUser: boolean; isExists: boolean }> {
-  // Detect if input is email or phone
   const isEmail = phone.includes('@');
   const source = isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE;
 
   logger.info('[Auth Service] initiateOtpFlow', { phone, phoneCode, isEmail, source });
 
-  // Step 1: Check user (raw response)
-  // Handle 404 gracefully - it means user doesn't exist (new registration)
   let userCheckResponse: ApiResponse<any>;
   let isRegistration = false;
   let isSpecialUser = false;
@@ -93,19 +80,11 @@ export async function initiateOtpFlow(
     logger.info('[Auth Service] Existing user detected, sending OTP with is_register: false');
   }
 
-  // Step 5: Send OTP (raw response) - for both existing and new users
-  const geoData = getUserGeoLocation();
-
   const otpResponse = await sendOtp({
     phone_code: phoneCode,
     phone: phone,
     is_register: isRegistration, // true for new users, false for existing
-    source: source,
-    country: geoData?.country_code || undefined,
-    state: geoData?.region || undefined,
-    city: geoData?.city || undefined,
-    lat: geoData?.lat?.toString() || undefined,
-    long: geoData?.Long?.toString() || undefined,
+    source: source
   }, sessionId) as ApiResponse<any>;
 
   // Step 6: Validate metaData status
@@ -159,30 +138,27 @@ export async function initiateOtpFlow(
   };
 }
 
-/**
- * Complete OTP Verification
- * 
- * Single step - verifies OTP and returns session
- * 
- * @param phone - User's phone number or email
- * @param phoneCode - Country phone code (empty string for email)
- * @param otp - OTP code
- * @param isRegister - Whether this is a registration flow
- * @param sessionId - Optional session ID
- * @returns Auth session data
- */
 export async function completeOtpVerification(
   phone: string,
   phoneCode: string,
   otp: string,
   isRegister: boolean = false,
-  sessionId?: string
+  sessionId?: string,
+  country?: string,
+  state?: string,
+  city?: string,
 ): Promise<VerifyOtpResponse> {
   // Detect if input is email or phone
   const isEmail = phone.includes('@');
   const source = isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE;
 
   const startTime = Date.now();
+
+  // Retrieve geolocation data for fallback if not provided
+  const geoData = getUserGeoLocation();
+  const finalCountry = country || geoData?.country_code || undefined;
+  const finalState = state || geoData?.region || undefined;
+  const finalCity = city || geoData?.city || undefined;
 
   // Step 1: Verify OTP (raw response)
   const response = await verifyOtp({
@@ -191,6 +167,11 @@ export async function completeOtpVerification(
     otp: otp,
     is_register: isRegister,
     source: source,
+    country: finalCountry,
+    state: finalState,
+    city: finalCity,
+    lat: geoData?.lat?.toString(),
+    lng: geoData?.Long?.toString()
   }, sessionId) as ApiResponse<any>;
 
   // Step 2: Validate metaData status

@@ -37,14 +37,14 @@ export function useCheckUserExists() {
       const sessionId = useAuthStore.getState().token ?? undefined;
       const isEmail = phone.includes('@');
       const source = isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE;
-      
+
       try {
         const response = await checkUser({
           phone_code: phoneCode,
           phone: phone,
           source: source,
         }, sessionId);
-        
+
         // If we get here, user exists
         const userCheck = mapCheckUserResponse(response);
         return {
@@ -105,17 +105,32 @@ export function useVerifyOtp() {
       phoneCode,
       otp,
       isRegister = false,
+      country,
+      state,
+      city
     }: {
       phone: string;
       phoneCode: string;
       otp: string;
       isRegister?: boolean;
+      country?: string;
+      state?: string;
+      city?: string;
     }) => {
       // Get session from store
       const sessionId = useAuthStore.getState().token ?? undefined;
 
       // Pass session to service with isRegister flag
-      return completeOtpVerification(phone, phoneCode, otp, isRegister, sessionId);
+      return completeOtpVerification(
+        phone,
+        phoneCode,
+        otp,
+        isRegister,
+        sessionId,
+        country,
+        state,
+        city
+      );
     },
     onSuccess: (data) => {
       // Update auth store with session_id as token

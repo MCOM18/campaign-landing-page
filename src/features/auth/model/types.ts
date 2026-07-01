@@ -53,6 +53,11 @@ export interface VerifyOtpRequest {
   otp: string;
   is_register: boolean;
   source: "phone" | "email";
+  country?: string;
+  state?: string;
+  city?: string;
+  lat?: string;
+  lng?: string
 }
 
 export interface VerifySpecialUserRequest {
