@@ -16,7 +16,7 @@ import { appConfig, AppConfig } from "@/lib/config/app.config";
 import { REGEX } from "@/lib/constants/regex";
 import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
-import { trackCampaignLandingImpression, trackLoginCompleted } from "@/services/analytics/events";
+import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
 import { useAuthStore } from "@/store/useAuthStore";
 import { decrypt } from "@lib/crypto/decrypt";
@@ -57,6 +57,8 @@ export default function Home() {
     impressionTracked.current = true;
 
     try {
+      localStorage.setItem("source_link", window.location.href);
+
       const url = new URL(window.location.href);
       const dataParam = url.searchParams.get("data");
 
@@ -67,18 +69,21 @@ export default function Home() {
       if (linkPathMatch) {
         redirectUrl = decodeURIComponent(linkPathMatch[1]);
       } else {
-        const linkParam = url.searchParams.get("link");
+        const linkParam = url.searchParams.get("source_link");
         if (linkParam) redirectUrl = linkParam;
       }
 
       if (redirectUrl) {
         redirectUrl = redirectUrl.replace(/^(https?):\/([^/])/, "$1://$2");
+        localStorage.setItem("source_link", redirectUrl);
+      } else {
+        localStorage.setItem("source_link", window.location.href);
       }
 
       // Collect all other query params (UTMs, source, other_info, etc.)
       const queryParams: Record<string, string> = {};
       url.searchParams.forEach((value, key) => {
-        if (key !== "data" && key !== "link") queryParams[key] = value;
+        if (key !== "data" && key !== "source_link") queryParams[key] = value;
       });
 
       let decoded: any = null;
@@ -142,9 +147,10 @@ export default function Home() {
         // Build structured payload
         const enrichedData = {
           decoded_data: decoded,       // { path, type, nameAnalytic } or { pricing_plan, ... }
-          link: redirectUrl,
-          redirectUrl,
+          link: redirectUrl || window.location.href,
+          redirectUrl: redirectUrl || window.location.href,
           finalRedirectUrl,
+          source_link: queryParams.source_link || window.location.href,
           ...queryParams,              // utm_source, utm_medium, source, source_link, other_info, etc.
         };
         localStorage.setItem("campaign_decoded_data", JSON.stringify(enrichedData));
@@ -183,7 +189,7 @@ export default function Home() {
       };
 
       logger.info("[Analytics] Sending campaign_landing_impression payload:", impressionPayload);
-      trackCampaignLandingImpression(impressionPayload);
+      trackEvent("campaign_landing_impression", impressionPayload);
 
     } catch (err) {
       logger.error("[Campaign] Error in campaign initialization/impression:", err);
@@ -468,26 +474,11 @@ export default function Home() {
         localStorage.removeItem("user_phone_code");
       }
 
-      // Track Login Completed event (runs asynchronously on success, regardless of Gold subscription status)
+      // Set OTP code in the auth store for reference (Login Completed tracking is handled inside completeOtpVerification service)
       try {
-        const finalPhoneCode = response.phone_code || parsedPhoneCode || "";
-        const finalPhoneOnly = response.phone || parsedPhone || "";
-        const phoneCode = finalPhoneCode ? `+${finalPhoneCode.replace(REGEX.NON_DIGIT, '')}` : "";
-        const phoneOnly = finalPhoneOnly ? finalPhoneOnly.replace(REGEX.NON_DIGIT, '') : "";
-        const identifier = isEmail ? (response.email || contactInfo) : `${phoneCode}${phoneOnly}`;
         if (otpCode) useAuthStore.getState().setLoginOtp(otpCode);
-
-        trackLoginCompleted(
-          isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE,
-          identifier,
-          otpCode,
-          phoneCode,
-          phoneOnly
-        ).catch((err) => {
-          logger.error("[OTP] Failed to track login completed", err);
-        });
       } catch (err) {
-        logger.error("[OTP] Error in preparing trackLoginCompleted", err);
+        logger.error("[OTP] Error in updating auth store with OTP", err);
       }
 
       // Check if the user has an active Gold (SVOD) subscription

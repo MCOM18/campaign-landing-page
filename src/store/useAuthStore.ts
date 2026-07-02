@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { StorageKey } from "@enums/storage.enum";
 import { localStorageManager } from "@lib/localStorage/localStorage.manager";
 import type { User, AuthState } from "@features/auth/model/types";
-import { analyticsService } from "@/shared/analytics";
+import { analyticsService, getSourceLink } from "@/shared/analytics";
 import { trackEvent } from "@/services/analytics/events";
 
 interface AuthStore extends AuthState {
@@ -54,24 +54,33 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     // Persist token
     localStorageManager.set(StorageKey.AUTH_TOKEN, token);
 
+    const guestIdStr = guestId || "guest_" + Math.random().toString(36).substring(2, 11);
+    const guestUser = {
+      id: guestIdStr,
+      phone: "",
+      isGuest: true,
+      createdAt: new Date().toISOString(),
+    };
+
     // Update state with guest user
     set({
       isAuthenticated: true,
-      user: {
-        id: guestId,
-        phone: "",
-        isGuest: true,
-        createdAt: new Date().toISOString(),
-      },
+      user: guestUser,
       token,
       refreshToken: null,
     });
 
-    // Track backend login event (guest)
-    trackEvent("login", {
+    const sourceLink = getSourceLink();
+
+    // Track login completed event (guest)
+    trackEvent("login_completed", {
       method: "guest",
       source: "phone",
-      user_id: guestId,
+      user_id: guestIdStr,
+      session_id: token,
+      source_link: sourceLink,
+      value: guestIdStr,
+      is_new_user: true,
     });
   },
 
@@ -81,22 +90,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   clearAuth: () => {
     const currentUser = get().user;
 
-    // Track logout
-    analyticsService.trackLogout({
-      reason: 'user_initiated',
+    // Track logout across all providers (Firebase, CleverTap, Backend)
+    trackEvent("logout", {
+      reason: "user_initiated",
+      user_id: currentUser?.id || "",
     });
-    
-    // Track backend logout event
-    if (currentUser) {
-      trackEvent("logout", {
-        reason: "user_initiated",
-        user_id: currentUser.id,
-      });
-    }
 
     // Reset analytics user
     analyticsService.resetUser();
-    
+
     // Remove tokens from storage
     localStorageManager.remove(StorageKey.AUTH_TOKEN);
     localStorageManager.remove(StorageKey.REFRESH_TOKEN);

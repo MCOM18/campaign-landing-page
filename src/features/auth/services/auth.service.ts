@@ -10,8 +10,8 @@
 
 import { LoginIdentifierType } from "@/enums/ui.enum";
 import { logger } from "@/lib/logger/logger";
+import { getSourceLink } from "@/shared/analytics";
 import { trackEvent } from "@/services/analytics/events";
-import { analyticsService } from "@/shared/analytics";
 import { getUserGeoLocation } from "@/utils/userUtil";
 import { HttpStatus } from "@enums/http.enum";
 import { AppError } from "@lib/error/types";
@@ -90,7 +90,7 @@ export async function initiateOtpFlow(
   // Step 6: Validate metaData status
   if (otpResponse.metaData?.status !== 200) {
     // Track OTP failure
-    analyticsService.trackOtpFailed({
+    trackEvent("otp_failed", {
       phone_code: phoneCode,
       phone: phone,
       source: source,
@@ -112,7 +112,7 @@ export async function initiateOtpFlow(
   // Only check otp_sent if data was not null
   if (otpResponse.data !== null && !otp.otp_sent) {
     // Track OTP failure
-    analyticsService.trackOtpFailed({
+    trackEvent("otp_failed", {
       phone_code: phoneCode,
       phone: phone,
       source: source,
@@ -125,7 +125,7 @@ export async function initiateOtpFlow(
   }
 
   // Track OTP sent successfully
-  analyticsService.trackOtpSent({
+  trackEvent("otp_sent", {
     phone_code: phoneCode,
     phone: phone,
     source: source,
@@ -179,7 +179,7 @@ export async function completeOtpVerification(
   const status = response.metaData?.status;
   if (status !== 200 && status !== 201) {
     // Track OTP verification failure
-    analyticsService.trackOtpFailed({
+    trackEvent("otp_failed", {
       phone_code: phoneCode,
       phone: phone,
       source: source,
@@ -201,7 +201,7 @@ export async function completeOtpVerification(
   const verificationTime = Math.floor((Date.now() - startTime) / 1000);
 
   // Track OTP verification success
-  analyticsService.trackOtpVerified({
+  trackEvent("otp_verified", {
     phone_code: phoneCode,
     phone: phone,
     source: source,
@@ -209,34 +209,27 @@ export async function completeOtpVerification(
     verification_time_seconds: verificationTime,
   });
 
-  // Track login success
-  analyticsService.trackLoginSuccess({
+  const sourceLink = getSourceLink();
+
+  // Track login completed containing all parameters
+  trackEvent("login_completed", {
     method: 'otp',
     is_new_user: status === 201,
     phone_code: phoneCode,
     phone: phone,
     source: source,
-  });
-
-  // Track backend login event
-  trackEvent("login", {
-    method: "otp",
-    source: source,
     user_id: mapped.user_id,
+    session_id: mapped.session_id,
+    source_link: sourceLink,
+    value: phone.includes('@') ? phone : `+${phoneCode.replace(/\D/g, '')}${phone.replace(/\D/g, '')}`,
+    otp: otp,
+    phoneCode: `+${phoneCode.replace(/\D/g, '')}`,
+    phoneOnly: phone.replace(/\D/g, '')
   });
 
   return mapped;
 }
 
-/**
- * Social Login Service
- * 
- * Simple orchestration - just calls API
- * 
- * @param request - Social login request
- * @param sessionId - Optional session ID
- * @returns Social login response with isNewUser flag
- */
 export async function socialLoginService(
   request: SocialLoginRequest,
   sessionId?: string
@@ -249,7 +242,7 @@ export async function socialLoginService(
   const status = response.metaData?.status;
   if (status !== 200 && status !== 201) {
     // Track login failure
-    analyticsService.trackLoginFailed({
+    trackEvent("login_failed", {
       method: request.source as 'google' | 'facebook' | 'apple',
       error_code: String(status || 'unknown'),
       error_message: response.metaData?.message || 'Social login failed',
@@ -275,18 +268,19 @@ export async function socialLoginService(
     logger.info('[Auth Service] Existing user logged in via social login');
   }
 
-  // Track login success
-  analyticsService.trackLoginSuccess({
+  const sourceLink = getSourceLink();
+
+  // Track login completed containing all parameters
+  trackEvent("login_completed", {
     method: request.source as 'google' | 'facebook' | 'apple',
     is_new_user: isNewUser,
-    source: 'phone', // Social login doesn't use email/phone source
-  });
-
-  // Track backend login event
-  trackEvent("login", {
-    method: request.source as 'google' | 'facebook' | 'apple',
     source: 'phone',
     user_id: mapped.user_id,
+    session_id: mapped.session_id,
+    source_link: sourceLink,
+    value: mapped.email || mapped.phone || '',
+    phone: mapped.phone || '',
+    email: mapped.email || '',
   });
 
   return {

@@ -51,6 +51,11 @@ class FirebaseClient {
   trackEvent(event: AnalyticsEvent): void {
     if (typeof window === 'undefined' || !this.isEnabled) return;
 
+    if (event.name === 'login' || event.name === 'login_success') {
+      analyticsLogger.info(`Firebase Client: Ignored deprecated event ${event.name}`);
+      return;
+    }
+
     if (!this.state.isInitialized) {
       this.queueEvent(event);
       return;

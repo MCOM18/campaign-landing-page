@@ -11,11 +11,11 @@ import {
 } from '../model/auth.types';
 
 export const authEvents = {
-  loginSuccess: (data: LoginSuccessEvent): AnalyticsEvent => ({
-    name: EVENT_NAMES.LOGIN_SUCCESS,
-    properties: data as any,
-    criticality: EventCriticality.CRITICAL,
-  }),
+  // loginSuccess: (data: LoginSuccessEvent): AnalyticsEvent => ({
+  //   name: (EVENT_NAMES as any).LOGIN_SUCCESS,
+  //   properties: data as any,
+  //   criticality: EventCriticality.CRITICAL,
+  // }),
 
   loginFailed: (data: LoginFailedEvent): AnalyticsEvent => ({
     name: EVENT_NAMES.LOGIN_FAILED,

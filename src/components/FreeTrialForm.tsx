@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { Country } from "@/features/auth/model/types";
-import { trackLoginStarted } from "@/services/analytics/events";
+import { trackEvent } from "@/services/analytics/events";
 import { LoginIdentifierType } from "@/enums/ui.enum";
 
 import { REGEX } from "@/lib/constants/regex";
@@ -87,10 +87,10 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
       fullIdentifier = `${selectedCountry.phoneCode}${cleanPhone}`;
     }
 
-    trackLoginStarted(
-      isEmailInput ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE,
-      fullIdentifier
-    );
+    trackEvent("login_started", {
+      method: isEmailInput ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE,
+      value: fullIdentifier
+    });
 
     if (isEmailInput) {
       onSubmit(trimmed);

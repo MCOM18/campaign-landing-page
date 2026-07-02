@@ -7,6 +7,7 @@ import { LoginIdentifierType } from "@/enums/ui.enum";
 import { getUserGeoLocation } from "@/utils/userUtil";
 import type { AnalyticsEvent } from '../model/common.types';
 import { EVENT_NAMES } from '../constants/analytics.constants';
+import { getSourceLink } from '../utils/getSourceLink';
 
 class BackendClient {
   private isEnabled = true;
@@ -47,6 +48,11 @@ class BackendClient {
   trackEvent(event: AnalyticsEvent): void {
     if (typeof window === 'undefined' || !this.isEnabled) return;
 
+    if (event.name === 'login' || event.name === 'login_success') {
+      logger.info(`[Backend Analytics] Ignored deprecated event ${event.name}`);
+      return;
+    }
+
     try {
       const storeState = useAuthStore.getState();
       const sessionId = storeState.token || "";
@@ -62,6 +68,10 @@ class BackendClient {
       // Case 2: login_started
       if (event.name === EVENT_NAMES.LOGIN_STARTED) {
         const properties = event.properties || {};
+        const eventSessionId = properties.session_id || sessionId;
+        const eventUserId = properties.user_id || userId;
+        const sourceLink = getSourceLink(properties.source_link);
+
         const payloadObject = {
           payload: {
             method: properties.method,
@@ -71,11 +81,11 @@ class BackendClient {
             lng: geoData?.lng || null,
             city: geoData?.city || null,
             country: geoData?.country_code || null,
-          },
-          timestamp: Date.now(),
-          sessionid: sessionId,
-          user_id: userId,
-          profile_id: "",
+            source_link: sourceLink,
+            user_id: eventUserId,
+            session_id: eventSessionId,
+            timestamp: Date.now(),
+          }
         };
         this.postEvent(ApiEndpoint.LOGIN_STARTED_EVENT, payloadObject, event.name);
         return;
@@ -84,6 +94,10 @@ class BackendClient {
       // Case 3: login_completed
       if (event.name === EVENT_NAMES.LOGIN_COMPLETED) {
         const properties = event.properties || {};
+        const eventSessionId = properties.session_id || sessionId;
+        const eventUserId = properties.user_id || userId;
+        const sourceLink = getSourceLink(properties.source_link);
+
         const payloadObject = {
           payload: {
             method: properties.method,
@@ -97,11 +111,11 @@ class BackendClient {
             lng: geoData?.lng || null,
             city: geoData?.city || null,
             country: geoData?.country_code || null,
-          },
-          timestamp: Date.now(),
-          sessionid: sessionId,
-          user_id: userId,
-          profile_id: "",
+            source_link: sourceLink,
+            user_id: eventUserId,
+            session_id: eventSessionId,
+            timestamp: Date.now(),
+          }
         };
         this.postEvent(ApiEndpoint.LOGIN_COMPLETED_EVENT, payloadObject, event.name);
         return;

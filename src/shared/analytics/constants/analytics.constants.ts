@@ -6,7 +6,7 @@ export const QUEUE_LIMITS = {
 } as const;
 
 export const EVENT_NAMES = {
-  LOGIN_SUCCESS: 'login_success',
+  // LOGIN_SUCCESS: 'login_success',
   LOGIN_FAILED: 'login_failed',
   OTP_SENT: 'otp_sent',
   OTP_VERIFIED: 'otp_verified',
@@ -16,6 +16,8 @@ export const EVENT_NAMES = {
   CAMPAIGN_LANDING_IMPRESSION: 'campaign_landing_impression',
   LOGIN_STARTED: 'login_started',
   LOGIN_COMPLETED: 'login_completed',
+  PAYMENT_SUCCESS: 'payment_success',
+  PAYMENT_FAILURE: 'payment_failure',
 } as const;
 
 export const GA4_LIMITS = {

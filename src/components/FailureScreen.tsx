@@ -14,9 +14,9 @@ export const FailureScreen: React.FC<FailureScreenProps> = ({ errorMsg, onClose 
       style={{
         width: "355px",
         borderRadius: "16px",
-        border: "2px solid rgba(255, 107, 107, 0.14)",
-        // Radial red/orange glow + solid #050505 base
-        backgroundImage: `url("data:image/svg+xml;utf8,<svg viewBox='0 0 355 224' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%' width='100%' fill='url(%23grad)' opacity='0.56'/><defs><radialGradient id='grad' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(0.046588 22.4 -38.909 0.074831 177.03 0.0000097384)'><stop stop-color='rgba(255,107,107,1)' offset='0'/><stop stop-color='rgba(255,135,135,0.75)' offset='0.25'/><stop stop-color='rgba(255,107,107,0.5)' offset='0.5'/><stop stop-color='rgba(130,50,50,0.25)' offset='0.75'/><stop stop-color='rgba(5,5,5,0)' offset='1'/></radialGradient></defs></svg>"), linear-gradient(90deg, rgb(5, 5, 5) 0%, rgb(5, 5, 5) 100%)`,
+        border: "2px solid rgba(250, 175, 63, 0.14)",
+        // Radial gold glow + solid #050505 base
+        backgroundImage: `url("data:image/svg+xml;utf8,<svg viewBox='0 0 355 224' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%' width='100%' fill='url(%23grad)' opacity='0.56'/><defs><radialGradient id='grad' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(0.046588 22.4 -38.909 0.074831 177.03 0.0000097384)'><stop stop-color='rgba(250,175,63,1)' offset='0'/><stop stop-color='rgba(188,132,48,0.75)' offset='0.25'/><stop stop-color='rgba(127,90,34,0.5)' offset='0.5'/><stop stop-color='rgba(66,47,19,0.25)' offset='0.75'/><stop stop-color='rgba(5,5,5,0)' offset='1'/></radialGradient></defs></svg>"), linear-gradient(90deg, rgb(5, 5, 5) 0%, rgb(5, 5, 5) 100%)`,
         backgroundSize: "100% 100%, 100% 100%",
         backgroundPosition: "center",
         boxSizing: "border-box",
@@ -40,7 +40,7 @@ export const FailureScreen: React.FC<FailureScreenProps> = ({ errorMsg, onClose 
         {/* Title: Payment Failed */}
         <p
           style={{
-            backgroundImage: "linear-gradient(4.9542deg, rgb(255, 107, 107) 21.627%, rgb(255, 180, 180) 49.519%, rgb(255, 107, 107) 81.684%)",
+            backgroundImage: "linear-gradient(4.9542deg, rgb(250, 175, 63) 21.627%, rgb(255, 214, 145) 49.519%, rgb(250, 175, 63) 81.684%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
@@ -82,7 +82,7 @@ export const FailureScreen: React.FC<FailureScreenProps> = ({ errorMsg, onClose 
             height: "48px",
             borderRadius: "100px",
             border: "none",
-            backgroundImage: "linear-gradient(9.09198deg, rgb(255, 107, 107) 21.627%, rgb(255, 180, 180) 49.519%, rgb(255, 107, 107) 81.684%)",
+            backgroundImage: "linear-gradient(4.9542deg, rgb(250, 175, 63) 21.627%, rgb(255, 214, 145) 49.519%, rgb(250, 175, 63) 81.684%)",
             color: "#191919",
             fontSize: "18px",
             fontWeight: "500",

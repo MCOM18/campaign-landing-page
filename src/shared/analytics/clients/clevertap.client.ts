@@ -108,6 +108,11 @@ class CleverTapClient {
       return;
     }
 
+    if (event.name === 'login' || event.name === 'login_success') {
+      analyticsLogger.info(`CleverTap Client: Ignored deprecated event ${event.name}`);
+      return;
+    }
+
     // Queue if not initialized
     if (!this.state.isInitialized) {
       this.queueEvent(event);

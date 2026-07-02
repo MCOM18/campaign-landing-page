@@ -6,6 +6,8 @@ import { AnalyticEvents } from "../services/analytics/AnalyticEvents";
 import { getUserGeoLocation } from "../utils/userUtil";
 import { logger } from "@/lib/logger/logger";
 import { appConfig } from "@/lib/config/app.config";
+import { trackEvent } from "@/services/analytics/events";
+import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -299,7 +301,8 @@ export const usePaymentHandler = () => {
   const handlePaymentSuccess = async (
     razorpayResponse: any,
     selectedPlan: any,
-    pricingData: PricingData
+    pricingData: PricingData,
+    paymentMethod = "upi"
   ) => {
     const isSvodPayment = !pricingData?.type || pricingData?.type === "SVOD";
 
@@ -314,6 +317,23 @@ export const usePaymentHandler = () => {
     const paymentId = razorpayResponse.razorpay_payment_id;
     localStorage.setItem("payment_razorpay_id", paymentId);
     localStorage.setItem("payment_order_id", razorpayResponse.razorpay_order_id);
+
+    // Retrieve analytics parameters early for reuse in success/failure/error paths
+    let campaignId = "";
+    let campaignName = "";
+    try {
+      const rawCampaign = localStorage.getItem("campaign_decoded_data");
+      if (rawCampaign) {
+        const parsed = JSON.parse(rawCampaign);
+        const decoded = parsed.decoded_data;
+        campaignId = decoded?.campaign_id || decoded?.id || "";
+        campaignName = decoded?.campaign_name || decoded?.name || decoded?.nameAnalytic || "";
+      }
+    } catch (e) {
+      logger.warn("Failed to parse campaign details:", e);
+    }
+    const devicePayload = buildDevicePayload();
+    const sessionId = localStorage.getItem("session_id") || "";
 
     try {
       const sToken = localStorage.getItem("payment_sToken");
@@ -376,6 +396,29 @@ export const usePaymentHandler = () => {
           logger.warn("Analytics error:", error);
         }
 
+        // Track new unified payment_success event
+        try {
+          trackEvent("payment_success", {
+            payment_id: paymentId,
+            order_id: razorpayResponse.razorpay_order_id,
+            transaction_id: paymentId,
+            amount: pricingData.price,
+            currency: pricingData.currency,
+            payment_method: paymentMethod,
+            payment_provider: "Razorpay",
+            campaign_id: campaignId,
+            campaign_name: campaignName,
+            user_id: userId || "",
+            session_id: sessionId,
+            device_type: devicePayload.device_type,
+            platform: "web",
+            timestamp: new Date().toISOString(),
+            payment_status: "success",
+          });
+        } catch (analyticsErr) {
+          logger.error("Failed to track payment success event:", analyticsErr);
+        }
+
         localStorage.removeItem("payment_sToken");
         localStorage.removeItem("payment_sProviderToken");
 
@@ -404,6 +447,31 @@ export const usePaymentHandler = () => {
       localStorage.setItem("payment_status", "FAILED");
       const errorMessage = (result as any).error || "Payment verification failed";
 
+      // Track new unified payment_failure event
+      try {
+        trackEvent("payment_failure", {
+          payment_id: paymentId,
+          order_id: razorpayResponse.razorpay_order_id,
+          transaction_id: paymentId,
+          amount: pricingData.price,
+          currency: pricingData.currency,
+          payment_method: paymentMethod,
+          payment_provider: "Razorpay",
+          failure_reason: errorMessage,
+          error_code: "verification_failed",
+          campaign_id: campaignId,
+          campaign_name: campaignName,
+          user_id: userId || "",
+          session_id: sessionId,
+          device_type: devicePayload.device_type,
+          platform: "web",
+          timestamp: new Date().toISOString(),
+          payment_status: "failure",
+        });
+      } catch (analyticsErr) {
+        logger.error("Failed to track payment failure (verification failed):", analyticsErr);
+      }
+
       if (isSvodPayment) {
         setOverlayError(errorMessage);
         setTimeout(() => {
@@ -417,6 +485,31 @@ export const usePaymentHandler = () => {
       logger.error("Payment handling error:", err);
       localStorage.setItem("payment_status", "ERROR");
       const errorMessage = err instanceof Error ? err.message : "Payment verification failed";
+
+      // Track new unified payment_failure event
+      try {
+        trackEvent("payment_failure", {
+          payment_id: paymentId,
+          order_id: razorpayResponse.razorpay_order_id,
+          transaction_id: paymentId,
+          amount: pricingData.price,
+          currency: pricingData.currency,
+          payment_method: paymentMethod,
+          payment_provider: "Razorpay",
+          failure_reason: errorMessage,
+          error_code: "handling_error",
+          campaign_id: campaignId,
+          campaign_name: campaignName,
+          user_id: userId || "",
+          session_id: sessionId,
+          device_type: devicePayload.device_type,
+          platform: "web",
+          timestamp: new Date().toISOString(),
+          payment_status: "failure",
+        });
+      } catch (analyticsErr) {
+        logger.error("Failed to track payment failure (handling error):", analyticsErr);
+      }
 
       if (isSvodPayment) {
         setOverlayError(errorMessage);
@@ -577,7 +670,7 @@ export const usePaymentHandler = () => {
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_order_id: response.razorpay_order_id,
             razorpay_signature: response.razorpay_signature,
-          }, selectedPlan, pricingData);
+          }, selectedPlan, pricingData, paymentMethod);
           resolve({ success: true });
         });
 
@@ -586,11 +679,92 @@ export const usePaymentHandler = () => {
           const msg = error?.error?.description || error?.error?.reason || "Payment failed. Please try again.";
           toast.error(msg);
           setIsProcessing(false);
+
+          // Track new unified payment_failure event
+          try {
+            const rawCampaign = localStorage.getItem("campaign_decoded_data");
+            let campaignId = "";
+            let campaignName = "";
+            if (rawCampaign) {
+              const parsed = JSON.parse(rawCampaign);
+              const decoded = parsed.decoded_data;
+              campaignId = decoded?.campaign_id || decoded?.id || "";
+              campaignName = decoded?.campaign_name || decoded?.name || decoded?.nameAnalytic || "";
+            }
+
+            const devicePayload = buildDevicePayload();
+            const sessionId = localStorage.getItem("session_id") || "";
+            const errPaymentId = error?.error?.metadata?.payment_id || error?.metadata?.payment_id;
+            const errOrderId = error?.error?.metadata?.order_id || error?.metadata?.order_id || orderDetails?.order_id;
+            const errCode = error?.error?.code || error?.code;
+
+            trackEvent("payment_failure", {
+              payment_id: errPaymentId || null,
+              order_id: errOrderId || null,
+              transaction_id: errPaymentId || null,
+              amount: pricingData.price,
+              currency: pricingData.currency,
+              payment_method: paymentMethod,
+              payment_provider: "Razorpay",
+              failure_reason: msg,
+              error_code: errCode ? String(errCode) : null,
+              campaign_id: campaignId,
+              campaign_name: campaignName,
+              user_id: userId || "",
+              session_id: sessionId,
+              device_type: devicePayload.device_type,
+              platform: "web",
+              timestamp: new Date().toISOString(),
+              payment_status: "failure",
+            });
+          } catch (analyticsErr) {
+            logger.error("Failed to track payment failure (checkout error):", analyticsErr);
+          }
+
           reject(new Error(msg));
         });
 
       } catch (error) {
         logger.error("executePayment error:", error);
+
+        // Track new unified payment_failure event
+        try {
+          const rawCampaign = localStorage.getItem("campaign_decoded_data");
+          let campaignId = "";
+          let campaignName = "";
+          if (rawCampaign) {
+            const parsed = JSON.parse(rawCampaign);
+            const decoded = parsed.decoded_data;
+            campaignId = decoded?.campaign_id || decoded?.id || "";
+            campaignName = decoded?.campaign_name || decoded?.name || decoded?.nameAnalytic || "";
+          }
+
+          const devicePayload = buildDevicePayload();
+          const sessionId = localStorage.getItem("session_id") || "";
+
+          trackEvent("payment_failure", {
+            payment_id: null,
+            order_id: initiateData?.oOrderDetails?.order_id || null,
+            transaction_id: null,
+            amount: pricingData.price,
+            currency: pricingData.currency,
+            payment_method: paymentMethod,
+            payment_provider: "Razorpay",
+            failure_reason: error instanceof Error ? error.message : "Execution error",
+            error_code: "execution_error",
+            campaign_id: campaignId,
+            campaign_name: campaignName,
+            user_id: userId || "",
+            session_id: sessionId,
+            device_type: devicePayload.device_type,
+            platform: "web",
+            timestamp: new Date().toISOString(),
+            payment_status: "failure",
+          });
+        } catch (analyticsErr) {
+          logger.error("Failed to track payment failure (execute error):", analyticsErr);
+        }
+
         reject(error);
       }
     });
@@ -635,6 +809,46 @@ export const usePaymentHandler = () => {
       logger.error("Payment initiation failed:", err);
       toast.error(err instanceof Error ? err.message : "Payment failed");
       setIsProcessing(false);
+
+      // Track new unified payment_failure event
+      try {
+        const rawCampaign = localStorage.getItem("campaign_decoded_data");
+        let campaignId = "";
+        let campaignName = "";
+        if (rawCampaign) {
+          const parsed = JSON.parse(rawCampaign);
+          const decoded = parsed.decoded_data;
+          campaignId = decoded?.campaign_id || decoded?.id || "";
+          campaignName = decoded?.campaign_name || decoded?.name || decoded?.nameAnalytic || "";
+        }
+
+        const devicePayload = buildDevicePayload();
+        const sessionId = localStorage.getItem("session_id") || "";
+        const pricing = selectedPlan ? getPricingData(selectedPlan) : null;
+
+        trackEvent("payment_failure", {
+          payment_id: null,
+          order_id: null,
+          transaction_id: null,
+          amount: pricing?.price || null,
+          currency: pricing?.currency || null,
+          payment_method: options?.paymentMethod || "upi",
+          payment_provider: "Razorpay",
+          failure_reason: err instanceof Error ? err.message : "Initiation error",
+          error_code: "initiation_error",
+          campaign_id: campaignId,
+          campaign_name: campaignName,
+          user_id: userId || "",
+          session_id: sessionId,
+          device_type: devicePayload.device_type,
+          platform: "web",
+          timestamp: new Date().toISOString(),
+          payment_status: "failure",
+        });
+      } catch (analyticsErr) {
+        logger.error("Failed to track payment failure (initiate error):", analyticsErr);
+      }
+
       return { success: false, error: err instanceof Error ? err.message : "Payment failed" };
     }
   };
