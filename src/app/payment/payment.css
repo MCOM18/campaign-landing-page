@@ -830,3 +830,69 @@
 .plans-selection-container .spc-box--active .spc-sub-label {
   color: #ffffff !important;
 }
+
+/* ── UPI Intent Apps ─────────────────────────────────────── */
+.apps-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.app-card {
+  background: rgba(8, 12, 20, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-card:hover {
+  border-color: #FAAF3F;
+  background: rgba(250, 175, 63, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.app-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.app-gpay { background: linear-gradient(135deg, #4285f4, #34a853); }
+.app-phonepe { background: linear-gradient(135deg, #5f259f, #7f39d5); }
+.app-paytm { background: linear-gradient(135deg, #00baf2, #002e6e); }
+.app-bhim { background: linear-gradient(135deg, #e05e26, #147e45); }
+.app-cred { background: linear-gradient(135deg, #000000, #333333); }
+.app-mobikwik { background: linear-gradient(135deg, #0076a8, #004d6f); }
+.app-amazon { background: linear-gradient(135deg, #ff9900, #232f3e); }
+.app-generic { background: linear-gradient(135deg, #4b5563, #1f2937); }
+
+.app-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.no-apps-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  font-size: 0.95rem;
+}

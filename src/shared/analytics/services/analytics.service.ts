@@ -2,6 +2,7 @@ import { appConfig } from '@/lib/config/app.config';
 import { backendClient } from '../clients/backend.client';
 import { cleverTapClient } from '../clients/clevertap.client';
 import { firebaseClient } from '../clients/firebase.client';
+import { facebookPixelClient } from '../clients/facebook.client';
 import { isProduction } from '../constants/analytics.constants';
 import type { AnalyticsEvent } from '../model/common.types';
 import type { EventContext } from '../model/context.types';
@@ -32,16 +33,18 @@ class AnalyticsService {
     if (this.isInitialized) return;
 
     try {
-      if (config.clevertap) {
+      if (config.clevertap && process.env.NEXT_PUBLIC_ENABLE_CLEVERTAP === 'true') {
         await cleverTapClient.initialize(
           config.clevertap.accountId,
           config.clevertap.region
         );
       }
-      if (config.firebase) {
+      if (config.firebase && process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true') {
         await firebaseClient.initialize(config.firebase);
       }
-      backendClient.initialize();
+      if (process.env.NEXT_PUBLIC_ENABLE_BACKEND_ANALYTICS === 'true') {
+        backendClient.initialize();
+      }
       this.isInitialized = true;
       analyticsLogger.info("AnalyticsService initialized successfully");
     } catch (error) {
@@ -71,11 +74,27 @@ class AnalyticsService {
         context: enrichedEvent.context
       });
       // Determine which providers to send to
-      const providers = enrichedEvent.providers || [
+      let providers = enrichedEvent.providers || [
         AnalyticsProvider.CLEVERTAP,
         AnalyticsProvider.FIREBASE,
         AnalyticsProvider.BACKEND,
+        AnalyticsProvider.FACEBOOK_PIXEL,
       ];
+
+      // Filter based on environment flags
+      if (process.env.NEXT_PUBLIC_ENABLE_CLEVERTAP !== 'true') {
+        providers = providers.filter(p => p !== AnalyticsProvider.CLEVERTAP);
+      }
+      if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE !== 'true') {
+        providers = providers.filter(p => p !== AnalyticsProvider.FIREBASE);
+      }
+      if (process.env.NEXT_PUBLIC_ENABLE_BACKEND_ANALYTICS !== 'true') {
+        providers = providers.filter(p => p !== AnalyticsProvider.BACKEND);
+      }
+      // Facebook pixel is enabled unconditionally for now
+      // if (process.env.NEXT_PUBLIC_ENABLE_FACEBOOK_PIXEL !== 'true') {
+      //   providers = providers.filter(p => p !== AnalyticsProvider.FACEBOOK_PIXEL);
+      // }
 
       // Send to providers
       if (providers.includes(AnalyticsProvider.CLEVERTAP)) {
@@ -88,6 +107,10 @@ class AnalyticsService {
 
       if (providers.includes(AnalyticsProvider.BACKEND)) {
         backendClient.trackEvent(enrichedEvent);
+      }
+
+      if (providers.includes(AnalyticsProvider.FACEBOOK_PIXEL)) {
+        facebookPixelClient.trackEvent(enrichedEvent);
       }
     } catch (error) {
       analyticsLogger.error('Analytics: Failed to track event', error);
@@ -142,27 +165,35 @@ class AnalyticsService {
   // ─── USER IDENTIFICATION ───
   identifyUser(userId: string, properties?: Record<string, any>): void {
     if (!this.isEnabled) return;
-    firebaseClient.identifyUser(userId, properties);
+    if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true') {
+      firebaseClient.identifyUser(userId, properties);
+    }
   }
 
   updateUserProperties(properties: Record<string, any>): void {
     if (!this.isEnabled) return;
-    const user = buildUserPayload();
-    if (user?.user_id) {
-      firebaseClient.identifyUser(user.user_id, properties);
-    } else {
-      firebaseClient.identifyUser('', properties);
+    if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true') {
+      const user = buildUserPayload();
+      if (user?.user_id) {
+        firebaseClient.identifyUser(user.user_id, properties);
+      } else {
+        firebaseClient.identifyUser('', properties);
+      }
     }
   }
 
   resetUser(): void {
     if (!this.isEnabled) return;
-    firebaseClient.resetUser();
+    if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true') {
+      firebaseClient.resetUser();
+    }
   }
 
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    firebaseClient.setEnabled(enabled);
+    if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true') {
+      firebaseClient.setEnabled(enabled);
+    }
   }
 
   getEnabled(): boolean {

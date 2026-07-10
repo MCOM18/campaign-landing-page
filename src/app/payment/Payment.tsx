@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { FiChevronUp, FiChevronDown, FiChevronLeft, FiEye, FiEyeOff } from "react-icons/fi";
 import SubscriptionPlanCard from "./SubscriptionPlanCard";
-import { usePaymentHandler, getPricingData, checkCardRecurringEligibility } from "../../hooks/usePaymentHandler";
+import { usePaymentHandler, getPricingData, checkCardRecurringEligibility, loadRazorpayScript } from "../../hooks/usePaymentHandler";
 import { getUserGeoLocation } from "../../utils/userUtil";
 import { PAYMENT_METHOD } from "@/enums/enums";
 import PhoneCollectModal from "./PhoneCollectModal";
@@ -13,6 +13,7 @@ import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { FailureScreen } from "@/components/FailureScreen";
 import { analyticsService } from "@/shared/analytics";
+import { trackEvent } from "@/services/analytics/events";
 import "./payment.css";
 import { appConfig } from "@/lib/config/app.config";
 
@@ -22,12 +23,18 @@ function PaymentPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [countryCode, setCountryCode] = useState(appConfig.DEFAULT_COUNTRY_NAME);
+  const [osPlatform, setOsPlatform] = useState<"android" | "ios" | "web">("web");
+  const [upiApps, setUpiApps] = useState<any[]>([]);
+  const [activeAppLoader, setActiveAppLoader] = useState<string | null>(null);
+
+  const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
 
   const {
     preparePayment,
     executePayment,
     isProcessing,
     isPreparing,
+    preparedData,
     showProcessingOverlay,
     pollingAttempt,
     overlayError,
@@ -62,9 +69,20 @@ function PaymentPage() {
       if (geoData?.country_code) {
         setCountryCode(geoData.country_code);
       }
+
+      // OS Detection for UPI Intent
+      const ua = navigator.userAgent.toLowerCase();
+      let platform: "android" | "ios" | "web" = "web";
+      if (/android/.test(ua)) platform = "android";
+      else if (/iphone|ipad|ipod/.test(ua)) platform = "ios";
+      setOsPlatform(platform);
+
+      if (platform === "ios") {
+        setUpiApps(["google_pay", "phonepe", "paytm", "bhim", "cred"]);
+      }
     }
     setIsMounted(true);
-  }, [router]);
+  }, [router, RAZORPAY_KEY]);
 
   const isOverseasUser = countryCode !== appConfig.DEFAULT_COUNTRY_NAME;
 
@@ -100,6 +118,46 @@ function PaymentPage() {
       setPaymentMethod("card");
     }
   }, [isOverseasUser]);
+
+  // Query installed UPI Apps on Android
+  useEffect(() => {
+    if (osPlatform === "android" && RAZORPAY_KEY) {
+      loadRazorpayScript().then((loaded) => {
+        if (loaded && window.Razorpay) {
+          const rzp = new window.Razorpay({
+            key: RAZORPAY_KEY
+          });
+          if (rzp.getSupportedUpiIntentApps) {
+            rzp.getSupportedUpiIntentApps()
+              .then((apps: any) => {
+                let appsArray: any[] = [];
+                if (Array.isArray(apps)) appsArray = apps;
+                else if (apps && typeof apps === "object") {
+                  appsArray = Object.keys(apps).filter((k) => apps[k]);
+                }
+                setUpiApps(appsArray);
+              })
+              .catch((err: any) => {
+                console.error("Failed to detect UPI apps:", err);
+              });
+          }
+        }
+      });
+    }
+  }, [osPlatform, preparedData, RAZORPAY_KEY]);
+
+  // Clear app loaders if the user returns to the browser after an OS intent
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setActiveAppLoader(null);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const toggleMethod = (method: string) => {
     setActiveMethod(activeMethod === method ? null : method);
@@ -246,6 +304,12 @@ function PaymentPage() {
       card: paymentMethod === "card" ? card : null,
     };
 
+    trackEvent("initiate_checkout", {
+      amount: pricingData.price,
+      plan_id: selectedPlan.iSubscriptionGroupId,
+      plan_name: selectedPlan.sTitle,
+    });
+
     executePayment(selectedPlan, paymentMethod, paymentDetails, pricingData, data)
       .then((res: any) => {
         if (res?.success) {
@@ -310,6 +374,10 @@ function PaymentPage() {
         <PhoneCollectModal
           onComplete={() => {
             setShowPhoneModal(false);
+            if (osPlatform !== "web") {
+              preparePayment(selectedPlan, "upi").catch(() => { });
+            }
+            // Still call handlePaymentClick in case they initiated via the main Pay button
             handlePaymentClick();
           }}
         />
@@ -450,17 +518,174 @@ function PaymentPage() {
 
                   {activeMethod === PAYMENT_METHOD.UPI && (
                     <div className="payment-content">
-                      <input
-                        type="text"
-                        placeholder="e.g., username@okhdfcbank"
-                        className={`payment-input${upiError ? " input-error" : ""}`}
-                        value={upiId}
-                        onChange={(e) => {
-                          setUpiId(e.target.value);
-                          if (upiError) setUpiError("");
-                        }}
-                      />
-                      {upiError && <span className="card-error-text">{upiError}</span>}
+                      {osPlatform !== "web" ? (
+                        <>
+                          <div className="apps-container" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" }}>
+                            {upiApps
+                              .filter((appCode) => ["phonepe", "gpay", "google_pay", "paytm", "cred"].includes(appCode.toLowerCase()))
+                              .slice(0, 4)
+                              .map((appCode) => {
+                                const metadata: Record<string, any> = {
+                                  phonepe: { name: "PhonePe", img: "/assets/upi/phone-pe.jpg" },
+                                  gpay: { name: "GPay", img: "/assets/upi/gpay.png" },
+                                  google_pay: { name: "GPay", img: "/assets/upi/gpay.png" },
+                                  paytm: { name: "Paytm", img: "/assets/upi/paytm.webp" },
+                                  bhim: { name: "BHIM", img: "/assets/upi/bhim.png" },
+                                  cred: { name: "Cred", img: "/assets/upi/cred.webp" },
+                                };
+                                const cleanCode = appCode.toLowerCase();
+                                const meta = metadata[cleanCode] || { name: appCode, img: "/assets/upi/other_upis.png" };
+                                const isThisLoading = activeAppLoader === cleanCode;
+
+                                return (
+                                  <div
+                                    key={cleanCode}
+                                    className={`app-card ${activeAppLoader && !isThisLoading ? "opacity-50 pointer-events-none" : ""}`}
+                                    style={{ padding: "12px 6px", gap: "8px", borderRadius: "12px" }}
+                                    onClick={() => {
+                                      if (isPreparing || activeAppLoader) return;
+
+                                      const storedPhone = localStorage.getItem("user_phone");
+                                      const userData = (() => { try { return JSON.parse(localStorage.getItem("userData") || "{}"); } catch { return {}; } })();
+                                      const phoneFromUserData = userData?.phone || userData?.sPhone || userData?.phone_number || userData?.mobile || "";
+                                      if (!storedPhone && !phoneFromUserData) {
+                                        setShowPhoneModal(true);
+                                        return;
+                                      }
+
+                                      if (!pricingData) {
+                                        toast.error("Pricing data not available");
+                                        return;
+                                      }
+
+                                      setActiveAppLoader(cleanCode);
+                                      preparePayment(selectedPlan, "upi")
+                                        .then((data: any) => {
+                                          if (!data || !data.oOrderDetails) {
+                                            setActiveAppLoader(null);
+                                            return;
+                                          }
+                                          return executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, cleanCode);
+                                        })
+                                        .then((res: any) => {
+                                          if (!res) return; // if it was aborted earlier
+                                          setActiveAppLoader(null);
+                                          if (res?.success) setShowSuccessPopup(true);
+                                          else {
+                                            setFailedErrorMsg(res?.error || "Payment verification failed.");
+                                            setShowFailedPopup(true);
+                                          }
+                                        })
+                                        .catch((err: any) => {
+                                          setActiveAppLoader(null);
+                                          setFailedErrorMsg(err?.message || "Payment failed.");
+                                          setShowFailedPopup(true);
+                                        });
+                                    }}
+                                  >
+                                    <div className="app-icon-wrapper" style={{ background: "transparent", border: "none", width: "40px", height: "40px", borderRadius: "12px", overflow: "hidden" }}>
+                                      {isThisLoading ? (
+                                        <div className="spinner-small" style={{ width: "24px", height: "24px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                                      ) : (
+                                        <img src={meta.img} alt={meta.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                      )}
+                                    </div>
+                                    <div className="app-name" style={{ fontSize: "0.7rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{meta.name}</div>
+                                  </div>
+                                );
+                              })}
+                            {osPlatform === "android" && upiApps.length === 0 && (
+                              <div className="no-apps-message">Scanning for UPI apps...</div>
+                            )}
+                            {osPlatform === "android" && (
+                              <div
+                                className={`app-card any-app-card ${activeAppLoader && activeAppLoader !== "any" ? "opacity-50 pointer-events-none" : ""}`}
+                                onClick={() => {
+                                  if (isPreparing || activeAppLoader) return;
+
+                                  const storedPhone = localStorage.getItem("user_phone");
+                                  const userData = (() => { try { return JSON.parse(localStorage.getItem("userData") || "{}"); } catch { return {}; } })();
+                                  const phoneFromUserData = userData?.phone || userData?.sPhone || userData?.phone_number || userData?.mobile || "";
+                                  if (!storedPhone && !phoneFromUserData) {
+                                    setShowPhoneModal(true);
+                                    return;
+                                  }
+
+                                  if (!pricingData) {
+                                    toast.error("Pricing data not available");
+                                    return;
+                                  }
+
+                                  setActiveAppLoader("any");
+                                  preparePayment(selectedPlan, "upi")
+                                    .then((data: any) => {
+                                      if (!data || !data.oOrderDetails) {
+                                        setActiveAppLoader(null);
+                                        return;
+                                      }
+                                      return executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, "any");
+                                    })
+                                    .then((res: any) => {
+                                      if (!res) return; // if it was aborted earlier
+                                      setActiveAppLoader(null);
+                                      if (res?.success) setShowSuccessPopup(true);
+                                      else {
+                                        setFailedErrorMsg(res?.error || "Payment verification failed.");
+                                        setShowFailedPopup(true);
+                                      }
+                                    })
+                                    .catch((err: any) => {
+                                      setActiveAppLoader(null);
+                                      setFailedErrorMsg(err?.message || "Payment failed.");
+                                      setShowFailedPopup(true);
+                                    });
+                                }}
+                              >
+                                <div className="app-icon-wrapper app-generic" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", width: "40px", height: "40px", borderRadius: "12px", overflow: "hidden" }}>
+                                  {activeAppLoader === "any" ? (
+                                    <div className="spinner-small" style={{ width: "24px", height: "24px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                                  ) : (
+                                    <img src="/assets/upi/other_upis.png" alt="Other Apps" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  )}
+                                </div>
+                                <div className="app-name" style={{ fontSize: "0.7rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>Other</div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ textAlign: "center", margin: "24px 0 16px", color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", fontWeight: "600", letterSpacing: "1px" }}>
+                            OR ENTER UPI ID
+                          </div>
+
+                          <div className="upi-vpa-section">
+                            <input
+                              type="text"
+                              placeholder="e.g., username@okhdfcbank"
+                              className={`payment-input${upiError ? " input-error" : ""}`}
+                              value={upiId}
+                              onChange={(e) => {
+                                setUpiId(e.target.value);
+                                if (upiError) setUpiError("");
+                              }}
+                            />
+                            {upiError && <span className="card-error-text">{upiError}</span>}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            type="text"
+                            placeholder="e.g., username@okhdfcbank"
+                            className={`payment-input${upiError ? " input-error" : ""}`}
+                            value={upiId}
+                            onChange={(e) => {
+                              setUpiId(e.target.value);
+                              if (upiError) setUpiError("");
+                            }}
+                          />
+                          {upiError && <span className="card-error-text">{upiError}</span>}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -567,7 +792,7 @@ function PaymentPage() {
               ) : isProcessing ? (
                 "Processing..."
               ) : (
-                `Proceed to pay ${pricingData?.currencySymbol || "₹"}${pricingData?.price ?? ""}`
+                "Proceed to pay"
               )}
             </button>
           </div>

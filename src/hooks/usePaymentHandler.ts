@@ -143,7 +143,7 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
  * Dynamically loads the Razorpay checkout script.
  * Returns true immediately if already loaded.
  */
-const loadRazorpayScript = (): Promise<boolean> => {
+export const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if (typeof window === "undefined") { resolve(false); return; }
     if (typeof window.Razorpay === "function") { resolve(true); return; }
@@ -577,8 +577,12 @@ export const usePaymentHandler = () => {
         headers: { sessionid: sessionId || "" },
       });
 
-      const newInitiateData = response?.data?.data?.initiateData;
-      if (!newInitiateData) throw new Error("Invalid initiate response");
+      logger.info("Initiate Payment Response:", response);
+      
+      const newInitiateData = response?.data?.data?.initiateData || response?.data?.initiateData || response?.initiateData;
+      if (!newInitiateData) {
+        throw new Error(`Invalid initiate response: ${JSON.stringify(response?.data || response)}`);
+      }
 
       localStorage.setItem("payment_sToken", newInitiateData.sToken);
       localStorage.setItem("payment_sProviderToken", newInitiateData.sProviderToken);
@@ -615,7 +619,8 @@ export const usePaymentHandler = () => {
     paymentMethod: string,
     paymentDetails: any,
     pricingData: PricingData,
-    initiateData: PaymentInitData
+    initiateData: PaymentInitData,
+    intentApp?: string
   ): Promise<any> => {
     return new Promise((resolve, reject) => {
       try {
@@ -632,8 +637,8 @@ export const usePaymentHandler = () => {
           amount: orderDetails.amount,
           currency: orderDetails.currency || "INR",
           order_id: orderDetails.order_id,
-          email: notes.email || "customer@razorpay.com",
-          contact: notes.contact || "",
+          email: notes.email || localStorage.getItem("user_email") || "customer@razorpay.com",
+          contact: notes.contact || localStorage.getItem("user_phone") || "9999999999",
         };
 
         if (orderDetails.customer_id) options.customer_id = orderDetails.customer_id;
@@ -641,7 +646,12 @@ export const usePaymentHandler = () => {
 
         if (paymentMethod === "upi") {
           options.method = "upi";
-          options.vpa = paymentDetails.upiId;
+          if (intentApp) {
+            options.upi = { flow: "intent" };
+            // Note: `recurring = 1` is already set above if SVOD
+          } else {
+            options.vpa = paymentDetails.upiId;
+          }
         } else if (paymentMethod === "card") {
           options.method = "card";
           options["card[number]"] = paymentDetails.card.number.replace(/\s/g, "");
@@ -653,8 +663,7 @@ export const usePaymentHandler = () => {
 
         // Synchronous construction — preserves user gesture ✅
         const rzp = new window.Razorpay({
-          key: RAZORPAY_KEY,
-          id: orderDetails.order_id,
+          key: RAZORPAY_KEY
         });
 
         if (typeof rzp.createPayment !== "function") {
@@ -662,7 +671,11 @@ export const usePaymentHandler = () => {
           return;
         }
 
-        rzp.createPayment(options);
+        if (intentApp) {
+          rzp.createPayment(options, { app: intentApp });
+        } else {
+          rzp.createPayment(options);
+        }
 
         rzp.on("payment.success", async (response: any) => {
           toast.success("Payment successful! Verifying...");
@@ -675,7 +688,8 @@ export const usePaymentHandler = () => {
         });
 
         rzp.on("payment.error", (error: any) => {
-          logger.error("Payment error:", error);
+          const errPayload = error instanceof Error ? error.message : JSON.stringify(error);
+          logger.error(`Payment error: ${errPayload}`);
           const msg = error?.error?.description || error?.error?.reason || "Payment failed. Please try again.";
           toast.error(msg);
           setIsProcessing(false);

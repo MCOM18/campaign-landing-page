@@ -196,15 +196,12 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
           </div>
         )}
 
-        {/* Plan name + price row */}
+        {/* Plan name row */}
         <div className="spc-row" style={{ alignItems: "center" }}>
           <div className="spc-left">
             <span className="spc-name" style={nameStyle}>
               {displayData.subLabel || displayData.name}
             </span>
-          </div>
-          <div className="spc-right" style={{ alignItems: "center" }}>
-            <span className="spc-price" style={priceStyle}>{displayData.price}</span>
           </div>
         </div>
 

@@ -36,6 +36,48 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
     inputRefs.current[0]?.focus();
   }, []);
 
+  const submitRef = useRef(onSubmit);
+  useEffect(() => {
+    submitRef.current = onSubmit;
+  }, [onSubmit]);
+
+  // WebOTP API for automatic SMS OTP fetching
+  useEffect(() => {
+    if ("OTPCredential" in window) {
+      const ac = new AbortController();
+      navigator.credentials
+        .get({
+          otp: { transport: ["sms"] },
+          signal: ac.signal,
+        })
+        .then((otp: any) => {
+          if (otp && otp.code) {
+            const codeString = String(otp.code).trim();
+            const digits = codeString.split("").slice(0, 4);
+            // Pad to ensure 4 boxes
+            while (digits.length < 4) {
+              digits.push("");
+            }
+            setOtp(digits);
+            if (codeString.length >= 4) {
+              submitRef.current(codeString.substring(0, 4));
+            }
+          }
+        })
+        .catch((err) => {
+          if (err.name === "AbortError") {
+            // Expected when component unmounts or StrictMode re-renders
+            return;
+          }
+          console.error("WebOTP Error:", err);
+        });
+
+      return () => {
+        ac.abort();
+      };
+    }
+  }, []);
+
   // Handle auto-focus and auto-submit
   const handleChange = (value: string, index: number) => {
     // Only allow numbers
@@ -137,6 +179,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
               onChange={(e) => handleChange(e.target.value, idx)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
               onPaste={idx === 0 ? handlePaste : undefined}
+              autoComplete="one-time-code"
               ref={(el) => {
                 inputRefs.current[idx] = el;
               }}

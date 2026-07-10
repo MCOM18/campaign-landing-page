@@ -2,6 +2,7 @@ export enum AnalyticsProvider {
   CLEVERTAP = 'clevertap',
   FIREBASE = 'firebase',
   BACKEND = 'backend',
+  FACEBOOK_PIXEL = 'facebook_pixel',
 }
 
 export enum EventCriticality {
