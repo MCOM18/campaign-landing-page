@@ -425,8 +425,14 @@ export default function Home() {
   };
 
   const handleOtpSubmit = async (otpCode: string) => {
+    if (isVerifying) return;
     setError(null);
     setIsVerifying(true);
+
+    const safetyTimeout = setTimeout(() => {
+      setIsVerifying(false);
+      setError("Verification took too long. Please try again.");
+    }, 15000);
 
     try {
       const geoData = getUserGeoLocation();
@@ -586,7 +592,9 @@ export default function Home() {
           setIsVerifying(false);
         }
       }
+      clearTimeout(safetyTimeout);
     } catch (err: any) {
+      clearTimeout(safetyTimeout);
       setError(err.message || "Invalid OTP code. Please try again.");
       setIsVerifying(false);
     }
@@ -782,6 +790,7 @@ export default function Home() {
                         onBack={handleBack}
                         onResend={handleResendOtp}
                         disclaimerText={disclaimerText}
+                        isMobileLayout={true}
                       />
                     ) : step === TrialFormStep.PLANS ? (
                       <div className="fade-in" style={{ width: "100%" }}>
@@ -975,6 +984,7 @@ export default function Home() {
                                   onBack={handleBack}
                                   onResend={handleResendOtp}
                                   disclaimerText={disclaimerText}
+                                  isMobileLayout={false}
                                 />
                               ) : step === TrialFormStep.PLANS ? (
                                 <div className="fade-in" style={{ width: "100%" }}>

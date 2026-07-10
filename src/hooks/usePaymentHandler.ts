@@ -578,7 +578,7 @@ export const usePaymentHandler = () => {
       });
 
       logger.info("Initiate Payment Response:", response);
-      
+
       const newInitiateData = response?.data?.data?.initiateData || response?.data?.initiateData || response?.initiateData;
       if (!newInitiateData) {
         throw new Error(`Invalid initiate response: ${JSON.stringify(response?.data || response)}`);
@@ -633,7 +633,7 @@ export const usePaymentHandler = () => {
         const orderDetails = initiateData.oOrderDetails;
         const notes = orderDetails?.notes || {};
 
-        const options: Record<string, any> = {
+        const paymentData: Record<string, any> = {
           amount: orderDetails.amount,
           currency: orderDetails.currency || "INR",
           order_id: orderDetails.order_id,
@@ -641,44 +641,40 @@ export const usePaymentHandler = () => {
           contact: notes.contact || localStorage.getItem("user_phone") || "9999999999",
         };
 
-        if (orderDetails.customer_id) options.customer_id = orderDetails.customer_id;
-        if (pricingData?.type === "SVOD") options.recurring = 1;
+        if (orderDetails.customer_id) paymentData.customer_id = orderDetails.customer_id;
+        if (pricingData?.type === "SVOD") paymentData.recurring = 1;
 
         if (paymentMethod === "upi") {
-          options.method = "upi";
+          paymentData.method = "upi";
           if (intentApp) {
-            options.upi = { flow: "intent" };
+            paymentData.upi = { flow: "intent" };
             // Note: `recurring = 1` is already set above if SVOD
           } else {
-            options.vpa = paymentDetails.upiId;
+            paymentData.vpa = paymentDetails.upiId;
           }
         } else if (paymentMethod === "card") {
-          options.method = "card";
-          options["card[number]"] = paymentDetails.card.number.replace(/\s/g, "");
-          options["card[expiry_month]"] = paymentDetails.card.month;
-          options["card[expiry_year]"] = paymentDetails.card.year;
-          options["card[cvv]"] = paymentDetails.card.cvv;
-          options["card[name]"] = paymentDetails.card.name;
+          paymentData.method = "card";
+          paymentData["card[number]"] = paymentDetails.card.number.replace(/\s/g, "");
+          paymentData["card[expiry_month]"] = paymentDetails.card.month;
+          paymentData["card[expiry_year]"] = paymentDetails.card.year;
+          paymentData["card[cvv]"] = paymentDetails.card.cvv;
+          paymentData["card[name]"] = paymentDetails.card.name;
         }
 
         // Synchronous construction — preserves user gesture ✅
-        const rzp = new window.Razorpay({
-          key: RAZORPAY_KEY
-        });
+        const rzp = new window.Razorpay({ key: RAZORPAY_KEY });
 
         if (typeof rzp.createPayment !== "function") {
           reject(new Error("Razorpay createPayment not available. Please refresh and try again."));
           return;
         }
 
-        if (intentApp) {
-          rzp.createPayment(options, { app: intentApp });
-        } else {
-          rzp.createPayment(options);
-        }
+
 
         rzp.on("payment.success", async (response: any) => {
+          console.log("Successs---->> response---->>", response)
           toast.success("Payment successful! Verifying...");
+          window.alert("Congratulation! Payment successful.");
           await handlePaymentSuccess({
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_order_id: response.razorpay_order_id,
@@ -692,6 +688,7 @@ export const usePaymentHandler = () => {
           logger.error(`Payment error: ${errPayload}`);
           const msg = error?.error?.description || error?.error?.reason || "Payment failed. Please try again.";
           toast.error(msg);
+          window.alert("Payment failed: " + msg);
           setIsProcessing(false);
 
           // Track new unified payment_failure event
@@ -738,6 +735,11 @@ export const usePaymentHandler = () => {
           reject(new Error(msg));
         });
 
+        if (intentApp && intentApp !== "any") {
+          rzp.createPayment(paymentData, { app: intentApp });
+        } else {
+          rzp.createPayment(paymentData);
+        }
       } catch (error) {
         logger.error("executePayment error:", error);
 

@@ -145,7 +145,7 @@ export default function RootLayout({
               t.src=v;s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window,document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '643613694636024'); 
+              fbq('init', '2043234696276290'); 
               fbq('track', 'PageView');
             `,
           }}
@@ -154,7 +154,7 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning> 
         <noscript>
           <img height="1" width="1" style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=643613694636024&ev=PageView&noscript=1"
+            src="https://www.facebook.com/tr?id=2043234696276290&ev=PageView&noscript=1"
           />
         </noscript>
         {/* Cache bust: {process.env.NEXT_PUBLIC_ENABLE_FACEBOOK_PIXEL} */}
