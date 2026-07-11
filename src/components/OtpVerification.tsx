@@ -22,7 +22,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
   const [otpValue, setOtpValue] = useState("");
   const [timer, setTimer] = useState(15);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
+  // const [debugLog, setDebugLog] = useState<string[]>([]);
   const [receivedOtpData, setReceivedOtpData] = useState<string>("");
 
   // Start Resend Timer countdown
@@ -278,7 +278,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       </p>
 
       {/* Temporary Debug Console */}
-      <div style={{
+      {/* <div style={{
         marginTop: "20px",
         padding: "10px",
         background: "rgba(0,0,0,0.8)",
@@ -299,7 +299,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         ) : (
           debugLog.map((log, i) => <div key={i} style={{ marginBottom: "2px" }}>{log}</div>)
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

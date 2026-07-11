@@ -16,9 +16,11 @@ import { analyticsService } from "@/shared/analytics";
 import { trackEvent } from "@/services/analytics/events";
 import "./payment.css";
 import { appConfig } from "@/lib/config/app.config";
+import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 
 function PaymentPage() {
   const router = useRouter();
+  const { isAppReady } = useBootstrap();
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -104,6 +106,7 @@ function PaymentPage() {
     name: ""
   });
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [isAutoPhoneModal, setIsAutoPhoneModal] = useState(false);
   const clickedIntentAppRef = useRef<string | null>(null);
   const [activeMethod, setActiveMethod] = useState<string | null>(PAYMENT_METHOD.UPI);
   const [paymentMethod, setPaymentMethod] = useState("upi");
@@ -119,6 +122,36 @@ function PaymentPage() {
       setPaymentMethod("card");
     }
   }, [isOverseasUser]);
+
+  // If email logged in and has no phone, show PhoneCollectModal immediately when ready
+  useEffect(() => {
+    if (isMounted && isAuthorized && selectedPlan) {
+      const pricingData = getPricingData(selectedPlan);
+      if (!pricingData) return;
+
+      const storedPhone = localStorage.getItem("user_phone");
+      const userData = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("userData") || "{}");
+        } catch {
+          return {};
+        }
+      })();
+      const phoneFromUserData =
+        userData?.phone ||
+        userData?.sPhone ||
+        userData?.phone_number ||
+        userData?.mobile ||
+        "";
+      const emailFromUserData =
+        userData?.email || localStorage.getItem("user_email") || "";
+
+      if (emailFromUserData && !storedPhone && !phoneFromUserData && !showPhoneModal) {
+        setIsAutoPhoneModal(true);
+        setShowPhoneModal(true);
+      }
+    }
+  }, [isMounted, isAuthorized, selectedPlan, showPhoneModal]);
 
   // Query installed UPI Apps on Android
   useEffect(() => {
@@ -262,7 +295,15 @@ function PaymentPage() {
     return valid;
   };
 
+
+
+
+
+  //*********************************************** */
   const handlePaymentClick = async () => {
+
+    window.alert(`Payment Method: ${paymentMethod}`);
+
     if (paymentMethod === "upi") {
       if (!upiId) {
         setUpiError("UPI ID is required");
@@ -332,6 +373,10 @@ function PaymentPage() {
         setShowFailedPopup(true);
       });
   };
+  //*********************************************** */
+
+
+
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
@@ -367,7 +412,7 @@ function PaymentPage() {
     selectedPlan?.oSubscriptionGroup?.aMediaUrls?.[0] ||
     null;
 
-  if (!isMounted || !isAuthorized || !selectedPlan || !pricingData) {
+  if (!isMounted || !isAuthorized || !selectedPlan || !pricingData || !isAppReady) {
     return (
       <div className="payment_wrapper">
         <p style={{ color: "rgba(255,255,255,0.5)" }}>Loading plan details...</p>
@@ -383,12 +428,48 @@ function PaymentPage() {
             setShowPhoneModal(false);
             const intentApp = clickedIntentAppRef.current;
             clickedIntentAppRef.current = null;
-            
-            // Pre-prepare payment so they don't have to wait next time
-            preparePayment(selectedPlan, "upi").catch(() => { });
-            
-            // If they didn't click an intent app, trigger standard checkout flow
-            if (!intentApp) {
+
+            if (isAutoPhoneModal) {
+              setIsAutoPhoneModal(false);
+              // Pre-prepare payment so they don't have to wait next time
+              preparePayment(selectedPlan, "upi").catch(() => { });
+              return;
+            }
+
+            if (!pricingData) {
+              toast.error("Pricing data not available");
+              return;
+            }
+
+            if (intentApp) {
+              setActiveAppLoader(intentApp);
+              preparePayment(selectedPlan, "upi")
+                .then((data) => {
+                  if (!data) {
+                    setActiveAppLoader(null);
+                    return;
+                  }
+                  executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, intentApp, () => setActiveAppLoader(null))
+                    .then((res: any) => {
+                      if (!res) return;
+                      setActiveAppLoader(null);
+                      if (res?.success) setShowSuccessPopup(true);
+                      else {
+                        setFailedErrorMsg(res?.error || "Payment verification failed.");
+                        setShowFailedPopup(true);
+                      }
+                    })
+                    .catch((err: any) => {
+                      setActiveAppLoader(null);
+                      setFailedErrorMsg(err?.message || "Payment failed.");
+                      setShowFailedPopup(true);
+                    });
+                })
+                .catch((err) => {
+                  setActiveAppLoader(null);
+                  toast.error(err?.message || "Failed to prepare payment.");
+                });
+            } else {
               handlePaymentClick();
             }
           }}
@@ -512,7 +593,7 @@ function PaymentPage() {
       )}
 
       {/* Main payment page */}
-      <div className="payment_wrapper">
+      <div className={`payment_wrapper ${showPhoneModal ? "blurred" : ""}`}>
         <div className="payment-wrapper-b">
 
           {/* Back header */}
@@ -605,12 +686,12 @@ function PaymentPage() {
                                       const data = preparedData;
                                       if (!data) {
                                         toast("Setting up secure connection... Please click again in a second.");
-                                        preparePayment(selectedPlan, "upi").catch(() => {});
+                                        preparePayment(selectedPlan, "upi").catch(() => { });
                                         return;
                                       }
 
                                       setActiveAppLoader(cleanCode);
-                                      executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, cleanCode)
+                                      executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, cleanCode, () => setActiveAppLoader(null))
                                         .then((res: any) => {
                                           if (!res) return; // if it was aborted earlier
                                           setActiveAppLoader(null);
@@ -663,12 +744,12 @@ function PaymentPage() {
                                   const data = preparedData;
                                   if (!data) {
                                     toast("Setting up secure connection... Please click again in a second.");
-                                    preparePayment(selectedPlan, "upi").catch(() => {});
+                                    preparePayment(selectedPlan, "upi").catch(() => { });
                                     return;
                                   }
 
                                   setActiveAppLoader("any");
-                                  executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, "any")
+                                  executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, "any", () => setActiveAppLoader(null))
                                     .then((res: any) => {
                                       if (!res) return;
                                       setActiveAppLoader(null);

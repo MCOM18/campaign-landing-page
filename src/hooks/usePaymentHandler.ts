@@ -29,6 +29,7 @@ interface PaymentInitData {
   sToken: string;
   oOrderDetails: any;
   skuId: string;
+  paymentMethod: string;
   expiresAt?: number;
   createdAt?: number;
   version?: string;
@@ -170,6 +171,11 @@ export const usePaymentHandler = () => {
       if (profile) {
         try { setSelectedProfile(JSON.parse(profile)); } catch { /* ignore */ }
       }
+
+      // On page refresh / mount, clear the cached payment initiation details
+      localStorage.removeItem("payment_init_data");
+      localStorage.removeItem("payment_sToken");
+      localStorage.removeItem("payment_sProviderToken");
     }
   }, []);
 
@@ -539,9 +545,9 @@ export const usePaymentHandler = () => {
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) throw new Error("Failed to load Razorpay SDK. Please check your network and try again.");
 
-      // Use cache if same SKU
+      // Use cache if same SKU and same payment method
       const cached = getPaymentInitData();
-      if (cached?.oOrderDetails && cached?.skuId === pricingData.skuId) {
+      if (cached?.oOrderDetails && cached?.skuId === pricingData.skuId && cached?.paymentMethod === paymentMethod) {
         setPreparedData(cached);
         setIsPreparing(false);
         return cached;
@@ -592,6 +598,7 @@ export const usePaymentHandler = () => {
         sToken: newInitiateData?.sToken,
         oOrderDetails: newInitiateData?.oOrderDetails,
         skuId: pricingData.skuId,
+        paymentMethod: paymentMethod,
       };
 
       setPaymentInitData(data);
@@ -615,13 +622,7 @@ export const usePaymentHandler = () => {
   // No await here — createPayment must fire within the same user gesture tick.
 
   const executePayment = (
-    selectedPlan: any,
-    paymentMethod: string,
-    paymentDetails: any,
-    pricingData: PricingData,
-    initiateData: PaymentInitData,
-    intentApp?: string
-  ): Promise<any> => {
+    selectedPlan: any, paymentMethod: string, paymentDetails: any, pricingData: PricingData, initiateData: PaymentInitData, intentApp?: string, p0?: () => void): Promise<any> => {
     return new Promise((resolve, reject) => {
       try {
         // Script must already be loaded by preparePayment
@@ -640,7 +641,7 @@ export const usePaymentHandler = () => {
           email: notes.email || localStorage.getItem("user_email") || "customer@razorpay.com",
           contact: notes.contact || localStorage.getItem("user_phone") || "9999999999",
         };
-
+        logger.info("sunil payment dataa. paymentData", paymentData)
         if (orderDetails.customer_id) paymentData.customer_id = orderDetails.customer_id;
         if (pricingData?.type === "SVOD") paymentData.recurring = 1;
 
@@ -735,6 +736,7 @@ export const usePaymentHandler = () => {
           reject(new Error(msg));
         });
 
+        logger.info("jadiya no payment dataa. paymentData", paymentData)
         if (intentApp && intentApp !== "any") {
           rzp.createPayment(paymentData, { app: intentApp });
         } else {
