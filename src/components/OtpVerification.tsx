@@ -8,6 +8,7 @@ interface OtpVerificationProps {
   onBack: () => void;
   onResend?: () => void;
   disclaimerText?: string;
+  isMobileLayout?: boolean;
 }
 
 export const OtpVerification: React.FC<OtpVerificationProps> = ({
@@ -16,10 +17,17 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
   onBack,
   onResend,
   disclaimerText,
+  isMobileLayout,
 }) => {
-  const [otp, setOtp] = useState<string[]>(["", "", "", ""]);
+  const [otpValue, setOtpValue] = useState("");
   const [timer, setTimer] = useState(15);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [receivedOtpData, setReceivedOtpData] = useState<string>("");
+
+  const addLog = (msg: string) => {
+    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString().split(" ")[0]}: ${msg}`]);
+  };
 
   // Start Resend Timer countdown
   useEffect(() => {
@@ -33,116 +41,132 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
 
   // Focus first input on mount
   useEffect(() => {
-    inputRefs.current[0]?.focus();
+    addLog("Mounted. WebOTP API supported in browser: " + ("OTPCredential" in window));
+    inputRef.current?.focus();
   }, []);
 
-  const submitRef = useRef(onSubmit);
+  const hasSubmittedRef = useRef(false);
+
+  const triggerSubmit = async (code: string) => {
+    if (hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+    try {
+      await onSubmit(code);
+    } finally {
+      hasSubmittedRef.current = false;
+    }
+  };
+
+  const submitRef = useRef(triggerSubmit);
   useEffect(() => {
-    submitRef.current = onSubmit;
+    submitRef.current = triggerSubmit;
   }, [onSubmit]);
 
   // WebOTP API for automatic SMS OTP fetching
   useEffect(() => {
-    if ("OTPCredential" in window) {
+    // Only run WebOTP on the instance that matches the active layout screen size
+    const isMobileScreen = typeof window !== "undefined" && window.innerWidth < 768;
+    const shouldRunWebOTP = isMobileLayout === undefined ? true : (isMobileLayout ? isMobileScreen : !isMobileScreen);
+
+    if (shouldRunWebOTP && "OTPCredential" in window) {
       const ac = new AbortController();
-      navigator.credentials
-        .get({
-          otp: { transport: ["sms"] },
-          signal: ac.signal,
-        })
-        .then((otp: any) => {
-          if (otp && otp.code) {
-            const codeString = String(otp.code).trim();
-            const digits = codeString.split("").slice(0, 4);
-            // Pad to ensure 4 boxes
-            while (digits.length < 4) {
-              digits.push("");
+      
+      addLog(`Scheduling WebOTP get() for ${isMobileLayout ? "mobile" : "desktop"} layout...`);
+      const timeoutId = setTimeout(() => {
+        addLog("Calling navigator.credentials.get()...");
+        navigator.credentials
+          .get({
+            otp: { transport: ["sms"] },
+            signal: ac.signal,
+          })
+          .then((otp: any) => {
+            const displayData = otp ? `code: "${otp.code}", type: "${otp.type}"` : "null/empty";
+            setReceivedOtpData(displayData);
+            addLog("WebOTP Credential Resolved! Code: " + (otp?.code || "none"));
+            window.alert("WebOTP Success! Code: " + (otp?.code || "none"));
+            if (otp && otp.code) {
+              const codeString = String(otp.code).trim().substring(0, 4);
+              setOtpValue(codeString);
+              if (codeString.length >= 4) {
+                addLog("Auto-submitting code: " + codeString);
+                submitRef.current(codeString);
+              }
             }
-            setOtp(digits);
-            if (codeString.length >= 4) {
-              submitRef.current(codeString.substring(0, 4));
+          })
+          .catch((err) => {
+            if (err.name === "AbortError") {
+              addLog("WebOTP aborted (cleanup/remount).");
+              return;
             }
-          }
-        })
-        .catch((err) => {
-          if (err.name === "AbortError") {
-            // Expected when component unmounts or StrictMode re-renders
-            return;
-          }
-          console.error("WebOTP Error:", err);
-        });
+            addLog(`WebOTP Rejected: ${err.message} (${err.name})`);
+            window.alert("WebOTP Error: " + err.message + " (" + err.name + ")");
+            console.error("WebOTP Error:", err);
+          });
+      }, 250);
 
       return () => {
+        addLog("Running WebOTP cleanup...");
+        clearTimeout(timeoutId);
         ac.abort();
       };
     }
-  }, []);
+  }, [isMobileLayout]);
+
+  // Debug event listeners to trace native browser/autofill events
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+
+    const logEvent = (e: Event) => {
+      let val = "";
+      if (e.target instanceof HTMLInputElement) {
+        val = e.target.value;
+      }
+      addLog(`DOM Event: ${e.type} | value: "${val}"`);
+    };
+
+    const events = ["input", "change", "paste", "keydown", "keyup", "focus", "blur"];
+    events.forEach(name => el.addEventListener(name, logEvent));
+
+    return () => {
+      events.forEach(name => el.removeEventListener(name, logEvent));
+    };
+  }, [otpValue]);
 
   // Handle auto-focus and auto-submit
-  const handleChange = (value: string, index: number) => {
-    // Only allow numbers
-    if (value && !/^\d+$/.test(value)) return;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    hasSubmittedRef.current = false;
+    const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+    setOtpValue(val);
 
-    const newOtp = [...otp];
-    // Keep only the last character entered
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-
-    // If typing a digit and not at the end, focus next input
-    if (value && index < 3) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    // Check for auto-submit
-    const combinedOtp = newOtp.join("");
-    if (combinedOtp.length === 4) {
-      onSubmit(combinedOtp);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === "Backspace") {
-      if (!otp[index] && index > 0) {
-        // Focus previous input if current is empty
-        const newOtp = [...otp];
-        newOtp[index - 1] = "";
-        setOtp(newOtp);
-        inputRefs.current[index - 1]?.focus();
-      } else {
-        // Clear current value
-        const newOtp = [...otp];
-        newOtp[index] = "";
-        setOtp(newOtp);
-      }
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").trim();
-    if (/^\d{4}$/.test(pastedData)) {
-      const digits = pastedData.split("");
-      setOtp(digits);
-      onSubmit(pastedData);
+    if (val.length === 4) {
+      triggerSubmit(val);
     }
   };
 
   const handleResend = () => {
+    hasSubmittedRef.current = false;
     setTimer(15);
-    setOtp(["", "", "", ""]);
-    // Focus first input
-    inputRefs.current[0]?.focus();
+    setOtpValue("");
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
     if (onResend) {
       onResend();
     }
   };
 
-  const isComplete = otp.every((val) => val.length === 1);
+  const isComplete = otpValue.length === 4;
 
   return (
     <div className="fade-in responsive-form-container" style={{ width: "100%" }}>
       {/* Contact Info and Edit Link */}
       <div className="responsive-text-align" style={{ marginBottom: "1.5rem", width: "100%" }}>
+        {receivedOtpData && (
+          <div style={{ color: "#39ff14", backgroundColor: "rgba(57, 255, 20, 0.15)", border: "1px solid #39ff14", padding: "8px", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", marginBottom: "0.8rem", wordBreak: "break-all" }}>
+            [RECEIVED WEBOTP DATA]: {receivedOtpData}
+          </div>
+        )}
         <p style={{ color: "#ffffff", fontSize: "16px", marginBottom: "0.5rem" }}>
           Enter the OTP sent on <strong style={{ color: "#ffffff" }}>{contactInfo}</strong>
         </p>
@@ -165,28 +189,58 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       </div>
 
       {/* OTP Boxes Wrapper */}
-      <div className="otp-boxes-container">
-        {otp.map((digit, idx) => (
-          <div
-            key={idx}
-            className={`otp-input-wrapper ${digit ? "filled" : ""}`}
-          >
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleChange(e.target.value, idx)}
-              onKeyDown={(e) => handleKeyDown(e, idx)}
-              onPaste={idx === 0 ? handlePaste : undefined}
-              autoComplete="one-time-code"
-              ref={(el) => {
-                inputRefs.current[idx] = el;
+      <div 
+        className="otp-boxes-container" 
+        style={{ position: "relative", cursor: "text" }}
+        onClick={() => inputRef.current?.focus()}
+      >
+        <input
+          ref={inputRef}
+          type="tel"
+          name="otp"
+          id="otp-input"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={4}
+          value={otpValue}
+          onChange={handleChange}
+          autoComplete="one-time-code"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            opacity: 1,
+            color: "transparent",
+            caretColor: "transparent",
+            backgroundColor: "transparent",
+            border: "none",
+            outline: "none",
+            cursor: "text",
+            fontSize: "24px",
+            zIndex: -1,
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Visible styled boxes */}
+        {[0, 1, 2, 3].map((idx) => {
+          const char = otpValue[idx] || "";
+          const isFocused = otpValue.length === idx;
+          return (
+            <div
+              key={idx}
+              className={`otp-input-wrapper ${char ? "filled" : ""} ${isFocused ? "focused" : ""}`}
+              style={{
+                zIndex: 1,
+                border: isFocused ? "1.5px solid #FAAF3F" : "none",
               }}
-              className="otp-input"
-            />
-          </div>
-        ))}
+            >
+              <span style={{ fontSize: "16px", color: "#ffffff", fontWeight: "400" }}>{char}</span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Timer / Resend OTP Link */}
@@ -216,7 +270,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       <button
         type="button"
         disabled={!isComplete}
-        onClick={() => onSubmit(otp.join(""))}
+        onClick={() => triggerSubmit(otpValue)}
         className={`btn-primary ${isComplete ? "active" : "inactive"} btn-otp-next`}
         style={{
           marginBottom: "1.2rem",
@@ -238,6 +292,30 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       >
         {disclaimerText || "Free for 7 days, then ₹499/year. Cancel anytime."}
       </p>
+
+      {/* Temporary Debug Console */}
+      <div style={{
+        marginTop: "20px",
+        padding: "10px",
+        background: "rgba(0,0,0,0.8)",
+        border: "1px solid #ff4d4d",
+        borderRadius: "8px",
+        fontSize: "11px",
+        color: "#39ff14",
+        fontFamily: "monospace",
+        maxHeight: "150px",
+        overflowY: "auto",
+        textAlign: "left",
+        width: "100%",
+        boxSizing: "border-box"
+      }}>
+        <div style={{fontWeight: "bold", color: "#ff4d4d", borderBottom: "1px solid #ff4d4d", marginBottom: "5px", paddingBottom: "2px"}}>WebOTP Debug Console:</div>
+        {debugLog.length === 0 ? (
+          <div>No logs recorded yet.</div>
+        ) : (
+          debugLog.map((log, i) => <div key={i} style={{marginBottom: "2px"}}>{log}</div>)
+        )}
+      </div>
     </div>
   );
 };
