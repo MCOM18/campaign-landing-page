@@ -573,7 +573,7 @@ export const usePaymentHandler = () => {
       };
 
       const sessionId = localStorage.getItem("session_id");
-      const response = await api.post("subscription/initiate-payment", payload, {
+      const response: any = await api.post("subscription/initiate-payment", payload, {
         headers: { sessionid: sessionId || "" },
       });
 

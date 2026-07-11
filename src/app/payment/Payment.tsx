@@ -604,7 +604,7 @@ function PaymentPage() {
                                       // Use the pre-created/prepared data synchronously to preserve user gesture context
                                       const data = preparedData;
                                       if (!data) {
-                                        toast.info("Setting up secure connection... Please click again in a second.");
+                                        toast("Setting up secure connection... Please click again in a second.");
                                         preparePayment(selectedPlan, "upi").catch(() => {});
                                         return;
                                       }
@@ -662,7 +662,7 @@ function PaymentPage() {
 
                                   const data = preparedData;
                                   if (!data) {
-                                    toast.info("Setting up secure connection... Please click again in a second.");
+                                    toast("Setting up secure connection... Please click again in a second.");
                                     preparePayment(selectedPlan, "upi").catch(() => {});
                                     return;
                                   }

@@ -71,7 +71,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
           .get({
             otp: { transport: ["sms"] },
             signal: ac.signal,
-          })
+          } as any)
           .then((otp: any) => {
             const displayData = otp ? `code: "${otp.code}", type: "${otp.type}"` : "null/empty";
             setReceivedOtpData(displayData);
