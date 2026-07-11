@@ -25,10 +25,6 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [receivedOtpData, setReceivedOtpData] = useState<string>("");
 
-  const addLog = (msg: string) => {
-    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString().split(" ")[0]}: ${msg}`]);
-  };
-
   // Start Resend Timer countdown
   useEffect(() => {
     if (timer > 0) {
@@ -41,7 +37,6 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
 
   // Focus first input on mount
   useEffect(() => {
-    addLog("Mounted. WebOTP API supported in browser: " + ("OTPCredential" in window));
     inputRef.current?.focus();
   }, []);
 
@@ -70,10 +65,8 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
 
     if (shouldRunWebOTP && "OTPCredential" in window) {
       const ac = new AbortController();
-      
-      addLog(`Scheduling WebOTP get() for ${isMobileLayout ? "mobile" : "desktop"} layout...`);
+
       const timeoutId = setTimeout(() => {
-        addLog("Calling navigator.credentials.get()...");
         navigator.credentials
           .get({
             otp: { transport: ["sms"] },
@@ -82,30 +75,22 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
           .then((otp: any) => {
             const displayData = otp ? `code: "${otp.code}", type: "${otp.type}"` : "null/empty";
             setReceivedOtpData(displayData);
-            addLog("WebOTP Credential Resolved! Code: " + (otp?.code || "none"));
-            window.alert("WebOTP Success! Code: " + (otp?.code || "none"));
             if (otp && otp.code) {
               const codeString = String(otp.code).trim().substring(0, 4);
               setOtpValue(codeString);
               if (codeString.length >= 4) {
-                addLog("Auto-submitting code: " + codeString);
                 submitRef.current(codeString);
               }
             }
           })
           .catch((err) => {
             if (err.name === "AbortError") {
-              addLog("WebOTP aborted (cleanup/remount).");
               return;
             }
-            addLog(`WebOTP Rejected: ${err.message} (${err.name})`);
-            window.alert("WebOTP Error: " + err.message + " (" + err.name + ")");
-            console.error("WebOTP Error:", err);
           });
       }, 250);
 
       return () => {
-        addLog("Running WebOTP cleanup...");
         clearTimeout(timeoutId);
         ac.abort();
       };
@@ -122,7 +107,6 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       if (e.target instanceof HTMLInputElement) {
         val = e.target.value;
       }
-      addLog(`DOM Event: ${e.type} | value: "${val}"`);
     };
 
     const events = ["input", "change", "paste", "keydown", "keyup", "focus", "blur"];
@@ -189,8 +173,8 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       </div>
 
       {/* OTP Boxes Wrapper */}
-      <div 
-        className="otp-boxes-container" 
+      <div
+        className="otp-boxes-container"
         style={{ position: "relative", cursor: "text" }}
         onClick={() => inputRef.current?.focus()}
       >
@@ -309,11 +293,11 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         width: "100%",
         boxSizing: "border-box"
       }}>
-        <div style={{fontWeight: "bold", color: "#ff4d4d", borderBottom: "1px solid #ff4d4d", marginBottom: "5px", paddingBottom: "2px"}}>WebOTP Debug Console:</div>
+        <div style={{ fontWeight: "bold", color: "#ff4d4d", borderBottom: "1px solid #ff4d4d", marginBottom: "5px", paddingBottom: "2px" }}>WebOTP Debug Console:</div>
         {debugLog.length === 0 ? (
           <div>No logs recorded yet.</div>
         ) : (
-          debugLog.map((log, i) => <div key={i} style={{marginBottom: "2px"}}>{log}</div>)
+          debugLog.map((log, i) => <div key={i} style={{ marginBottom: "2px" }}>{log}</div>)
         )}
       </div>
     </div>
