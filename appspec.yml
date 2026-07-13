@@ -1,0 +1,25 @@
+version: 0.0
+os: linux
+
+file_exists_behavior: OVERWRITE
+
+files:
+  - source: /
+    destination: /var/www/subscription.jojoapp.in/
+
+# ADD THIS SECTION BELOW
+permissions:
+  - object: /var/www/subscription.jojoapp.in/
+    pattern: "**"
+    owner: nginx
+    group: nginx
+    mode: 755
+    type:
+      - file
+      - directory
+
+hooks:
+  ApplicationStart:
+    - location: script/nginx.sh
+      timeout: 300
+      runas: root
