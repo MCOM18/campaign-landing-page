@@ -18,6 +18,7 @@ export async function verifyOtp(
     otp: request.otp,
     is_register: request.is_register,
     source: request.source,
+    domain: typeof window !== "undefined" ? window.location.hostname : "jojoapp.in"
   };
 
   if (request.source === LoginIdentifierType.PHONE) {
@@ -29,11 +30,11 @@ export async function verifyOtp(
     body.email = request.phone; // API expects 'email' field for email source
   }
 
-  if (request.country !== undefined) body.country = request.country;
-  if (request.state !== undefined) body.state = request.state;
-  if (request.city !== undefined) body.city = request.city;
-  if (request.lat !== undefined) body.lat = request.lat;
-  if (request.lng !== undefined) body.lng = request.lng;
+  if (request.country !== undefined && request.country !== null) body.country = request.country;
+  if (request.state !== undefined && request.state !== null) body.state = request.state;
+  if (request.city !== undefined && request.city !== null) body.city = request.city;
+  if (request.lat !== undefined && request.lat !== null) body.lat = request.lat;
+  if (request.lng !== undefined && request.lng !== null) body.lng = request.lng;
 
   logger.info('[Verify OTP API] Request body:', body);
 

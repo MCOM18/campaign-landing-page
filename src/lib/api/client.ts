@@ -188,10 +188,36 @@ async function request<T>(
 
       // Handle error responses
       if (!response.ok) {
-        const message = data?.message ?? 
-                        data?.['meta-data']?.message ?? 
-                        data?.metaData?.message ?? 
-                        response.statusText;
+        let errorMessage = "";
+
+        if (data && typeof data === "object") {
+          let decryptedData = data;
+          
+          // Determine if we need to decrypt the error response payload
+          const encryptedPayload = data.data ?? (data["meta-data"] && typeof data["meta-data"] === "object" ? data["meta-data"].data : undefined);
+          
+          if (typeof encryptedPayload === "string" && encryptedPayload.length > 0) {
+            try {
+              const decrypted = decrypt(encryptedPayload, appConfig.flags.enableEncryption);
+              if (decrypted && decrypted.trim().length > 0) {
+                const parsed = JSON.parse(decrypted);
+                if (parsed && typeof parsed === "object") {
+                  decryptedData = parsed;
+                }
+              }
+            } catch (decError) {
+              logger.warn("[API Error] Failed to decrypt error payload", { endpoint });
+            }
+          }
+
+          errorMessage = decryptedData?.message ?? 
+                         decryptedData?.["meta-data"]?.message ?? 
+                         decryptedData?.metaData?.message ?? 
+                         decryptedData?.data?.message ?? 
+                         "";
+        }
+
+        const message = errorMessage || response.statusText || "Something went wrong";
         lastError = new AppError(message, response.status as HttpStatus);
 
         // Only retry for 5xx errors (server errors)
