@@ -203,6 +203,13 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
               {displayData.subLabel || displayData.name}
             </span>
           </div>
+          {!isFreeTrial && displayData.price && (
+            <div className="spc-right">
+              <span className="spc-price" style={priceStyle}>
+                {displayData.price}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Free trial subtitle */}

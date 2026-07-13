@@ -835,7 +835,7 @@ export default function Home() {
                             fontWeight: "700"
                           }}
                         >
-                          {`Proceed to pay ${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.sCurrencySymbol || "₹"}${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.nPrice !== undefined ? flatPlansList[selectedPlanIndex].sku.oPricing.nPrice : "499"}`}
+                          Proceed to pay
                         </button>
 
                         {freshPlans?.sFooterNote && (
@@ -1029,7 +1029,7 @@ export default function Home() {
                                       fontWeight: "700"
                                     }}
                                   >
-                                    {`Proceed to pay ${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.sCurrencySymbol || "₹"}${flatPlansList[selectedPlanIndex]?.sku?.oPricing?.nPrice !== undefined ? flatPlansList[selectedPlanIndex].sku.oPricing.nPrice : "499"}`}
+                                    Proceed to pay
                                   </button>
 
                                   {freshPlans?.sFooterNote && (

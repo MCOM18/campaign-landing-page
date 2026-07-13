@@ -188,7 +188,10 @@ async function request<T>(
 
       // Handle error responses
       if (!response.ok) {
-        const message = data?.message ?? response.statusText;
+        const message = data?.message ?? 
+                        data?.['meta-data']?.message ?? 
+                        data?.metaData?.message ?? 
+                        response.statusText;
         lastError = new AppError(message, response.status as HttpStatus);
 
         // Only retry for 5xx errors (server errors)
