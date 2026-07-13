@@ -30,3 +30,11 @@ export const slugMap: Record<number, string> = {
   [AssetType.COLLECTION]: "collections",
   [AssetType.KIDZ]: "kidz",
 };
+
+export enum PurchaseStatus {
+  INITIATED = "INITIATED",
+  PENDING = "PENDING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+  CANCELLED = "CANCELLED",
+}

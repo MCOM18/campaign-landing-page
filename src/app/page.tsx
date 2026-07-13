@@ -37,6 +37,85 @@ const SOCIAL_ICON_MAP: Record<string, string> = {
   linkdin: "/assets/linkdin.svg", // currently twitter.svg is used for LinkedIn slot
 };
 
+const renderFooterWithLinks = (text: string) => {
+  if (!text) return null;
+
+  const termsText = "Terms of Use";
+  const privacyText = "Privacy Statement";
+
+  if (text.includes(termsText) && text.includes(privacyText)) {
+    const partsByTerms = text.split(termsText);
+    const beforeTerms = partsByTerms[0];
+    const afterTerms = partsByTerms.slice(1).join(termsText);
+    
+    const partsByPrivacy = afterTerms.split(privacyText);
+    const betweenTermsAndPrivacy = partsByPrivacy[0];
+    const afterPrivacy = partsByPrivacy.slice(1).join(privacyText);
+
+    return (
+      <>
+        {beforeTerms}
+        <a 
+          href="https://jojoapp.in/terms-conditions" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
+        >
+          {termsText}
+        </a>
+        {betweenTermsAndPrivacy}
+        <a 
+          href="https://jojoapp.in/privacy-policy" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
+        >
+          {privacyText}
+        </a>
+        {afterPrivacy}
+      </>
+    );
+  }
+
+  if (text.includes(termsText)) {
+    const parts = text.split(termsText);
+    return (
+      <>
+        {parts[0]}
+        <a 
+          href="https://jojoapp.in/terms-conditions" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
+        >
+          {termsText}
+        </a>
+        {parts.slice(1).join(termsText)}
+      </>
+    );
+  }
+
+  if (text.includes(privacyText)) {
+    const parts = text.split(privacyText);
+    return (
+      <>
+        {parts[0]}
+        <a 
+          href="https://jojoapp.in/privacy-policy" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
+        >
+          {privacyText}
+        </a>
+        {parts.slice(1).join(privacyText)}
+      </>
+    );
+  }
+
+  return text;
+};
+
 export default function Home() {
   const router = useRouter();
   const { isAppReady } = useBootstrap();
@@ -835,7 +914,7 @@ export default function Home() {
                             fontWeight: "700"
                           }}
                         >
-                          Proceed to pay
+                          Upgrade Now
                         </button>
 
                         {freshPlans?.sFooterNote && (
@@ -844,14 +923,14 @@ export default function Home() {
                               color: "rgba(255, 255, 255, 0.7)",
                               fontSize: "14px",
                               lineHeight: "22px",
-                              textAlign: "center",
+                              textAlign: "left",
                               fontWeight: "400",
                               width: "100%",
                               marginTop: "2.5rem",
                               whiteSpace: "pre-line",
                             }}
                           >
-                            {freshPlans.sFooterNote}
+                            {renderFooterWithLinks(freshPlans.sFooterNote)}
                           </p>
                         )}
                       </div>
@@ -1029,7 +1108,7 @@ export default function Home() {
                                       fontWeight: "700"
                                     }}
                                   >
-                                    Proceed to pay
+                                    Upgrade Now
                                   </button>
 
                                   {freshPlans?.sFooterNote && (
@@ -1038,14 +1117,14 @@ export default function Home() {
                                         color: "rgba(255, 255, 255, 0.7)",
                                         fontSize: "14px",
                                         lineHeight: "22px",
-                                        textAlign: "center",
+                                        textAlign: "left",
                                         fontWeight: "400",
                                         width: "100%",
                                         marginTop: "2.5rem",
                                         whiteSpace: "pre-line",
                                       }}
                                     >
-                                      {freshPlans.sFooterNote}
+                                      {renderFooterWithLinks(freshPlans.sFooterNote)}
                                     </p>
                                   )}
                                 </div>

@@ -16,7 +16,8 @@ export async function sendOtp(
 
   const body: any = {
     is_register: request.is_register,
-    source: request.source
+    source: request.source,
+    domain: typeof window !== "undefined" ? window.location.hostname : "jojoapp.in"
   };
 
   if (request.source === LoginIdentifierType.PHONE) {

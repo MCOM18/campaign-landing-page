@@ -8,6 +8,7 @@ import { logger } from "@/lib/logger/logger";
 import { appConfig } from "@/lib/config/app.config";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
+import { PurchaseStatus } from "../enums/enums";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -252,6 +253,30 @@ export const usePaymentHandler = () => {
     setPollingAttempt(0);
     setShowProcessingOverlay(false);
     setOverlayError(null);
+  };
+
+  const registerPaymentStatus = async (sStatus: PurchaseStatus, sToken: string, ePaymentGateway = "RZP") => {
+    try {
+      const sessionId = localStorage.getItem("session_id") || "";
+      const currentGeoData = getUserGeoLocation();
+
+      const sCountryCode3 = currentGeoData?.country_code || "IN";
+
+      const payload = {
+        sStatus,
+        sToken,
+        ePaymentGateway,
+        sCountryCode3,
+      };
+
+      logger.info("[registerPaymentStatus] Request payload:", payload);
+
+      await api.post("subscription/register-payment-status", payload, {
+        headers: { sessionid: sessionId },
+      });
+    } catch (err) {
+      logger.error("[registerPaymentStatus] Failed to call register-payment-status:", err);
+    }
   };
 
   // ── Polling ────────────────────────────────────────────────────────────────
@@ -590,6 +615,9 @@ export const usePaymentHandler = () => {
         throw new Error(`Invalid initiate response: ${JSON.stringify(response?.data || response)}`);
       }
 
+      // Register status as INITIATED
+      registerPaymentStatus(PurchaseStatus.INITIATED, newInitiateData.sToken, newInitiateData.ePaymentProvider || "RZP");
+
       localStorage.setItem("payment_sToken", newInitiateData.sToken);
       localStorage.setItem("payment_sProviderToken", newInitiateData.sProviderToken);
 
@@ -675,7 +703,12 @@ export const usePaymentHandler = () => {
         rzp.on("payment.success", async (response: any) => {
           console.log("Successs---->> response---->>", response)
           toast.success("Payment successful! Verifying...");
-          window.alert("Congratulation! Payment successful.");
+          // window.alert("Congratulation! Payment successful.");
+
+          if (initiateData?.sToken) {
+            await registerPaymentStatus(PurchaseStatus.SUCCESS, initiateData.sToken, initiateData.ePaymentGateway || "RZP");
+          }
+
           await handlePaymentSuccess({
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_order_id: response.razorpay_order_id,
@@ -684,13 +717,25 @@ export const usePaymentHandler = () => {
           resolve({ success: true });
         });
 
-        rzp.on("payment.error", (error: any) => {
+        rzp.on("payment.error", async (error: any) => {
           const errPayload = error instanceof Error ? error.message : JSON.stringify(error);
           logger.error(`Payment error: ${errPayload}`);
           const msg = error?.error?.description || error?.error?.reason || "Payment failed. Please try again.";
           toast.error(msg);
-          window.alert("Payment failed: " + msg);
+          // window.alert("Payment failed: " + msg);
           setIsProcessing(false);
+
+          const errPaymentId = error?.error?.metadata?.payment_id || error?.metadata?.payment_id;
+          const errOrderId = error?.error?.metadata?.order_id || error?.metadata?.order_id || orderDetails?.order_id;
+          const errCode = error?.error?.code || error?.code;
+
+          if (initiateData?.sToken) {
+            const isCancelled = msg.toLowerCase().includes("cancel") ||
+              (error?.error?.reason === "payment_cancelled") ||
+              (error?.reason === "payment_cancelled");
+            const finalStatus = isCancelled ? PurchaseStatus.CANCELLED : PurchaseStatus.FAILED;
+            await registerPaymentStatus(finalStatus, initiateData.sToken, initiateData.ePaymentGateway || "RZP");
+          }
 
           // Track new unified payment_failure event
           try {
@@ -706,9 +751,6 @@ export const usePaymentHandler = () => {
 
             const devicePayload = buildDevicePayload();
             const sessionId = localStorage.getItem("session_id") || "";
-            const errPaymentId = error?.error?.metadata?.payment_id || error?.metadata?.payment_id;
-            const errOrderId = error?.error?.metadata?.order_id || error?.metadata?.order_id || orderDetails?.order_id;
-            const errCode = error?.error?.code || error?.code;
 
             trackEvent("payment_failure", {
               payment_id: errPaymentId || null,
@@ -737,8 +779,13 @@ export const usePaymentHandler = () => {
         });
 
         logger.info("jadiya no payment dataa. paymentData", paymentData)
+        if (initiateData?.sToken) {
+          registerPaymentStatus(PurchaseStatus.PENDING, initiateData.sToken, initiateData.ePaymentGateway || "RZP");
+        }
+
         if (intentApp && intentApp !== "any") {
-          rzp.createPayment(paymentData, { app: intentApp });
+          const appName = intentApp === "google_pay" ? "gpay" : intentApp;
+          rzp.createPayment(paymentData, { app: appName });
         } else {
           rzp.createPayment(paymentData);
         }

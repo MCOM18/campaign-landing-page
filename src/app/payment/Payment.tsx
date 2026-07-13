@@ -180,22 +180,7 @@ function PaymentPage() {
     }
   }, [osPlatform, preparedData, RAZORPAY_KEY]);
 
-  // Pre-prepare UPI payment session when tab becomes UPI or on mount
-  useEffect(() => {
-    if (isMounted && selectedPlan && activeMethod === PAYMENT_METHOD.UPI) {
-      const storedPhone = localStorage.getItem("user_phone");
-      const userData = (() => { try { return JSON.parse(localStorage.getItem("userData") || "{}"); } catch { return {}; } })();
-      const phoneFromUserData = userData?.phone || userData?.sPhone || userData?.phone_number || userData?.mobile || "";
 
-      // Only pre-prepare if user phone number exists (so backend doesn't reject).
-      // Otherwise, the PhoneCollectModal will fire on button click, which is expected.
-      if (storedPhone || phoneFromUserData) {
-        preparePayment(selectedPlan, "upi").catch((err) => {
-          console.error("Failed to pre-prepare payment:", err);
-        });
-      }
-    }
-  }, [isMounted, selectedPlan, activeMethod]);
 
 
 
@@ -301,8 +286,6 @@ function PaymentPage() {
 
   //*********************************************** */
   const handlePaymentClick = async () => {
-
-    window.alert(`Payment Method: ${paymentMethod}`);
 
     if (paymentMethod === "upi") {
       if (!upiId) {
@@ -431,8 +414,6 @@ function PaymentPage() {
 
             if (isAutoPhoneModal) {
               setIsAutoPhoneModal(false);
-              // Pre-prepare payment so they don't have to wait next time
-              preparePayment(selectedPlan, "upi").catch(() => { });
               return;
             }
 
@@ -665,7 +646,7 @@ function PaymentPage() {
                                     key={cleanCode}
                                     className={`app-card ${activeAppLoader && !isThisLoading ? "opacity-50 pointer-events-none" : ""}`}
                                     style={{ padding: "12px 6px", gap: "8px", borderRadius: "12px" }}
-                                    onClick={() => {
+                                    onClick={async () => {
                                       if (isPreparing || activeAppLoader) return;
 
                                       const storedPhone = localStorage.getItem("user_phone");
@@ -682,30 +663,38 @@ function PaymentPage() {
                                         return;
                                       }
 
-                                      // Use the pre-created/prepared data synchronously to preserve user gesture context
-                                      const data = preparedData;
-                                      if (!data) {
-                                        toast("Setting up secure connection... Please click again in a second.");
-                                        preparePayment(selectedPlan, "upi").catch(() => { });
-                                        return;
-                                      }
-
                                       setActiveAppLoader(cleanCode);
-                                      executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, cleanCode, () => setActiveAppLoader(null))
-                                        .then((res: any) => {
-                                          if (!res) return; // if it was aborted earlier
+                                      try {
+                                        const data = await preparePayment(selectedPlan, "upi");
+                                        if (!data) {
                                           setActiveAppLoader(null);
-                                          if (res?.success) setShowSuccessPopup(true);
-                                          else {
-                                            setFailedErrorMsg(res?.error || "Payment verification failed.");
+                                          return;
+                                        }
+
+                                        if ((data as any).isAlreadyActive) {
+                                          setActiveAppLoader(null);
+                                          setShowGoldPopup(true);
+                                          return;
+                                        }
+
+                                        executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, cleanCode, () => setActiveAppLoader(null))
+                                          .then((res: any) => {
+                                            if (!res) return; // if it was aborted earlier
+                                            setActiveAppLoader(null);
+                                            if (res?.success) setShowSuccessPopup(true);
+                                            else {
+                                              setFailedErrorMsg(res?.error || "Payment verification failed.");
+                                              setShowFailedPopup(true);
+                                            }
+                                          })
+                                          .catch((err: any) => {
+                                            setActiveAppLoader(null);
+                                            setFailedErrorMsg(err?.message || "Payment failed.");
                                             setShowFailedPopup(true);
-                                          }
-                                        })
-                                        .catch((err: any) => {
-                                          setActiveAppLoader(null);
-                                          setFailedErrorMsg(err?.message || "Payment failed.");
-                                          setShowFailedPopup(true);
-                                        });
+                                          });
+                                      } catch (err) {
+                                        setActiveAppLoader(null);
+                                      }
                                     }}
                                   >
                                     <div className="app-icon-wrapper" style={{ background: "transparent", border: "none", width: "40px", height: "40px", borderRadius: "12px", overflow: "hidden" }}>
@@ -725,7 +714,7 @@ function PaymentPage() {
                             {osPlatform === "android" && (
                               <div
                                 className={`app-card any-app-card ${activeAppLoader && activeAppLoader !== "any" ? "opacity-50 pointer-events-none" : ""}`}
-                                onClick={() => {
+                                onClick={async () => {
                                   if (isPreparing || activeAppLoader) return;
 
                                   const storedPhone = localStorage.getItem("user_phone");
@@ -741,29 +730,38 @@ function PaymentPage() {
                                     return;
                                   }
 
-                                  const data = preparedData;
-                                  if (!data) {
-                                    toast("Setting up secure connection... Please click again in a second.");
-                                    preparePayment(selectedPlan, "upi").catch(() => { });
-                                    return;
-                                  }
-
                                   setActiveAppLoader("any");
-                                  executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, "any", () => setActiveAppLoader(null))
-                                    .then((res: any) => {
-                                      if (!res) return;
+                                  try {
+                                    const data = await preparePayment(selectedPlan, "upi");
+                                    if (!data) {
                                       setActiveAppLoader(null);
-                                      if (res?.success) setShowSuccessPopup(true);
-                                      else {
-                                        setFailedErrorMsg(res?.error || "Payment verification failed.");
+                                      return;
+                                    }
+
+                                    if ((data as any).isAlreadyActive) {
+                                      setActiveAppLoader(null);
+                                      setShowGoldPopup(true);
+                                      return;
+                                    }
+
+                                    executePayment(selectedPlan, "upi", { upiId: null }, pricingData, data, "any", () => setActiveAppLoader(null))
+                                      .then((res: any) => {
+                                        if (!res) return;
+                                        setActiveAppLoader(null);
+                                        if (res?.success) setShowSuccessPopup(true);
+                                        else {
+                                          setFailedErrorMsg(res?.error || "Payment verification failed.");
+                                          setShowFailedPopup(true);
+                                        }
+                                      })
+                                      .catch((err: any) => {
+                                        setActiveAppLoader(null);
+                                        setFailedErrorMsg(err?.message || "Payment failed.");
                                         setShowFailedPopup(true);
-                                      }
-                                    })
-                                    .catch((err: any) => {
-                                      setActiveAppLoader(null);
-                                      setFailedErrorMsg(err?.message || "Payment failed.");
-                                      setShowFailedPopup(true);
-                                    });
+                                      });
+                                  } catch (err) {
+                                    setActiveAppLoader(null);
+                                  }
                                 }}
                               >
                                 <div className="app-icon-wrapper app-generic" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", width: "40px", height: "40px", borderRadius: "12px", overflow: "hidden" }}>
@@ -917,7 +915,7 @@ function PaymentPage() {
               ) : isProcessing ? (
                 "Processing..."
               ) : (
-                "Proceed to pay"
+                "Upgrade Now"
               )}
             </button>
           </div>
