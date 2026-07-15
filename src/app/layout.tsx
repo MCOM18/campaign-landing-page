@@ -5,6 +5,7 @@ import { ReactQueryProvider } from "@/lib/react-query/provider";
 import { BootstrapProvider } from "@/lib/bootstrap/BootstrapProvider";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import { AnalyticsProvider } from "@/shared/analytics";
+import { StatusLine } from "@/components/StatusLine";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -139,7 +140,7 @@ export default function RootLayout({
             __html: `
               !function(f,b,e,v,n,t,s)
               {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+               n.callMethod.apply(n,arguments):n.queue.push(arguments)};
               if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
               n.queue=[];t=b.createElement(e);t.async=!0;
               t.src=v;s=b.getElementsByTagName(e)[0];
@@ -162,6 +163,7 @@ export default function RootLayout({
           <BootstrapProvider>
             <AnalyticsProvider>
               {children}
+              <StatusLine />
             </AnalyticsProvider>
           </BootstrapProvider>
         </ReactQueryProvider>
