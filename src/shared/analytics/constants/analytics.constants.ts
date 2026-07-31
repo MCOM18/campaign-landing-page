@@ -18,6 +18,8 @@ export const EVENT_NAMES = {
   LOGIN_COMPLETED: 'login_completed',
   PAYMENT_SUCCESS: 'payment_success',
   PAYMENT_FAILURE: 'payment_failure',
+  SVOD_PLAN_SELECTED: "svod_plan_selected",
+  SVOD_PURCHASE_STARTED: "svod_purchase_started"
 } as const;
 
 export const GA4_LIMITS = {

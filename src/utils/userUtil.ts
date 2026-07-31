@@ -1,3 +1,6 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
 export const getUserGeoLocation = () => {
   try {
     if (typeof window === "undefined") return {};
@@ -123,3 +126,7 @@ export const getFullUserData = () => {
     geoLocation: getUserGeoLocation(),
   };
 };
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}

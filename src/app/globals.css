@@ -358,6 +358,11 @@ body {
   background: linear-gradient(44.13deg, var(--gradient-start) 21.63%, var(--gradient-middle) 49.52%, var(--gradient-end) 81.68%);
 }
 
+.premium-badge-bg {
+  background: linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%) !important;
+  color: #120c07 !important;
+}
+
 /* Movie Posters Banner */
 .posters-banner-container {
   border-radius: 0;

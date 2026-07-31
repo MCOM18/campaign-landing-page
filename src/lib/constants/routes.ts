@@ -30,6 +30,7 @@ export const ROUTES = {
   SHOWS: "/shows",
   NATAK: "/nataks",
   WATCHLIST: "/watchlist",
+  PAYMENT: "/payment",
 
   // SSO Callback routes
   APPLE_CALLBACK: '/auth/apple/callback',
