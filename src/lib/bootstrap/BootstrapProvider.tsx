@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { fetchConfig, setAppConfig } from "@lib/config/app.config";
 import { fetchGeoData } from "@lib/geo/geo.service";
 import { getCachedGeo, setCachedGeo } from "@lib/geo/geo.cache";
@@ -16,6 +17,7 @@ interface BootstrapProviderProps {
 type BootstrapState = "loading" | "ready" | "error";
 
 export function BootstrapProvider({ children }: BootstrapProviderProps) {
+  const pathname = usePathname();
   const [state, setState] = useState<BootstrapState>("loading");
   const [error, setError] = useState<string | null>(null);
   const [isAppReady, setIsAppReady] = useState(false);
@@ -100,24 +102,29 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
           city: finalGeoData.city || '',
         };
 
-        // STEP 2.5: Fetch Special Offer Plan (used by /campaign route)
-        try {
-          logger.info("[Bootstrap] Fetching special offer plan...");
-          const offerResponse = await getSpecialOfferPlan({
-            country: config.geoLocationData.countryCode || "IN",
-            countryCode: config.geoLocationData.countryCode || "IN",
-            sState: config.geoLocationData.region || "",
-            city: config.geoLocationData.city || "",
-            bIsRegistered: false,
-            fcmToken: ""
-          });
-          config.specialOfferPlan = offerResponse.data;
-          logger.info("[Bootstrap] Special offer plan loaded successfully", offerResponse.data);
-        } catch (offerError) {
-          // Special offer plan failure should NOT block app
-          logger.warn("[Bootstrap] Failed to fetch special offer plan", {
-            error: offerError instanceof Error ? offerError.message : 'Unknown'
-          });
+        // STEP 2.5: Fetch Special Offer Plan — only on /campaign route
+        const isCampaignRoute = pathname?.startsWith("/campaign");
+        if (isCampaignRoute) {
+          try {
+            logger.info("[Bootstrap] Fetching special offer plan (campaign route only)...");
+            const offerResponse = await getSpecialOfferPlan({
+              country: config.geoLocationData.countryCode || "IN",
+              countryCode: config.geoLocationData.countryCode || "IN",
+              sState: config.geoLocationData.region || "",
+              city: config.geoLocationData.city || "",
+              bIsRegistered: false,
+              fcmToken: ""
+            });
+            config.specialOfferPlan = offerResponse.data;
+            logger.info("[Bootstrap] Special offer plan loaded successfully", offerResponse.data);
+          } catch (offerError) {
+            // Special offer plan failure should NOT block app
+            logger.warn("[Bootstrap] Failed to fetch special offer plan", {
+              error: offerError instanceof Error ? offerError.message : 'Unknown'
+            });
+          }
+        } else {
+          logger.info("[Bootstrap] Skipping special offer plan (not a campaign route)");
         }
 
         // STEP 3: Set app ready
