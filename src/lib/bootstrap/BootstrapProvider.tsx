@@ -100,7 +100,7 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
           city: finalGeoData.city || '',
         };
 
-        // STEP 2.5: Fetch Special Offer Plan
+        // STEP 2.5: Fetch Special Offer Plan (used by /campaign route)
         try {
           logger.info("[Bootstrap] Fetching special offer plan...");
           const offerResponse = await getSpecialOfferPlan({
