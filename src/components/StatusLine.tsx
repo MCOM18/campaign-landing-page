@@ -37,6 +37,10 @@ export function StatusLine() {
 
   if (!mounted) return null;
 
+  // Never show StatusLine in production
+  const isProd = process.env.NEXT_PUBLIC_ENV_TYPE === "prod";
+  if (isProd) return null;
+
   // Get env type ("stage" or "prod")
   let envType = "STAGE";
   try {

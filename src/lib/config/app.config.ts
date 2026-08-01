@@ -310,7 +310,7 @@ export function getApiUpdateTimestamp(resourceName: string): string | null {
 export const appConfig = {
     flags: {
         enableEncryption: true,  // Enable encryption for API responses
-        enableLogger: process.env.NODE_ENV !== "production",
+        enableLogger: process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENV_TYPE !== "prod",
         enableMocks: false,
         enableAnalytics: false,
         enableCaptcha: false,     // Enable/disable reCAPTCHA verification globally

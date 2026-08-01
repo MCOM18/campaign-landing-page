@@ -1,3 +1,4 @@
+import "@/lib/utils/suppressConsole";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import Script from "next/script";
