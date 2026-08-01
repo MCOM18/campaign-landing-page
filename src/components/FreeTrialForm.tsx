@@ -229,8 +229,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           width: "100%",
         }}
       >
-        {footerNote || "No charges during the trial. Payment will be charged to your account after the trial ends unless cancelled at least 24 hours before renewal. Subscription renews automatically."}
-      </p>
+        By proceeding with the "Subscribe Now" process, we might send a one-time verification code to the Phone number/Email linked to your account. Standard message and data rates may apply.</p>
     </form>
   );
 };
