@@ -706,6 +706,7 @@ export default function page() {
                       lottieRef={lottieMobileRef}
                       animationData={thumbnailsJson}
                       loop={true}
+                      onDOMLoaded={() => lottieMobileRef.current?.setSpeed(0.15)}
                       style={{ width: "100%", height: "100%" }}
                       rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
                     />
@@ -894,6 +895,7 @@ export default function page() {
                       lottieRef={lottieDesktopRef}
                       animationData={thumbnailsJson}
                       loop={true}
+                      onDOMLoaded={() => lottieDesktopRef.current?.setSpeed(0.15)}
                       style={{ width: "100%", height: "100%" }}
                       rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
                     />
