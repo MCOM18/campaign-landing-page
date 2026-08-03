@@ -20,6 +20,9 @@ export const env = {
   fallbackSocketUrl: process.env.NEXT_PUBLIC_SOCKET_URL || "",
   fallbackEnvType: (process.env.NEXT_PUBLIC_ENV_TYPE || "stage") as "stage" | "prod",
 
+  // App Version
+  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || process.env.NEXT_PUBLIC_VERSION || "v1.0.0",
+
   // reCAPTCHA v3
   recaptchaSiteKey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "",
 } as const;

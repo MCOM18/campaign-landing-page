@@ -13,6 +13,7 @@ import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { completeOtpVerification, initiateOtpFlow } from "@/features/auth/services/auth.service";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { appConfig } from "@/lib/config/app.config";
+import { env } from "@/lib/config/env";
 import { REGEX } from "@/lib/constants/regex";
 import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
@@ -1181,11 +1182,18 @@ export default function page() {
                   </a>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "1rem", justifyContent: "flex-end" }}>
-                  <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
-                  <span style={{ fontSize: "12px", color: "var(--text-footer)", fontWeight: 400 }}>
-                    {new Date().getFullYear()} JOJO LIMITED. All the Copyrights Reserved.
-                  </span>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", marginTop: "1rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
+                    <span style={{ fontSize: "12px", color: "var(--text-footer)", fontWeight: 400 }}>
+                      {new Date().getFullYear()} JOJO LIMITED. All the Copyrights Reserved.
+                    </span>
+                  </div>
+                  {env.appVersion && (
+                    <span style={{ fontSize: "11px", color: "var(--text-footer)", opacity: 0.7, fontWeight: 400 }}>
+                      v{env.appVersion.replace(/^v/i, "")}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
