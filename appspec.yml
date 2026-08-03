@@ -11,14 +11,24 @@ files:
 permissions:
   - object: /var/www/subscription.jojoapp.in/
     pattern: "**"
-    owner: nginx
-    group: nginx
+    owner: ec2-user
+    group: ec2-user
     mode: 755
     type:
       - file
       - directory
 
 hooks:
+  BeforeInstall:
+    - location: script/cleanup.sh
+      timeout: 300
+      runas: ec2-user
+
+  AfterInstall:
+    - location: script/deploy.sh
+      timeout: 3600
+      runas: ec2-user
+
   ApplicationStart:
     - location: script/nginx.sh
       timeout: 300
