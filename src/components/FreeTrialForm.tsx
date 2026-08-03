@@ -204,19 +204,21 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
       </button>
 
       {/* Helper text under button */}
-      <p
-        style={{
-          color: "rgba(255, 255, 255, 0.7)",
-          fontSize: "14px",
-          fontWeight: "600",
-          lineHeight: "18px",
-          textAlign: "inherit",
-          marginBottom: "3rem",
-          width: "100%",
-        }}
-      >
-        {disclaimerText}
-      </p>
+      {disclaimerText && (
+        <p
+          style={{
+            color: "rgba(255, 255, 255, 0.7)",
+            fontSize: "14px",
+            fontWeight: "600",
+            lineHeight: "18px",
+            textAlign: "inherit",
+            marginBottom: "3rem",
+            width: "100%",
+          }}
+        >
+          {disclaimerText}
+        </p>
+      )}
 
       {/* Long disclaimer */}
       <p

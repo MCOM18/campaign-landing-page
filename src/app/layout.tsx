@@ -16,12 +16,11 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "JOJO Gold - Start Your 7-Day Free Trial",
-  description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p. Start your 7-day free trial now.",
+  title: "JOJO Gold",
+  description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p.",
   keywords: [
     "JOJO Gold",
     "JOJO Gold Premium",
-    "7-day free trial",
     "premium streaming",
     "no video ads",
     "watch on 4 devices",
@@ -46,8 +45,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "JOJO Gold - Start Your 7-Day Free Trial",
-    description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p. Start your 7-day free trial now.",
+    title: "JOJO Gold",
+    description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p.",
     url: "https://jojoapp.in",
     siteName: "JOJO",
     images: [
@@ -63,8 +62,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "JOJO Gold - Start Your 7-Day Free Trial",
-    description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p. Start your 7-day free trial now.",
+    title: "JOJO Gold",
+    description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p.",
     images: ["https://cdn.thesupercms.com/app_media/sub/Watch-on-upto-4-Devices.png"],
   },
 };
@@ -80,7 +79,7 @@ export default function RootLayout({
     "@type": "WebSite",
     "name": "JOJO Gold",
     "url": "https://jojoapp.in",
-    "description": "Start your 7-day free trial of JOJO Gold. Access exclusive premium content, enjoy ad-free videos, stream on up to 4 devices, and watch in 1080p Full HD.",
+    "description": "Get unlimited access to JOJO Gold. Access exclusive premium content, enjoy ad-free videos, stream on up to 4 devices, and watch in 1080p Full HD.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://jojoapp.in/?q={search_term_string}",
@@ -153,7 +152,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased" suppressHydrationWarning> 
+      <body className="antialiased" suppressHydrationWarning>
         <noscript>
           <img height="1" width="1" style={{ display: "none" }}
             src="https://www.facebook.com/tr?id=2043234696276290&ev=PageView&noscript=1"

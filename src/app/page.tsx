@@ -800,7 +800,6 @@ export default function page() {
                       <FreeTrialForm
                         onSubmit={handleInputSubmit}
                         confirmButtonLabel={confirmButtonLabel}
-                        disclaimerText={disclaimerText}
                         footerNote={footerNote}
                       />
                     ) : step === TrialFormStep.OTP ? (
@@ -957,7 +956,6 @@ export default function page() {
                                 <FreeTrialForm
                                   onSubmit={handleInputSubmit}
                                   confirmButtonLabel={confirmButtonLabel}
-                                  disclaimerText={disclaimerText}
                                   footerNote={footerNote}
                                 />
                               ) : step === TrialFormStep.OTP ? (
@@ -1073,7 +1071,7 @@ export default function page() {
               <div className="web-footer-column">
                 <a href="https://jojolimited.com/career" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Careers</a>
                 <a href="https://jojolimited.com/contact" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Contact us</a>
-                <a href="mailto:support@appjojo.in" className="web-footer-link" style={{ textDecoration: "none" }}>Support</a>
+                <a href="https://help.jojoapp.in/en/support/home" target="_blank" className="web-footer-link" style={{ textDecoration: "none" }}>Support</a>
               </div>
 
               <div className="web-footer-column" style={{ alignItems: "flex-end", textAlign: "right" }}>
@@ -1152,12 +1150,17 @@ export default function page() {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", marginTop: "1rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <a
+                    href="https://jojolimited.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: "4px", textDecoration: "none", cursor: "pointer" }}
+                  >
                     <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
                     <span style={{ fontSize: "12px", color: "var(--text-footer)", fontWeight: 400 }}>
                       {new Date().getFullYear()} JOJO LIMITED. All the Copyrights Reserved.
                     </span>
-                  </div>
+                  </a>
                   {env.appVersion && (
                     <span style={{ fontSize: "11px", color: "var(--text-footer)", opacity: 0.7, fontWeight: 400 }}>
                       v{env.appVersion.replace(/^v/i, "")}
