@@ -814,22 +814,6 @@ export default function page() {
                       />
                     ) : step === TrialFormStep.PLANS ? (
                       <div className="fade-in" style={{ width: "100%" }}>
-                        <div
-                          style={{
-                            padding: "14px 16px",
-                            borderRadius: "12px",
-                            border: "1px solid rgba(250, 175, 63, 0.3)",
-                            background: "rgba(250, 175, 63, 0.08)",
-                            color: "#FAAF3F",
-                            fontSize: "13px",
-                            lineHeight: "18px",
-                            textAlign: "center",
-                            marginBottom: "1.5rem",
-                            fontWeight: "500",
-                          }}
-                        >
-                          You are not eligible for a free trial as this offer has already been claimed on your account. Please choose a plan below to subscribe.
-                        </div>
 
                         <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
                           {flatPlansList.map((planObj, idx) => (
@@ -987,22 +971,7 @@ export default function page() {
                                 />
                               ) : step === TrialFormStep.PLANS ? (
                                 <div className="fade-in" style={{ width: "100%" }}>
-                                  <div
-                                    style={{
-                                      padding: "14px 16px",
-                                      borderRadius: "12px",
-                                      border: "1px solid rgba(250, 175, 63, 0.3)",
-                                      background: "rgba(250, 175, 63, 0.08)",
-                                      color: "#FAAF3F",
-                                      fontSize: "13px",
-                                      lineHeight: "18px",
-                                      textAlign: "center",
-                                      marginBottom: "1.5rem",
-                                      fontWeight: "500",
-                                    }}
-                                  >
-                                    You are not eligible for a free trial as this offer has already been claimed on your account. Please choose a plan below to subscribe.
-                                  </div>
+
 
                                   <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
                                     {flatPlansList.map((planObj, idx) => (
