@@ -8,6 +8,14 @@ echo "========================================"
 echo "Starting Application Deployment"
 echo "========================================"
 
+source /home/ec2-user/.bashrc || source /etc/profile
+
+export NVM_DIR="/home/ec2-user/.nvm"
+
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh"
+fi
+
 # Check if application directory exists
 if [ ! -d "$APP_DIR" ]; then
     echo "ERROR: Application directory does not exist: $APP_DIR"
@@ -39,5 +47,3 @@ npm run build
 echo "========================================"
 echo "Deployment completed successfully."
 echo "========================================"
-
-exit 0
