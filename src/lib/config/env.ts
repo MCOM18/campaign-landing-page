@@ -22,7 +22,7 @@ export const env = {
 
   // App Version
   appVersion: process.env.NEXT_PUBLIC_APP_VERSION || process.env.NEXT_PUBLIC_VERSION || "v1.0.0",
-  timestamp: process.env.NEXT_PUBLIC_BUILD_TIME || "",
+  timestamp: process.env.NEXT_PUBLIC_BUILD_TIME || new Date().toISOString(),
   // reCAPTCHA v3
   recaptchaSiteKey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "",
 } as const;
