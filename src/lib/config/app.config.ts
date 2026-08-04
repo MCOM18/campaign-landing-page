@@ -1,6 +1,7 @@
 import { HttpStatus } from "@/enums/http.enum";
 import { DEFAULT_HEADER_VALUES, HEADERS } from "@lib/constants/headers";
 import { decrypt } from "@lib/crypto/decrypt";
+import { encrypt } from "@lib/crypto/encrypt";
 import { logger } from "@lib/logger/logger";
 import { env } from "./env";
 
@@ -121,7 +122,15 @@ async function performFetch(): Promise<RuntimeConfig> {
                     [HEADERS.APP_VERSION]: DEFAULT_HEADER_VALUES.APP_VERSION,
                     [HEADERS.PROJECT]: DEFAULT_HEADER_VALUES.PROJECT,
                 },
-                body: JSON.stringify({}), // Empty body as per your old flow
+                body: JSON.stringify({
+                    data: encrypt(
+                        JSON.stringify({
+                            domain: typeof window !== "undefined" ? window.location.hostname : "jojoapp.in",
+                            is_enable_campaign_event_config: true
+                        }),
+                        appConfig.flags.enableEncryption
+                    )
+                }),
             });
 
             logger.info(`[Config] Response status: ${response.status}`);
