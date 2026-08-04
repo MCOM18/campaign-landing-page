@@ -10,6 +10,7 @@ import { AnalyticsProvider } from '../model/provider.types';
 import { buildDevicePayload } from '../utils/buildDevicePayload';
 import { buildUserPayload } from '../utils/buildUserPayload';
 import { analyticsLogger } from '../utils/logger';
+import { getSourceLink, parseSourceLinkParams } from '../utils/getSourceLink';
 
 class AnalyticsService {
   private isInitialized = false;
@@ -55,16 +56,27 @@ class AnalyticsService {
   track(event: AnalyticsEvent | string, properties?: Record<string, any>): void {
     if (!this.isEnabled) return;
     try {
+      const sourceLink = getSourceLink(typeof event === 'object' ? event.properties?.source_link : properties?.source_link);
+      const sourceParams = parseSourceLinkParams(sourceLink);
+
+      const eventProps = typeof event === 'string' ? properties : event?.properties;
+      const enrichedProperties = {
+        ...(sourceLink ? { source_link: sourceLink } : {}),
+        ...sourceParams,
+        ...eventProps,
+      };
+
       let enrichedEvent: AnalyticsEvent;
       if (typeof event === 'string') {
         enrichedEvent = {
           name: event,
-          properties,
+          properties: enrichedProperties,
           context: this.buildContext(),
         };
       } else {
         enrichedEvent = {
           ...event,
+          properties: enrichedProperties,
           context: this.buildContext(event.context),
         };
       }

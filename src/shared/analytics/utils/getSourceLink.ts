@@ -43,7 +43,8 @@ export function parseSourceLinkParams(overrideSourceLink?: string): Record<strin
       });
     } catch {
       try {
-        const url = new URL(sourceLink, '');
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+        const url = new URL(sourceLink, baseUrl);
         url.searchParams.forEach((value, key) => {
           params[key] = value;
         });
