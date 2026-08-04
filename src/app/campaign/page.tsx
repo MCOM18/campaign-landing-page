@@ -1278,8 +1278,13 @@ export default function Home() {
                     </span>
                   </a>
                   {env.appVersion && (
-                    <span style={{ fontSize: "11px", color: "var(--text-footer)", opacity: 0.7, fontWeight: 400 }}>
+                    <span style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
                       v{env.appVersion.replace(/^v/i, "")}
+                    </span>
+                  )}
+                  {env.timestamp && (
+                    <span style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
+                      {env.timestamp}
                     </span>
                   )}
                 </div>
