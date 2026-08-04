@@ -10,4 +10,4 @@ export type { AnalyticsEvent } from './model/common.types';
 export type { EventContext } from './model/context.types';
 export { AnalyticsProvider as AnalyticsProviderEnum } from './model/provider.types';
 export { EventCriticality } from './model/provider.types';
-export { getSourceLink } from './utils/getSourceLink';
+export { getSourceLink, parseSourceLinkParams } from './utils/getSourceLink';
