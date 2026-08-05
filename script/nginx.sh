@@ -1,8 +1,13 @@
 #!/bin/bash
+
 set -e
+
+echo "Testing nginx configuration..."
 
 nginx -t
 
-systemctl restart nginx
+echo "Reloading nginx..."
+
+systemctl reload nginx
 
 echo "Nginx reloaded successfully."

@@ -17,6 +17,7 @@ cd "$APP_DIR"
 find . -mindepth 1 \
     ! -name ".env" \
     ! -name ".env.*" \
+    ! -name ".well-known" \
     ! -name ".git" \
     ! -name ".gitignore" \
     -exec rm -rf {} + 2>/dev/null || true
