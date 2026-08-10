@@ -142,8 +142,8 @@ body {
   position: relative;
   width: 100%;
   margin-bottom: 1.5rem;
-  background: var(--theme_10_50, rgba(25, 25, 25, 0.50)) !important;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 25px;
   padding: 1.5px;
   padding-left: 12px;
   padding-right: 8px;
@@ -179,8 +179,8 @@ body {
 }
 
 .form-input:-webkit-autofill,
-.form-input:-webkit-autofill:hover, 
-.form-input:-webkit-autofill:focus, 
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
 .form-input:-webkit-autofill:active {
   -webkit-text-fill-color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
@@ -205,7 +205,6 @@ body {
   height: 48px;
   border-radius: 16px;
   position: relative;
-  background: var(--theme_10_50, rgba(25, 25, 25, 0.50)) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -558,7 +557,7 @@ body {
 
   .web-footer-container {
     width: 100% !important;
-    padding: 40px 96px 40px 96px !important;
+    padding: 40px 0 !important;
     margin-top: auto !important;
     position: relative !important;
     z-index: 10 !important;
@@ -621,16 +620,7 @@ body {
     width: 194px !important;
     height: 48px !important;
     padding: 0 !important;
-    border-radius: 16px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-
-  @media (min-width: 768px) {
-    .btn-start-trial {
-      margin-left: 0 !important;
-      margin-right: auto !important;
-    }
+    border-radius: 30px !important;
   }
 
   .btn-otp-next {
@@ -648,6 +638,84 @@ body {
       margin-right: auto !important;
     }
   }
+}
+
+/* Mobile OTP Next button — full 50% width */
+.btn-otp-next {
+  width: 50% !important;
+  height: 48px !important;
+  border-radius: 30px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Hide scrollbar on login overlay (Firefox + Chrome/Safari) */
+.login-flow-screen {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.login-flow-screen::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Footer — Mobile-first base styles ─── */
+.web-footer-container {
+  width: 100%;
+  padding: 24px 0 32px;
+  position: relative;
+  z-index: 10;
+}
+
+.mobile-footer-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  border-top: 1px solid rgba(226, 226, 226, 0.2);
+  padding-top: 24px;
+}
+
+.desktop-footer-wrapper {
+  display: none;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .mobile-footer-wrapper {
+    display: none !important;
+  }
+  .desktop-footer-wrapper {
+    display: block !important;
+  }
+}
+
+.web-footer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border-top: 1px solid rgba(226, 226, 226, 0.2);
+  padding-top: 24px;
+  width: 100%;
+}
+
+.web-footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--text-footer);
+  align-items: flex-start;
+  text-align: left;
+}
+
+.web-footer-link {
+  cursor: pointer;
+  color: var(--text-footer);
+  font-weight: 300;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
 /* Country Selector and Dropdown Styles */
@@ -697,19 +765,20 @@ body {
   top: calc(100% + 8px);
   left: -12px;
   width: 280px;
-  background: rgba(28, 26, 23, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   padding: 12px;
   z-index: 9999;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .country-search-input {
   width: 100%;
   padding: 10px 12px;
-  background: rgba(25, 25, 25, 0.8);
+  background: rgba(255, 255, 255, 0.15);
   border: 1.5px solid transparent;
   border-radius: 10px;
   color: var(--text-primary);

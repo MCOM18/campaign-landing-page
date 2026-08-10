@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:stage": "npx env-cmd -f .env.stage next dev",
+    "stage": "npx env-cmd -f .env.stage next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

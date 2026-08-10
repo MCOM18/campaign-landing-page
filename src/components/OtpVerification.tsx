@@ -218,6 +218,8 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
               className={`otp-input-wrapper ${char ? "filled" : ""} ${isFocused ? "focused" : ""}`}
               style={{
                 zIndex: 1,
+                backgroundColor: "rgba(255, 255, 255, 0.15)",
+                borderRadius: "25px",
                 border: isFocused ? "1.5px solid #FAAF3F" : "none",
               }}
             >
@@ -255,10 +257,26 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         type="button"
         disabled={!isComplete}
         onClick={() => triggerSubmit(otpValue)}
-        className={`btn-primary ${isComplete ? "active" : "inactive"} btn-otp-next`}
+        className={`btn-primary btn-otp-next`}
         style={{
           marginBottom: "1.2rem",
           outline: "none",
+          ...(isComplete
+            ? {
+              background: "rgba(242, 110, 33, 1)",
+              backgroundImage: "none",
+              color: "#ffffff",
+              border: "none",
+              boxShadow: "none",
+            }
+            : {
+              background: "rgba(255, 255, 255, 0.15)",
+              backgroundImage: "none",
+              border: "none",
+              boxShadow: "none",
+              cursor: "not-allowed",
+              color: "rgba(255, 255, 255, 0.4)",
+            }),
         }}
       >
         Next

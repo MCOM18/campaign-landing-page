@@ -189,7 +189,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
       <button
         type="submit"
         disabled={!isActive}
-        className={`btn-primary ${isActive ? "active" : "inactive"} btn-start-trial`}
+        className={`btn-primary btn-start-trial`}
         style={{
           marginBottom: "1.2rem",
           outline: "none",
@@ -198,6 +198,23 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           marginLeft: "auto",
           marginRight: "auto",
           padding: "10px 10px 10px 10px",
+          borderRadius: "9999px",
+          ...(isActive
+            ? {
+              background: "rgba(242, 110, 33, 1)",
+              backgroundImage: "none",
+              color: "#ffffff",
+              border: "none",
+              boxShadow: "none",
+            }
+            : {
+              background: "rgba(255, 255, 255, 0.15)",
+              backgroundImage: "none",
+              border: "none",
+              boxShadow: "none",
+              cursor: "not-allowed",
+              color: "rgba(255, 255, 255, 0.4)",
+            }),
         }}
       >
         {confirmButtonLabel}
@@ -211,7 +228,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
             fontSize: "14px",
             fontWeight: "600",
             lineHeight: "18px",
-            textAlign: "inherit",
+            textAlign: "left",
             marginBottom: "3rem",
             width: "100%",
           }}

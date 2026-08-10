@@ -1,6 +1,8 @@
 {
   "cleanUrls": true,
   "rewrites": [
+    { "source": "/offer/:id", "destination": "/offer/default.html" },
+    { "source": "/offer/:id/**", "destination": "/offer/default.html" },
     { "source": "/link=**", "destination": "/index.html" },
     { "source": "**/link=**", "destination": "/index.html" }
   ]

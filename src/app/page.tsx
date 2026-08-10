@@ -15,6 +15,7 @@ import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { appConfig } from "@/lib/config/app.config";
 import { env } from "@/lib/config/env";
 import { REGEX } from "@/lib/constants/regex";
+import Footer from "@/components/Footer";
 import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
 import { trackEvent } from "@/services/analytics/events";
@@ -624,6 +625,14 @@ export default function page() {
       }
 
       if (!isGoldUser) {
+        const pendingCampaignId = typeof window !== "undefined" ? localStorage.getItem("pending_campaign_id") : null;
+        if (pendingCampaignId) {
+          clearTimeout(safetyTimeout);
+          setIsVerifying(false);
+          router.push(`/offer/${pendingCampaignId}`);
+          return;
+        }
+
         // allplans-campaign never has oOfferDetails, so always show plan selection.
         // Use fresh post-login plans if available, otherwise fall back to the initially loaded data.
         if (freshPlansData) {
@@ -698,173 +707,243 @@ export default function page() {
       <main className="app-container">
         {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
         <div className="mobile-only" style={{ width: "100%" }}>
-          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {Object.values(PageSection).map((section) => {
-              if (section === PageSection.BANNER) {
-                return (
-                  <div key={section} className="posters-banner-container">
-                    <Lottie
-                      lottieRef={lottieMobileRef}
-                      animationData={thumbnailsJson}
-                      loop={true}
-                      onDOMLoaded={() => lottieMobileRef.current?.setSpeed(0.15)}
-                      style={{ width: "100%", height: "100%" }}
-                      rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-                    />
-                    <div className="posters-banner-mask" />
-                  </div>
-                );
-              }
-              if (section === PageSection.TOPBAR) {
-                return (
-                  <header key={section} style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
-                    <JojoLogo />
-                  </header>
-                );
-              }
-              if (section === PageSection.HEADING) {
-                if (step === TrialFormStep.PLANS) return null;
-                return (
-                  <div key={section} style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2.5rem" }}>
-                    <h1
-                      className="gold-text-gradient"
-                      style={{
-                        fontSize: "30px",
-                        fontWeight: "700",
-                        textTransform: "uppercase",
-                        letterSpacing: "1.5px",
-                        textAlign: "center",
-                        margin: 0,
-                        lineHeight: "48px",
-                      }}
-                    >
-                      Login to explore your jounrey
-                    </h1>
-                  </div>
-                );
-              }
-              if (section === PageSection.FEATURES) {
-                return (
-                  <div
-                    key={section}
+
+          {/* Login Flow: Purple gradient screen for INPUT and OTP steps */}
+          {(step === TrialFormStep.INPUT || step === TrialFormStep.OTP) ? (
+            <div
+              className="login-flow-screen fade-in"
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 100,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                overflowY: "scroll",
+                scrollbarWidth: "none",
+                background: "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a",
+              }}
+            >
+              {/* Logo at top — always above the Mask_group image */}
+              <div style={{ width: "100%", display: "flex", justifyContent: "center", paddingTop: "48px", paddingBottom: "0", position: "relative", zIndex: 2 }}>
+                <img
+                  src="/assets/images/Logo/JOJO_LOGO.svg"
+                  alt="JOJO"
+                  style={{ width: "112px", height: "36px", display: "block" }}
+                />
+              </div>
+
+              {/* Mask group — decorative poster collage with top gradient blend */}
+              <div style={{ width: "100%", maxWidth: "480px", overflow: "hidden", flexShrink: 0, position: "relative", marginTop: "-4px" }}>
+                <img
+                  src="/assets/images/Logo/Mask_group.svg"
+                  alt=""
+                  style={{ width: "100%", display: "block", userSelect: "none", pointerEvents: "none" }}
+                />
+                {/* Top gradient to blend logo area seamlessly into the image */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "48px",
+                    background: "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
+              </div>
+
+              {/* Form content */}
+              <div
+                style={{
+                  width: "100%",
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: "0 24px 20px",
+                }}
+              >
+                {/* Heading */}
+                {step === TrialFormStep.INPUT && (
+                  <h1
+                    className="gold-text-gradient"
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      width: "100%",
-                      marginBottom: "2.5rem",
-                      gap: "8px",
+                      fontSize: "24px",
+                      fontWeight: "700",
+                      textTransform: "uppercase",
+                      letterSpacing: "1.2px",
+                      textAlign: "center",
+                      margin: "0 0 24px 0",
+                      lineHeight: "1.4",
                     }}
                   >
-                    {activeFeatures.map((feature: any) => (
-                      <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card-mobile">
-                        <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
-                        <span
-                          className="gold-text-gradient"
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: "600",
-                            textAlign: "center",
-                            lineHeight: "1.3",
-                          }}
-                        >
-                          {feature.sFeatureName}
-                        </span>
-                      </div>
-                    ))}
+                    Login to explore your journey
+                  </h1>
+                )}
+
+                {/* Error */}
+                {error && (
+                  <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1rem", width: "100%", textAlign: "center", fontWeight: "500" }}>
+                    {error}
                   </div>
-                );
-              }
-              if (section === PageSection.FORM) {
-                return (
-                  <div key={section} style={{ width: "100%" }}>
-                    {error && (
-                      <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "center", fontWeight: "500" }}>
-                        {error}
-                      </div>
-                    )}
-                    {isVerifying ? (
-                      <div
-                        className="fade-in"
+                )}
+
+                {/* Verifying state */}
+                {isVerifying ? (
+                  <div
+                    className="fade-in"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: "200px",
+                      width: "100%",
+                    }}
+                  >
+                    <div className="premium-loader" />
+                    <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
+                  </div>
+                ) : step === TrialFormStep.INPUT ? (
+                  <div style={{ width: "100%" }}>
+                    <FreeTrialForm
+                      onSubmit={handleInputSubmit}
+                      confirmButtonLabel={confirmButtonLabel}
+                      footerNote={footerNote}
+                    />
+                  </div>
+                ) : step === TrialFormStep.OTP ? (
+                  <div style={{ width: "100%" }}>
+                    <OtpVerification
+                      contactInfo={contactInfo}
+                      onSubmit={handleOtpSubmit}
+                      onBack={handleBack}
+                      onResend={handleResendOtp}
+                      disclaimerText={disclaimerText}
+                      isMobileLayout={true}
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Footer inside login overlay */}
+              <div style={{ width: "100%", padding: "0 24px 32px" }}>
+                <Footer />
+              </div>
+            </div>
+          ) : (
+            /* Normal scrollable view for PLANS and other steps */
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {Object.values(PageSection).map((section) => {
+                if (section === PageSection.BANNER) {
+                  return (
+                    <div key={section} className="posters-banner-container">
+                      <Lottie
+                        lottieRef={lottieMobileRef}
+                        animationData={thumbnailsJson}
+                        loop={true}
+                        onDOMLoaded={() => lottieMobileRef.current?.setSpeed(0.15)}
+                        style={{ width: "100%", height: "100%" }}
+                        rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+                      />
+                      <div className="posters-banner-mask" />
+                    </div>
+                  );
+                }
+                if (section === PageSection.TOPBAR) {
+                  return (
+                    <header key={section} style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
+                      <JojoLogo />
+                    </header>
+                  );
+                }
+                if (section === PageSection.HEADING) {
+                  if (step === TrialFormStep.PLANS) return null;
+                  return (
+                    <div key={section} style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2.5rem" }}>
+                      <h1
+                        className="gold-text-gradient"
                         style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          minHeight: "200px",
+                          fontSize: "30px",
+                          fontWeight: "700",
+                          textTransform: "uppercase",
+                          letterSpacing: "1.5px",
+                          textAlign: "center",
+                          margin: 0,
+                          lineHeight: "48px",
                         }}
                       >
-                        <div className="premium-loader" />
-                        <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
-                      </div>
-                    ) : step === TrialFormStep.INPUT ? (
-                      <FreeTrialForm
-                        onSubmit={handleInputSubmit}
-                        confirmButtonLabel={confirmButtonLabel}
-                        footerNote={footerNote}
-                      />
-                    ) : step === TrialFormStep.OTP ? (
-                      <OtpVerification
-                        contactInfo={contactInfo}
-                        onSubmit={handleOtpSubmit}
-                        onBack={handleBack}
-                        onResend={handleResendOtp}
-                        disclaimerText={disclaimerText}
-                        isMobileLayout={true}
-                      />
-                    ) : step === TrialFormStep.PLANS ? (
-                      <div className="fade-in" style={{ width: "100%" }}>
-
-                        <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
-                          {flatPlansList.map((planObj, idx) => (
-                            <SubscriptionPlanCard
-                              key={planObj.uniqueKey}
-                              plan={planObj.plan}
-                              isActive={selectedPlanIndex === idx}
-                              onClick={() => setSelectedPlanIndex(idx)}
-                              isSelectionScreen={true}
-                            />
-                          ))}
+                        Login to explore your journey
+                      </h1>
+                    </div>
+                  );
+                }
+                if (section === PageSection.FORM) {
+                  return (
+                    <div key={section} style={{ width: "100%" }}>
+                      {error && (
+                        <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "1.5rem", width: "100%", textAlign: "center", fontWeight: "500" }}>
+                          {error}
                         </div>
+                      )}
+                      {step === TrialFormStep.PLANS ? (
+                        <div className="fade-in" style={{ width: "100%" }}>
+                          <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
+                            {flatPlansList.map((planObj, idx) => (
+                              <SubscriptionPlanCard
+                                key={planObj.uniqueKey}
+                                plan={planObj.plan}
+                                isActive={selectedPlanIndex === idx}
+                                onClick={() => setSelectedPlanIndex(idx)}
+                                isSelectionScreen={true}
+                              />
+                            ))}
+                          </div>
 
-                        <button
-                          onClick={handleSelectPlanAndContinue}
-                          className="btn-primary active btn-start-trial"
-                          style={{
-                            width: "80%",
-                            display: "block",
-                            marginLeft: "auto",
-                            marginRight: "auto",
-                            padding: "12px",
-                            fontWeight: "700"
-                          }}
-                        >
-                          Upgrade Now
-                        </button>
-
-                        {freshPlans?.sFooterNote && (
-                          <p
+                          <button
+                            onClick={handleSelectPlanAndContinue}
+                            className="btn-primary active btn-start-trial"
                             style={{
-                              color: "rgba(255, 255, 255, 0.7)",
-                              fontSize: "14px",
-                              lineHeight: "22px",
-                              textAlign: "left",
-                              fontWeight: "400",
-                              width: "100%",
-                              marginTop: "2.5rem",
-                              whiteSpace: "pre-line",
+                              width: "80%",
+                              display: "block",
+                              marginLeft: "auto",
+                              marginRight: "auto",
+                              padding: "12px",
+                              fontWeight: "700"
                             }}
                           >
-                            {renderFooterWithLinks(freshPlans.sFooterNote)}
-                          </p>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              }
-              return null;
-            })}
-          </div>
+                            Upgrade Now
+                          </button>
+
+                          {freshPlans?.sFooterNote && (
+                            <p
+                              style={{
+                                color: "rgba(255, 255, 255, 0.7)",
+                                fontSize: "14px",
+                                lineHeight: "22px",
+                                textAlign: "left",
+                                fontWeight: "400",
+                                width: "100%",
+                                marginTop: "2.5rem",
+                                whiteSpace: "pre-line",
+                              }}
+                            >
+                              {renderFooterWithLinks(freshPlans.sFooterNote)}
+                            </p>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          )}
+          {/* Footer for normal (PLANS) view */}
+          <Footer />
         </div>
 
         {/* 2. DESKTOP VIEW (Visible on screens >= 768px) */}
@@ -890,7 +969,15 @@ export default function page() {
               if (section === PageSection.TOPBAR) {
                 return (
                   <header key={section} style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
-                    <JojoLogo />
+                    {(step === TrialFormStep.INPUT || step === TrialFormStep.OTP) ? (
+                      <img
+                        src="/assets/images/Logo/JOJO_LOGO.svg"
+                        alt="JOJO"
+                        style={{ width: "112px", height: "36px", display: "block" }}
+                      />
+                    ) : (
+                      <JojoLogo />
+                    )}
                   </header>
                 );
               }
@@ -1052,129 +1139,7 @@ export default function page() {
           })()}
 
           {/* Footer links at the bottom */}
-          <footer className="web-footer-container">
-            <div className="web-footer-grid">
-              <div className="web-footer-column">
-                <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Terms & Conditions</a>
-                <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Privacy Policy</a>
-                <div style={{ marginTop: "1rem" }}>
-                  <a href="https://jojoapp.in/" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
-                    <img
-                      src="/assets/plain_logo.svg"
-                      alt="JOJO Logo"
-                      style={{ width: "93px", height: "30px", display: "block", cursor: "pointer" }}
-                    />
-                  </a>
-                </div>
-              </div>
-
-              <div className="web-footer-column">
-                <a href="https://jojolimited.com/career" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Careers</a>
-                <a href="https://jojolimited.com/contact" target="_blank" rel="noopener noreferrer" className="web-footer-link" style={{ textDecoration: "none" }}>Contact us</a>
-                <a href="https://help.jojoapp.in/en/support/home" target="_blank" className="web-footer-link" style={{ textDecoration: "none" }}>Support</a>
-              </div>
-
-              <div className="web-footer-column" style={{ alignItems: "flex-end", textAlign: "right" }}>
-                <span style={{ color: "var(--text-footer)", marginBottom: "0.5rem", fontWeight: 400 }}>Follow us for more updates</span>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
-                  {footerData.social.platforms.map((platform) => {
-                    const iconSrc = SOCIAL_ICON_MAP[platform.id];
-                    if (!iconSrc || !platform.href) return null;
-                    return (
-                      <a
-                        key={platform.id}
-                        href={platform.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={platform.label}
-                      >
-                        <img
-                          src={iconSrc}
-                          alt={platform.label}
-                          style={{ width: "32px", height: "32px", cursor: "pointer" }}
-                        />
-                      </a>
-                    );
-                  })}
-                </div>
-
-                <span style={{ color: "var(--text-footer)", marginBottom: "0.5rem", fontWeight: 400 }}>Download the JOJO app</span>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
-                  {/* Google Play Button */}
-                  <a
-                    href="https://play.google.com/store/apps/details?id=com.navkarevent.jojo&pcampaignid=web_share%5D"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: "#e2e2e2",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "6px 10px",
-                      borderRadius: "4px",
-                      height: "37px",
-                      cursor: "pointer",
-                      textDecoration: "none"
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
-                      <img src="/assets/google_play_logo.png" alt="Google Play Icon" style={{ width: "21px", height: "22px" }} />
-                      <img src="/assets/google_play_text.svg" alt="Google Play Store" style={{ width: "76.7px", height: "23.5px" }} />
-                    </div>
-                  </a>
-                  {/* App Store Button */}
-                  <a
-                    href="https://apps.apple.com/us/app/jojo-app-movies-shows-natak/id1665094876"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: "var(--text-footer)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "6px 10px",
-                      borderRadius: "4px",
-                      height: "37px",
-                      cursor: "pointer",
-                      textDecoration: "none"
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: "7px", alignItems: "center" }}>
-                      <img src="/assets/apple_logo.svg" alt="Apple Icon" style={{ width: "19.3px", height: "22.6px" }} />
-                      <div style={{ display: "flex", flexDirection: "column", gap: "3px", justifyContent: "center" }}>
-                        <img src="/assets/apple_text_line1.svg" alt="Download on the" style={{ width: "72.6px", height: "6.4px" }} />
-                        <img src="/assets/apple_text_line2.svg" alt="App Store" style={{ width: "78.8px", height: "15.6px" }} />
-                      </div>
-                    </div>
-                  </a>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", marginTop: "1rem" }}>
-                  <a
-                    href="https://jojolimited.com/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ display: "flex", alignItems: "center", gap: "4px", textDecoration: "none", cursor: "pointer" }}
-                  >
-                    <img src="/assets/copyright.svg" alt="Copyright Icon" style={{ width: "14px", height: "14px" }} />
-                    <span style={{ fontSize: "12px", color: "var(--text-footer)", fontWeight: 400 }}>
-                      {new Date().getFullYear()} JOJO LIMITED. All the Copyrights Reserved.
-                    </span>
-                  </a>
-                  {env.appVersion && (
-                    <span style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
-                      v{env.appVersion.replace(/^v/i, "")}
-                    </span>
-                  )}
-                  {env.timestamp && (
-                    <span style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
-                      {env.timestamp}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </footer>
+          <Footer />
         </div>
 
         {/* Unified Success State Overlay Modal */}

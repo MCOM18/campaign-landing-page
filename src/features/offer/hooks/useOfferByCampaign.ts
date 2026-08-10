@@ -5,14 +5,14 @@ import { getOfferByCampaign } from "../api/getOfferByCampaign";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { logger } from "@/lib/logger/logger";
 
-export function useOfferByCampaign(campaignId: string) {
+export function useOfferByCampaign(campaignId: string, sCouponCode: string = "") {
   const { isAppReady } = useBootstrap();
 
   return useQuery({
-    queryKey: ["offerByCampaign", campaignId],
+    queryKey: ["offerByCampaign", campaignId, sCouponCode],
     queryFn: async () => {
       logger.info("[useOfferByCampaign] Fetching offer for campaignId:", campaignId);
-      return await getOfferByCampaign(campaignId);
+      return await getOfferByCampaign(campaignId, sCouponCode);
     },
     enabled: isAppReady && Boolean(campaignId),
   });

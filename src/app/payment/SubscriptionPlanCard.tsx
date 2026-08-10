@@ -2,7 +2,10 @@ import React from "react";
 import "./payment.css";
 
 interface SubscriptionPlanCardProps {
-  plan: any;
+  plan?: any;
+  planObj?: any;
+  offerDetails?: any;
+  activeFeatures?: any[];
   isActive?: boolean;
   onClick?: () => void;
   landscapeUrl?: string | null;
@@ -10,213 +13,312 @@ interface SubscriptionPlanCardProps {
 }
 
 const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
-  plan,
-  isActive = false,
+  plan: planProp,
+  planObj: planObjProp,
+  offerDetails: offerDetailsProp,
+  activeFeatures: activeFeaturesProp = [],
+  isActive = true,
   onClick,
   landscapeUrl = null,
-  isSelectionScreen = false,
 }) => {
-  const getPlanDisplayData = (plan: any) => {
-    if (!plan) return {
-      name: "Plan", subLabel: null, price: "Price not available",
-      priceRaw: null, currencySymbol: "₹", validity: null,
-      isFreeTrial: false, trialDays: null, trialUnit: null,
-      offerId: null, providerOfferId: null, discount: null, features: [],
-      offerDisclaimer: null,
-    };
+  const planInput = planObjProp || planProp;
+  if (!planInput) return null;
 
-    // ── Special offer plan shape ──────────────────────────────────────────────
-    // plan.oSubscriptionGroup.aSubscriptionProducts[0]
-    if (plan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]) {
-      const product  = plan.oSubscriptionGroup.aSubscriptionProducts[0];
-      const providerSku = product?.aProviderSkus?.[0];
-      const offer    = product?.oOfferDetails || providerSku?.oOfferDetails;
+  const effectivePlan = planInput?.plan || planInput;
+  const product = effectivePlan?.product || effectivePlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0];
+  const group = effectivePlan?.group || effectivePlan?.oSubscriptionGroup;
+  const sku = effectivePlan?.sku || effectivePlan?.providerSku || product?.aProviderSkus?.[0];
+  const offer = offerDetailsProp || effectivePlan?.oOfferDetails || product?.oOfferDetails || sku?.oOfferDetails || planInput?.offerDetails;
 
-      return {
-        name:            plan.oSubscriptionGroup.oGroupTranslation?.sName,
-        subLabel:        product.sSubProductLabel || null,
-        price:           providerSku?.oPricing?.nPrice !== undefined
-                           ? `${providerSku.oPricing.sCurrencySymbol}${providerSku.oPricing.nPrice}`
-                           : "Price not available",
-        priceRaw:        providerSku?.oPricing?.nPrice ?? null,
-        currencySymbol:  providerSku?.oPricing?.sCurrencySymbol || "₹",
-        validity:        product.nValidityDays,
-        isFreeTrial:     !!offer,
-        trialDays:       offer?.nValidityCount ?? null,
-        trialUnit:       offer?.sValidityDuration || "day",
-        offerId:         offer?.sOfferId || null,
-        providerOfferId: providerSku?.sProviderOfferId || null,
-        discount:        null,
-        features:        product?.aFeatures || [],
-        offerDisclaimer: offer?.oOfferTranslation?.sOfferDisclaimer || null,
-      };
-    }
+  // 1. Title (e.g. "12 Months", "1 Month")
+  const planTitle =
+    effectivePlan?.sSubProductLabel?.trim() ||
+    product?.sSubProductLabel?.trim() ||
+    sku?.sSubProductLabel?.trim() ||
+    effectivePlan?.oProductTranslation?.sTitle?.trim() ||
+    effectivePlan?.oProductTranslation?.sName?.trim() ||
+    group?.oGroupTranslation?.sName?.trim() ||
+    group?.oGroupTranslation?.sTitle?.trim() ||
+    effectivePlan?.sTitle ||
+    effectivePlan?.sName ||
+    effectivePlan?.sProductName ||
+    planInput?.name ||
+    "JOJO Gold";
 
-    // ── SVOD plan with providerSku ────────────────────────────────────────────
-    if (plan.providerSku?.oPricing) {
-      const offer = plan.providerSku?.oOfferDetails;
-      return {
-        name:            plan.oProductTranslation?.sName || plan.sName || "Subscription Plan",
-        subLabel:        plan.sSubProductLabel || plan.providerSku?.sSubProductLabel || null,
-        price:           plan.sAltPrice || plan.sFormattedPrice ||
-                           `${plan.providerSku.oPricing.sCurrencySymbol}${plan.providerSku.oPricing.nPrice}`,
-        priceRaw:        plan.providerSku.oPricing.nPrice,
-        currencySymbol:  plan.providerSku.oPricing.sCurrencySymbol || "₹",
-        validity:        plan.nValidity || null,
-        isFreeTrial:     !!offer,
-        trialDays:       offer?.nValidityCount ?? null,
-        trialUnit:       offer?.sValidityDuration || "day",
-        offerId:         offer?.sOfferId || null,
-        providerOfferId: plan.providerSku?.sProviderOfferId || null,
-        discount:        plan.sDiscount || null,
-        features:        plan.aFeatures || [],
-        offerDisclaimer: offer?.oOfferTranslation?.sOfferDisclaimer || null,
-      };
-    }
+  // 2. Savings / Discount Badge (e.g. "20% OFF")
+  const discountLabel =
+    planInput?.discountLabel ||
+    effectivePlan?.sDiscount ||
+    (offer?.discountValue ? `${offer.discountValue}% OFF` : "");
 
-    // ── TVOD ──────────────────────────────────────────────────────────────────
-    if (plan.oProductTranslation || plan.pricing) {
-      return {
-        name:            plan.oProductTranslation?.sName || plan.oProductTranslation?.sTitle || "Premium Content",
-        subLabel:        null,
-        price:           plan.pricing
-                           ? `${plan.pricing.sCurrencySymbol}${plan.pricing.nPrice}`
-                           : "Price not available",
-        priceRaw:        plan.pricing?.nPrice ?? null,
-        currencySymbol:  plan.pricing?.sCurrencySymbol || "₹",
-        validity:        plan.nInitialValidityDays || null,
-        isFreeTrial:     false,
-        trialDays:       null,
-        trialUnit:       null,
-        offerId:         null,
-        providerOfferId: null,
-        discount:        null,
-        features:        plan.aFeatures || [],
-        offerDisclaimer: null,
-      };
-    }
+  // 3. Currency and Prices (e.g. original ₹624, final ₹499)
+  const currencySym =
+    planInput?.currencySymbol ||
+    effectivePlan?.currencySymbol ||
+    sku?.oPricing?.sCurrencySymbol ||
+    effectivePlan?.pricing?.sCurrencySymbol ||
+    "₹";
 
-    return {
-      name: "Plan", subLabel: null, price: "Price not available",
-      priceRaw: null, currencySymbol: "₹", validity: null,
-      isFreeTrial: false, trialDays: null, trialUnit: null,
-      offerId: null, providerOfferId: null, discount: null, features: [],
-      offerDisclaimer: null,
-    };
-  };
+  const origPriceNum =
+    planInput?.originalPrice ??
+    planInput?.originalPriceNum ??
+    effectivePlan?.nOriginalPrice ??
+    sku?.oPricing?.nOriginalPrice;
 
-  const displayData = getPlanDisplayData(plan);
+  const finalPriceNum =
+    planInput?.finalPrice ??
+    planInput?.finalPriceNum ??
+    sku?.oPricing?.nPrice ??
+    effectivePlan?.pricing?.nPrice ??
+    effectivePlan?.nPrice;
 
-  const isFreeTrial = !!(displayData.isFreeTrial && displayData.trialDays);
+  const originalPrice =
+    effectivePlan?.sOriginalPrice ||
+    planInput?.originalPriceFormatted ||
+    (typeof origPriceNum === "string" && origPriceNum.includes(currencySym)
+      ? origPriceNum
+      : origPriceNum !== undefined && origPriceNum !== null && origPriceNum !== ""
+        ? `${currencySym}${origPriceNum}`
+        : "");
 
-  // Normalize billing period for subtitle
-  let period = displayData.subLabel || `${displayData.validity} days`;
-  if (period === "12 Months" || displayData.validity === 365) {
-    period = "year";
-  }
+  const finalPrice =
+    effectivePlan?.sFormattedPrice ||
+    effectivePlan?.sAltPrice ||
+    planInput?.finalPriceFormatted ||
+    (typeof finalPriceNum === "string" && finalPriceNum.includes(currencySym)
+      ? finalPriceNum
+      : finalPriceNum !== undefined && finalPriceNum !== null && finalPriceNum !== ""
+        ? `${currencySym}${finalPriceNum}`
+        : "");
 
-  let disclaimerText = "";
-  if (isFreeTrial) {
-    if (displayData.offerDisclaimer) {
-      disclaimerText = displayData.offerDisclaimer
-        .replace("{sCurrencySymbol}", displayData.currencySymbol || "₹")
-        .replace("{nPrice}", displayData.priceRaw?.toString() || "");
-    } else {
-      disclaimerText = `Free for ${displayData.trialDays} ${displayData.trialUnit}s, then ${displayData.price}/${period}. Cancel anytime.`;
-    }
-  }
+  // 4. Dynamic Subtext ("After 12 months") & Recurring Price ("₹624/year" or "₹120/month")
+  const validityUnit = effectivePlan?.sValidityDuration || product?.sValidityDuration || "month";
+  const validityDays = effectivePlan?.nValidityDays || effectivePlan?.nValidity || product?.nValidityDays || 30;
+  const isYearly =
+    validityDays >= 365 ||
+    validityUnit === "year" ||
+    (effectivePlan?.nValidityCount && effectivePlan.nValidityCount >= 12);
 
-  // Determine styles for free trial card
-  const trialBoxStyle: React.CSSProperties = isFreeTrial
-    ? {
-        background: isActive
-          ? "linear-gradient(44.13deg, #FAAF3F 21.63%, #FFD691 49.52%, #FAAF3F 81.68%)"
-          : "rgba(30, 30, 30, 0.9)",
-        border: isActive ? "none" : "1.5px solid rgba(255, 255, 255, 0.08)",
-        borderRadius: "24px",
-        padding: "24px 26px",
-        boxShadow: isActive ? "0 10px 30px rgba(250, 175, 63, 0.3)" : "none",
-        transition: "all 0.2s ease",
-      }
-    : {};
+  const durationLabel = planTitle.toLowerCase().trim();
+  const subtext =
+    effectivePlan?.sRenewalText ||
+    effectivePlan?.sDescription ||
+    (durationLabel ? `After ${durationLabel}` : "");
 
-  const nameStyle: React.CSSProperties = isFreeTrial
-    ? {
-        fontSize: "24px",
-        fontWeight: "800",
-        color: isActive ? "#111111" : "#ffffff",
-        fontFamily: "inherit",
-      }
-    : {
-        fontSize: "17px",
-        fontWeight: "700",
-      };
+  const recurringUnit = isYearly ? "year" : validityUnit;
+  const cleanOrigPriceNum =
+    typeof origPriceNum === "number"
+      ? origPriceNum
+      : typeof origPriceNum === "string"
+        ? origPriceNum.replace(/^[^\d.]+/, "")
+        : null;
 
-  const priceStyle: React.CSSProperties = isFreeTrial
-    ? {
-        fontSize: "24px",
-        fontWeight: "800",
-        color: isActive ? "#111111" : "#ffffff",
-        fontFamily: "inherit",
-      }
-    : {};
+  const recurringPrice =
+    effectivePlan?.sRecurringPriceText ||
+    (cleanOrigPriceNum !== null && cleanOrigPriceNum !== ""
+      ? `${currencySym}${cleanOrigPriceNum}/${recurringUnit}`
+      : "");
 
-  const trialBadgeStyle: React.CSSProperties = {
-    backgroundColor: isActive ? "#111111" : "rgba(255, 255, 255, 0.08)",
-    color: isActive ? "#FAAF3F" : "#FAAF3F",
-    borderRadius: "100px",
-    padding: "6px 14px",
-    fontSize: "12px",
-    fontWeight: "800",
-    letterSpacing: "0.5px",
-    textTransform: "uppercase",
-    display: "inline-block",
-  };
+  // 5. Dynamic Features List directly from Backend API (aFeatures)
+  const featuresList: any[] =
+    effectivePlan?.aFeatures?.length > 0
+      ? effectivePlan.aFeatures
+      : product?.aFeatures?.length > 0
+        ? product.aFeatures
+        : activeFeaturesProp?.length > 0
+          ? activeFeaturesProp
+          : planInput?.features?.length > 0
+            ? planInput.features
+            : [];
 
-  const trialNoteStyle: React.CSSProperties = {
-    fontSize: "14px",
-    fontWeight: "500",
-    color: isActive ? "rgba(17, 17, 17, 0.85)" : "rgba(255, 255, 255, 0.6)",
-    marginTop: "12px",
-    lineHeight: "1.4",
-  };
+  const DEFAULT_FEATURES = [
+    { sFeatureName: "No In Video Ads" },
+    { sFeatureName: "Watch on upto 4 Devices" },
+    { sFeatureName: "Exclusive Content" },
+    { sFeatureName: "Early Bird Access" },
+  ];
+
+  const featuresToRender = featuresList.length > 0 ? featuresList.slice(0, 4) : DEFAULT_FEATURES;
+
+  // Selection styling: When selected (isActive === true), show ONLY gold border, no solid background color fill!
+  const borderStyle = isActive
+    ? "2px solid #FAAF3F"
+    : "1.5px solid rgba(255, 255, 255, 0.1)";
+
+  const backgroundStyle = isActive
+    ? "rgba(250, 175, 63, 0.06)"
+    : "rgba(255, 255, 255, 0.03)";
+
+  const boxShadowStyle = isActive
+    ? "0 0 20px rgba(250, 175, 63, 0.25)"
+    : "none";
+
+  const mainTextColor = "#FFFFFF";
+  const subTextColor = isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.6)";
+  const origPriceColor = "rgba(255, 255, 255, 0.5)";
+  const strokeColor = isActive ? "#FAAF3F" : "#FFFFFF";
 
   return (
-    <div className="spc-wrapper">
+    <div className="spc-wrapper" style={{ width: "100%", marginBottom: "24px" }}>
+      {landscapeUrl && (
+        <div className="spc-landscape">
+          <img src={landscapeUrl} alt={planTitle} />
+        </div>
+      )}
       <div
         onClick={onClick}
         className={`spc-box${isActive ? " spc-box--active" : " spc-box--default"}`}
-        style={trialBoxStyle}
+        style={{
+          width: "100%",
+          borderRadius: landscapeUrl ? "0 0 24px 24px" : "24px",
+          background: backgroundStyle,
+          border: borderStyle,
+          padding: "20px 20px 16px 20px",
+          color: mainTextColor,
+          boxShadow: boxShadowStyle,
+          cursor: onClick ? "pointer" : "default",
+          transition: "all 0.25s ease",
+        }}
       >
-        {isFreeTrial && (
-          <div style={{ marginBottom: "12px", display: "flex" }}>
-            <span style={trialBadgeStyle}>
-              {displayData.trialDays} {displayData.trialUnit === "day" ? "DAYS" : displayData.trialUnit.toUpperCase()} FREE
+        {/* Top Line: Title, Discount Badge, Prices */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "4px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "18px", fontWeight: "700", color: mainTextColor, letterSpacing: "-0.2px" }}>
+              {planTitle}
             </span>
+            {discountLabel && (
+              <span
+                style={{
+                  backgroundColor: "#000000",
+                  color: "#FFFFFF",
+                  border: isActive ? "1px solid rgba(250, 175, 63, 0.6)" : "1px solid rgba(255, 255, 255, 0.2)",
+                  fontSize: "11px",
+                  fontWeight: "600",
+                  padding: "4px 10px",
+                  borderRadius: "9999px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                {discountLabel}
+              </span>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+            {originalPrice && originalPrice !== finalPrice && (
+              <span
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  color: origPriceColor,
+                  textDecoration: "line-through",
+                }}
+              >
+                {originalPrice}
+              </span>
+            )}
+            <span style={{ fontSize: "24px", fontWeight: "700", color: isActive ? "#FAAF3F" : "#FFFFFF" }}>
+              {finalPrice}
+            </span>
+          </div>
+        </div>
+
+        {/* Subline: After 1 month ... ₹120/month */}
+        {(subtext || recurringPrice) && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: "13px",
+              color: subTextColor,
+              fontWeight: "400",
+              marginBottom: "14px",
+              marginTop: "4px",
+            }}
+          >
+            <span>{subtext}</span>
+            <span>{recurringPrice}</span>
           </div>
         )}
 
-        {/* Plan name row */}
-        <div className="spc-row" style={{ alignItems: "center" }}>
-          <div className="spc-left">
-            <span className="spc-name" style={nameStyle}>
-              {displayData.subLabel || displayData.name}
-            </span>
-          </div>
-          {!isFreeTrial && displayData.price && (
-            <div className="spc-right">
-              <span className="spc-price" style={priceStyle}>
-                {displayData.price}
-              </span>
-            </div>
-          )}
-        </div>
+        {/* Horizontal Divider Line */}
+        <div
+          style={{
+            height: "1px",
+            backgroundColor: isActive ? "rgba(250, 175, 63, 0.3)" : "rgba(255, 255, 255, 0.12)",
+            margin: "0 -4px 14px -4px",
+          }}
+        />
 
-        {/* Free trial subtitle */}
-        {isFreeTrial && (
-          <p style={trialNoteStyle}>
-            {disclaimerText}
-          </p>
+        {/* 4 Feature Icons Grid */}
+        {featuresToRender.length > 0 && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${Math.min(featuresToRender.length, 4)}, 1fr)`,
+              gap: "4px",
+              textAlign: "center",
+            }}
+          >
+            {featuresToRender.map((feature: any, index: number) => (
+              <div
+                key={feature.sFeatureId || feature.sFeatureName || index}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}
+              >
+                {feature.sFeatureImageUrl ? (
+                  <img
+                    src={feature.sFeatureImageUrl}
+                    alt={feature.sFeatureName || ""}
+                    style={{
+                      width: "32px",
+                      height: "28px",
+                      objectFit: "contain",
+                      filter: isActive ? "none" : "opacity(0.8)",
+                    }}
+                  />
+                ) : index === 0 ? (
+                  <svg width="30" height="26" viewBox="0 0 34 29" fill="none">
+                    <rect x="1.5" y="4" width="30" height="21" rx="2.5" stroke={strokeColor} strokeWidth="1.8" fill="none" />
+                    <rect x="4" y="6.5" width="25" height="16" rx="1" stroke={strokeColor} strokeWidth="1.2" fill="none" />
+                    <text x="17" y="16.5" textAnchor="middle" fontSize="7.5" fontFamily="sans-serif" fontWeight="700" fill={strokeColor}>
+                      AD
+                    </text>
+                    <line x1="2.1" y1="4.9" x2="30.3" y2="24.2" stroke={strokeColor} strokeWidth="2.2" strokeLinecap="round" />
+                  </svg>
+                ) : index === 1 ? (
+                  <svg width="30" height="26" viewBox="0 0 34 29" fill="none">
+                    <rect x="2" y="5" width="20" height="14" rx="2" stroke={strokeColor} strokeWidth="1.8" fill="none" />
+                    <rect x="15" y="11" width="16" height="13" rx="2" stroke={strokeColor} strokeWidth="1.8" fill={isActive ? "rgba(250, 175, 63, 0.2)" : "none"} />
+                    <line x1="8" y1="19" x2="15" y2="19" stroke={strokeColor} strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                ) : index === 2 ? (
+                  <svg width="30" height="26" viewBox="0 0 34 29" fill="none">
+                    <path d="M17 3L23 12L17 25L11 12L17 3Z" stroke={strokeColor} strokeWidth="1.8" strokeLinejoin="round" fill="none" />
+                    <line x1="11" y1="12" x2="23" y2="12" stroke={strokeColor} strokeWidth="1.4" />
+                    <path d="M17 3L14 12L17 25L20 12L17 3Z" stroke={strokeColor} strokeWidth="1.2" fill="none" />
+                  </svg>
+                ) : (
+                  <svg width="30" height="26" viewBox="0 0 34 29" fill="none">
+                    <path d="M10 5H24L18 14.5L24 24H10L16 14.5L10 5Z" stroke={strokeColor} strokeWidth="1.8" strokeLinejoin="round" fill="none" />
+                    <line x1="8" y1="5" x2="26" y2="5" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+                    <line x1="8" y1="24" x2="26" y2="24" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+                    <path d="M14 19H20" stroke={strokeColor} strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                )}
+                <span style={{ fontSize: "10px", fontWeight: "500", color: isActive ? "#FFFFFF" : "rgba(255, 255, 255, 0.7)", lineHeight: "1.2", textAlign: "center" }}>
+                  {feature.sFeatureName}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

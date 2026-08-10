@@ -5,13 +5,11 @@
 
 import { apiClient } from "@/lib/api/client";
 import { ApiEndpoint } from "@/enums/api.enum";
-import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
-import { getBrowserUID } from "@/lib/utils/deviceId";
 import { getUserAuthData, getUserGeoLocation } from "@/utils/userUtil";
 import { logger } from "@/lib/logger/logger";
 import type { ApiResponse } from "@/lib/types/api.types";
 
-export async function getOfferByCampaign(campaignId: string): Promise<ApiResponse<any>> {
+export async function getOfferByCampaign(campaignId: string, sCouponCode: string = ""): Promise<ApiResponse<any>> {
   if (!campaignId) {
     throw new Error("Campaign ID is required");
   }
@@ -22,17 +20,19 @@ export async function getOfferByCampaign(campaignId: string): Promise<ApiRespons
   const geoData = getUserGeoLocation();
 
   const headers: Record<string, string> = {
-    deviceid: getBrowserUID(),
-    devicetypecode: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
     sessionid: authData.session_id || "",
-    language: DEFAULT_HEADER_VALUES.LANGUAGE,
     country: geoData.country_code || "IN",
   };
 
-  logger.info("[Get Offer By Campaign API] Requesting:", { endpoint, headers, campaignId });
+  const payload = {
+    sCouponCode: sCouponCode || "",
+    sCampaignId: campaignId,
+  };
+
+  logger.info("[Get Offer By Campaign API] Requesting:", { endpoint, headers, payload });
 
   try {
-    const response = await apiClient.get<any>(endpoint, { headers });
+    const response = await apiClient.post<any>(endpoint, payload, { headers, encrypt: true });
 
     logger.info("[Get Offer By Campaign API] Response:", {
       metaData: response.metaData,

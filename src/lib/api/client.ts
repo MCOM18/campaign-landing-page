@@ -114,24 +114,40 @@ async function request<T>(
       // Build headers based on URL type
       const headers: Record<string, string> = {};
 
+      const setHeader = (key: string, value: string) => {
+        if (!key || value === undefined || value === null) return;
+        const existingKey = Object.keys(headers).find(
+          (k) => k.toLowerCase() === key.toLowerCase()
+        );
+        if (existingKey) {
+          headers[existingKey] = String(value);
+        } else {
+          headers[key] = String(value);
+        }
+      };
+
       if (isFullUrl) {
         // For external URLs, ONLY use options.headers
-        Object.assign(headers, options?.headers || {});
+        if (options?.headers) {
+          Object.entries(options.headers).forEach(([k, v]) => setHeader(k, v));
+        }
       } else {
         // For internal APIs, add all standard headers
         if (!isFormData) {
-          headers[HEADERS.CONTENT_TYPE] = HEADERS.JSON;
+          setHeader(HEADERS.CONTENT_TYPE, HEADERS.JSON);
         }
-        headers[HEADERS.ACCEPT] = HEADERS.JSON;
-        headers[HEADERS.DEVICE_TYPE_CODE] = DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE;
-        headers[HEADERS.DEVICE_ID] = getBrowserUID();
-        headers[HEADERS.LANGUAGE] = DEFAULT_HEADER_VALUES.LANGUAGE;
-        headers[HEADERS.APP_VERSION] = DEFAULT_HEADER_VALUES.APP_VERSION;
-        headers[HEADERS.PROJECT] = DEFAULT_HEADER_VALUES.PROJECT;
-        headers["platform"] = getPlatform(); // Add OS platform
-        
-        // Merge with options.headers (sessionid, etc.)
-        Object.assign(headers, options?.headers || {});
+        setHeader(HEADERS.ACCEPT, HEADERS.JSON);
+        setHeader(HEADERS.DEVICE_TYPE_CODE, DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE);
+        setHeader(HEADERS.DEVICE_ID, getBrowserUID());
+        setHeader(HEADERS.LANGUAGE, DEFAULT_HEADER_VALUES.LANGUAGE);
+        setHeader(HEADERS.APP_VERSION, DEFAULT_HEADER_VALUES.APP_VERSION);
+        setHeader(HEADERS.PROJECT, DEFAULT_HEADER_VALUES.PROJECT);
+        setHeader("platform", getPlatform());
+
+        // Merge with options.headers (sessionid, etc.) case-insensitively
+        if (options?.headers) {
+          Object.entries(options.headers).forEach(([k, v]) => setHeader(k, v));
+        }
       }
 
       // Encrypt request body if needed

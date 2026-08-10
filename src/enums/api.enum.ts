@@ -2,14 +2,13 @@ export enum ApiEndpoint {
   // Config
   CONFIG = "/app-config",
   CHECK_AVAILABILITY = "/v3/auth/check-availability",
-  GEO_LOCATION = "/v3/auth/geo-location",
+  GEO_LOCATION = "/auth/geo-location",
   GET_COUNTRIES = "/v3/auth/country-list",
 
-
   // Auth - OTP Flow
-  CHECK_USER = "/v3/auth/check-user",
-  SEND_OTP = "/v3/auth/send-otp",
-  VERIFY_OTP = "/v3/auth/verify-otp",
+  CHECK_USER = "/auth/check-user",
+  SEND_OTP = "/auth/send-otp",
+  VERIFY_OTP = "/auth/verify-otp",
   VERIFY_SPECIAL_USER = "/v3/auth/verify-special-user",
 
   // Auth - Captcha
@@ -40,5 +39,6 @@ export enum ApiEndpoint {
   CAMPAIGN_IMPRESSION = "/v1/jojoevents/campaign_landing_impression",
 
   // offer fatch from campaidId 
-  GET_OFFER_BY_CAMPAIGN = "/user/offer/campaign-details/:campaignId",
+  GET_OFFER_BY_CAMPAIGN = "/user/offer/campaign-fetch-details/:campaignId",
+  VALIDATE_CODE = "/user/offer/validate-code"
 }
