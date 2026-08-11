@@ -12,7 +12,7 @@ const SOCIAL_ICON_MAP: Record<string, string> = {
 
 export default function Footer() {
   return (
-    <footer className="web-footer-container" style={{ paddingLeft: 0, paddingRight: 0 }}>
+    <footer className="web-footer-container">
       {/* ── MOBILE FOOTER (Screens < 768px): Logo first, then all menus ── */}
       <div className="mobile-footer-wrapper">
         {/* 1. Logo First */}

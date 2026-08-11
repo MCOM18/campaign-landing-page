@@ -364,7 +364,16 @@ export default function page() {
   // Footer note comes at the top level of the response data
   const footerNote = campaignPlan?.sFooterNote || "";
 
-  const [step, setStep] = useState<TrialFormStep>(TrialFormStep.INPUT);
+  const [step, setStep] = useState<TrialFormStep>(() => {
+    if (typeof window !== "undefined") {
+      const sessionId = localStorage.getItem("session_id");
+      const userId = localStorage.getItem("user_id");
+      if (sessionId && userId) {
+        return TrialFormStep.PLANS;
+      }
+    }
+    return TrialFormStep.INPUT;
+  });
   const [contactInfo, setContactInfo] = useState("");
   const [parsedPhone, setParsedPhone] = useState("");
   const [parsedPhoneCode, setParsedPhoneCode] = useState("");
@@ -378,7 +387,23 @@ export default function page() {
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
 
-  // Selective cleanup of session and payment states on mount
+  // Restore auth store state on mount if session exists
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sessionId = localStorage.getItem("session_id");
+    const userId = localStorage.getItem("user_id");
+    const userDataRaw = localStorage.getItem("userData");
+    if (sessionId && userId) {
+      try {
+        const user = userDataRaw ? JSON.parse(userDataRaw) : { id: userId };
+        setAuth(user, sessionId, "");
+      } catch (e) {
+        logger.error("[Auth Restore] Failed to parse userData", e);
+      }
+    }
+  }, [setAuth]);
+
+  // Selective cleanup of payment states on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -386,10 +411,7 @@ export default function page() {
         "selectedPlan",
         "payment_init_data",
         "payment_sToken",
-        "payment_sProviderToken",
-        "session_id",
-        "user_id",
-        "userData"
+        "payment_sProviderToken"
       ];
       keysToRemove.forEach((key) => localStorage.removeItem(key));
 
@@ -402,7 +424,7 @@ export default function page() {
       ];
       sessionKeysToRemove.forEach((key) => localStorage.removeItem(key));
 
-      logger.info("[Storage Cleanup] Stale session and payment details cleared.");
+      logger.info("[Storage Cleanup] Stale payment details cleared.");
     } catch (e) {
       logger.error("[Storage Cleanup] Failed to clear storage", e);
     }

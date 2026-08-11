@@ -601,6 +601,7 @@ export const usePaymentHandler = () => {
           selectedPlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]?.aProviderSkus?.[0]?.oOfferDetails?.sOfferId ||
           null,
         sEmail: localStorage.getItem("user_email") || null,
+        sCouponCode: localStorage.getItem("sCouponCode") || null,
       };
 
       const sessionId = localStorage.getItem("session_id");

@@ -555,38 +555,7 @@ body {
     text-shadow: 0 1px 11px rgba(var(--gradient-start-rgb), 0.4) !important;
   }
 
-  .web-footer-container {
-    width: 100% !important;
-    padding: 40px 0 !important;
-    margin-top: auto !important;
-    position: relative !important;
-    z-index: 10 !important;
-  }
 
-  .web-footer-grid {
-    display: flex !important;
-    border-top: 1px solid #E2E2E2 !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    padding-top: 31px;
-  }
-
-  .web-footer-column {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-    font-size: 16px !important;
-    font-weight: 300 !important;
-    color: var(--text-footer) !important;
-  }
-
-  .web-footer-link {
-    cursor: pointer !important;
-    color: var(--text-footer) !important;
-    font-weight: 300 !important;
-    position: relative !important;
-    transition: color 0.2s !important;
-  }
 
   /* Success Modal Overlay (Mobile & Desktop) - defined at root level */
 
@@ -659,12 +628,20 @@ body {
   display: none;
 }
 
-/* ─── Footer — Mobile-first base styles ─── */
+/* ─── Footer — Mobile-first & Desktop Responsive styles ─── */
 .web-footer-container {
   width: 100%;
-  padding: 24px 0 32px;
+  padding: 24px 16px 32px;
   position: relative;
   z-index: 10;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .web-footer-container {
+    padding: 40px 96px !important;
+    margin-top: auto !important;
+  }
 }
 
 .mobile-footer-wrapper {
@@ -699,6 +676,17 @@ body {
   width: 100%;
 }
 
+@media (min-width: 768px) {
+  .web-footer-grid {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    gap: 32px !important;
+    border-top: 1px solid rgba(226, 226, 226, 0.2) !important;
+    padding-top: 32px !important;
+  }
+}
+
 .web-footer-column {
   display: flex;
   flex-direction: column;
@@ -710,12 +698,23 @@ body {
   text-align: left;
 }
 
+@media (min-width: 768px) {
+  .web-footer-column {
+    gap: 16px !important;
+    font-size: 15px !important;
+  }
+}
+
 .web-footer-link {
   cursor: pointer;
   color: var(--text-footer);
   font-weight: 300;
   text-decoration: none;
   transition: color 0.2s;
+}
+
+.web-footer-link:hover {
+  color: #FFFFFF;
 }
 
 /* Country Selector and Dropdown Styles */

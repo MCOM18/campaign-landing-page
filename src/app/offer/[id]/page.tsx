@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import OfferDetailsClient from "./OfferDetailsClient";
 
 export function generateStaticParams() {
@@ -9,5 +10,9 @@ interface PageProps {
 }
 
 export default function OfferDetailsPage({ params }: PageProps) {
-  return <OfferDetailsClient params={params} />;
+  return (
+    <Suspense fallback={<div>Loading offer details...</div>}>
+      <OfferDetailsClient params={params} />
+    </Suspense>
+  );
 }

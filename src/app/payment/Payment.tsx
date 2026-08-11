@@ -584,7 +584,11 @@ function PaymentPage() {
               localStorage.removeItem("payment_init_data");
               localStorage.removeItem("payment_sToken");
               localStorage.removeItem("payment_sProviderToken");
-              router.push("/");
+              if (typeof window !== "undefined" && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push("/");
+              }
             }}
           >
             <FiChevronLeft size={26} />

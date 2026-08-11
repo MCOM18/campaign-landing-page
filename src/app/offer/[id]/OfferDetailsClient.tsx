@@ -222,6 +222,8 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     if (selectedPlanObj?.plan) {
       localStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj.plan));
     }
+    const enteredCoupon = (couponInput || sCouponCode || "").trim();
+    localStorage.setItem("sCouponCode", enteredCoupon);
     const codeToSave = campaignRefId || campaignId || "";
     if (codeToSave) {
       localStorage.setItem("campaign_code", codeToSave);
@@ -664,31 +666,6 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                 </div>
               )}
 
-                {/* Detailed Disclaimer Text */}
-                <p
-                  style={{
-                    color: "rgba(255, 255, 255, 0.7)",
-                    fontSize: "12px",
-                    lineHeight: "1.7",
-                    textAlign: "left",
-                    fontWeight: "400",
-                    width: "100%",
-                    marginBottom: "28px",
-                  }}
-                >
-                  Enjoy exclusive benefits with our Premium plan, including offline downloads, special content, early access, and multi-device streaming. However, these features depend on your internet and device capabilities. Your account is for personal use only, and sharing is not allowed. With Premium, you can stream on up to 4 devices simultaneously. If more users try to stream at once, some will be asked to log out.<br /><br />
-                  For payments over ₹2000, you'll need extra verification.<br />
-                  By clicking "Update Now," you agree to our{" "}
-                  <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noreferrer" style={{ color: "#F26E21", textDecoration: "underline" }}>
-                    terms
-                  </a>{" "}
-                  and{" "}
-                  <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noreferrer" style={{ color: "#F26E21", textDecoration: "underline" }}>
-                    privacy policy
-                  </a>
-                  , confirm you're over 13, and authorize automatic renewal of your subscription. You can choose a subscription plan for a duration of your preference, with the option to cancel anytime to avoid future charges.
-                </p>
-
               {/* Terms Accordions */}
               {renderAccordions({
                 termsList,
@@ -844,38 +821,14 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                       </div>
                     </div>
                   )}
-
-                    {/* Detailed Disclaimer Text */}
-                    <p
-                      style={{
-                        color: "rgba(255, 255, 255, 0.7)",
-                        fontSize: "13px",
-                        lineHeight: "1.7",
-                        textAlign: "left",
-                        fontWeight: "400",
-                        width: "100%",
-                      }}
-                    >
-                      Enjoy exclusive benefits with our Premium plan, including offline downloads, special content, early access, and multi-device streaming. However, these features depend on your internet and device capabilities. Your account is for personal use only, and sharing is not allowed. With Premium, you can stream on up to 4 devices simultaneously. If more users try to stream at once, some will be asked to log out.<br /><br />
-                      For payments over ₹2000, you'll need extra verification.<br />
-                      By clicking "Update Now," you agree to our{" "}
-                      <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noreferrer" style={{ color: "#F26E21", textDecoration: "underline" }}>
-                        terms
-                      </a>{" "}
-                      and{" "}
-                      <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noreferrer" style={{ color: "#F26E21", textDecoration: "underline" }}>
-                        privacy policy
-                      </a>
-                      , confirm you're over 13, and authorize automatic renewal of your subscription. You can choose a subscription plan for a duration of your preference, with the option to cancel anytime to avoid future charges.
-                    </p>
-                  </div>
                 </div>
-
-                {/* Shared Desktop Footer */}
-                <Footer />
               </div>
             </div>
-          </>
+
+            {/* Shared Desktop Footer */}
+            <Footer />
+          </div>
+        </>
       )}
 
       {/* Login & OTP Auth Modal for Payment Initiation */}

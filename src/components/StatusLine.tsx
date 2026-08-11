@@ -61,9 +61,10 @@ export function StatusLine() {
       : "STAGE BUILD";
 
   // Check Razorpay status
-  const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY;
+  const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY || "";
   const isRazorpayLive = razorpayKey ? razorpayKey.startsWith("rzp_live") : (envType === "PROD");
-  const razorpayDisplay = isRazorpayLive ? "LIVE" : "TEST";
+  const razorpayStatus = isRazorpayLive ? "LIVE" : "TEST";
+  const razorpayDisplay = razorpayKey ? `${razorpayStatus} (${razorpayKey})` : razorpayStatus;
 
   // Check Analytics status
   const activeProviders: string[] = [];
