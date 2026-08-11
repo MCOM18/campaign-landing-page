@@ -28,6 +28,23 @@
   --desktop-bg: #1d160b;
 }
 
+@keyframes skeletonPulse {
+  0% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .theme-1 {
   --gold-primary-rgb: 255, 59, 48;
   --gold-primary: rgb(var(--gold-primary-rgb));
@@ -66,10 +83,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  /* Premium warm dark background with bottom orange linear glow */
-  /* background: linear-gradient(180deg, #0c0b0a 0%, #1d160b 50%, rgba(242, 110, 33, 0.15) 100%), #0c0b0a; */
-  background: linear-gradient(180deg, rgba(5, 5, 5, 0) 0%, var(--theme-glow-color) 100%);
-
+  background: #0c0b0a;
   background-attachment: fixed;
 }
 
@@ -83,21 +97,6 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 2.5rem 1.5rem;
-  /* position: relative; */
-  /* background: linear-gradient(180deg, #1d160b 0%, rgba(242, 110, 33, 0.12) 100%), #0c0b0a; */
-}
-
-@media (min-width: 480px) {
-  .app-container {
-    min-height: 850px;
-    max-height: 900px;
-    /* border-radius: 40px; */
-    /* border: 1px solid rgba(255, 255, 255, 0.05); */
-    /* box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8),
-      0 0 40px rgba(58, 30, 5, 0.3); */
-    /* background: linear-gradient(180deg, rgba(29, 22, 11, 0.8) 0%, rgba(242, 110, 33, 0.12) 100%), rgba(12, 11, 10, 0.7); */
-    /* margin: 2rem 0; */
-  }
 }
 
 /* Scrollbar Styling */
@@ -440,7 +439,7 @@ body {
     border-radius: 0px !important;
     border: none !important;
     box-shadow: none !important;
-    background: linear-gradient(180deg, rgba(5, 5, 5, 0) 1%, var(--theme-glow-color) 90%) !important;
+    background: #0c0b0a;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     padding: 0 !important;
@@ -631,7 +630,7 @@ body {
 /* ─── Footer — Mobile-first & Desktop Responsive styles ─── */
 .web-footer-container {
   width: 100%;
-  padding: 24px 16px 32px;
+  padding: 0px;
   position: relative;
   z-index: 10;
   box-sizing: border-box;
@@ -639,7 +638,7 @@ body {
 
 @media (min-width: 768px) {
   .web-footer-container {
-    padding: 40px 96px !important;
+    padding: 10px 20px !important;
     margin-top: auto !important;
   }
 }
@@ -662,6 +661,7 @@ body {
   .mobile-footer-wrapper {
     display: none !important;
   }
+
   .desktop-footer-wrapper {
     display: block !important;
   }

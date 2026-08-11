@@ -70,15 +70,16 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   }, [resolvedParams, routeParams, campaignId]);
 
   const searchParams = useSearchParams();
-  const sCouponCode = searchParams?.get("sCouponCode") || "";
-
-  const [couponInput, setCouponInput] = useState<string>(sCouponCode || "");
+  const [sCouponCode, setSCouponCode] = useState<string>("");
+  const [couponInput, setCouponInput] = useState<string>("");
 
   useEffect(() => {
-    if (sCouponCode) {
-      setCouponInput(sCouponCode);
-    }
-  }, [sCouponCode]);
+    const fromParams = searchParams?.get("sCouponCode") || "";
+    const fromStorage = typeof window !== "undefined" ? localStorage.getItem("sCouponCode") || "" : "";
+    const effectiveCode = fromParams || fromStorage;
+    setSCouponCode(effectiveCode);
+    setCouponInput(effectiveCode);
+  }, [searchParams]);
 
   const { data, isLoading, isError, error, refetch } = useOfferByCampaign(campaignId, sCouponCode);
 
@@ -108,6 +109,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     if (campaignId) {
       if (typeof window !== "undefined") {
         localStorage.setItem("pending_campaign_id", campaignId);
+        localStorage.setItem("is_campaign_landing", "true");
       }
       logger.info(`[OfferDetailsClient] Loaded offer details page for campaignId: ${campaignId}`);
     }
@@ -226,8 +228,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     localStorage.setItem("sCouponCode", enteredCoupon);
     const codeToSave = campaignRefId || campaignId || "";
     if (codeToSave) {
-      localStorage.setItem("campaign_code", codeToSave);
-      localStorage.setItem("promo_code", codeToSave);
+      localStorage.setItem("pending_campaign_id", codeToSave);
     }
 
     if (checkIsLoggedIn()) {
@@ -382,8 +383,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         }
         const codeToSave = campaignRefId || campaignId || "";
         if (codeToSave) {
-          localStorage.setItem("campaign_code", codeToSave);
-          localStorage.setItem("promo_code", codeToSave);
+          localStorage.setItem("pending_campaign_id", codeToSave);
         }
         router.push("/payment");
       }
@@ -462,9 +462,6 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   };
 
   const isLoggedIn = checkIsLoggedIn();
-  const ctaButtonText = isLoggedIn
-    ? `REDEEM OFFER (${selectedPlanObj?.currencySymbol || "₹"}${selectedPlanObj?.finalPrice ?? ""})`
-    : `LOGIN TO REDEEM (${selectedPlanObj?.currencySymbol || "₹"}${selectedPlanObj?.finalPrice ?? ""})`;
 
   return (
     <main
@@ -569,8 +566,9 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                     onClick={() => {
                       if (campaignId) {
                         localStorage.setItem("pending_campaign_id", campaignId);
+                        localStorage.setItem("is_campaign_landing", "true");
                       }
-                      router.push("/");
+                      router.push("/login");
                     }}
                     className="btn-primary active"
                     style={{
@@ -578,13 +576,12 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                       padding: "14px",
                       borderRadius: "9999px",
                       backgroundColor: "#F26E21",
-                      color: "#FFFFFF",
-                      fontSize: "18px",
-                      fontWeight: "700",
+                      color: "#000000",
+                      fontSize: "16px",
+                      fontWeight: "600",
                       border: "none",
                       cursor: "pointer",
                       textAlign: "center",
-                      boxShadow: "0 4px 15px rgba(242, 110, 33, 0.4)",
                     }}
                   >
                     LOGIN TO REDEEM OFFER
@@ -697,10 +694,15 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
               <JojoLogo />
             </header>
 
-            {/* Desktop Split Layout */}
+            {/* Desktop Split Layout: T&C left, Card+Action right */}
             <div className="web-split-layout">
-              {/* Left Column */}
+              {/* Left Column: Terms & Conditions */}
               <div className="web-layout-left">
+                {renderAccordions({ termsList, showTerms, setShowTerms })}
+              </div>
+
+              {/* Right Column: Gold Offer Card + Action Button */}
+              <div className="web-layout-right">
                 {/* Gold Offer Card */}
                 {renderGoldOfferCard({
                   planObj: selectedPlanObj,
@@ -708,120 +710,102 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                   activeFeatures,
                 })}
 
-                {/* Terms Accordions */}
-                {renderAccordions({
-                  termsList,
-                  showTerms,
-                  setShowTerms,
-                })}
-              </div>
-
-              {/* Right Column: Coupon Input & Apply / Login Button */}
-              <div className="web-layout-right">
-                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                  {!isLoggedIn ? (
-                    <div style={{ width: "100%", display: "flex", justifyContent: "flex-start", marginBottom: "24px" }}>
-                      <button
-                        onClick={() => {
-                          if (campaignId) {
-                            localStorage.setItem("pending_campaign_id", campaignId);
-                          }
-                          router.push("/");
-                        }}
-                        className="btn-primary active"
+                {/* Action below card */}
+                {!isLoggedIn ? (
+                  <div style={{ width: "100%", display: "flex", justifyContent: "flex-start", marginTop: "16px" }}>
+                    <button
+                      onClick={() => {
+                        if (campaignId) {
+                          localStorage.setItem("pending_campaign_id", campaignId);
+                          localStorage.setItem("is_campaign_landing", "true");
+                        }
+                        router.push("/login");
+                      }}
+                      className="btn-primary active"
+                      style={{
+                        width: "100%",
+                        padding: "14px",
+                        borderRadius: "9999px",
+                        backgroundColor: "#F26E21",
+                        color: "#000000",
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "center",
+                      }}
+                    >
+                      LOGIN TO REDEEM OFFER
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ width: "100%", textAlign: "left", marginTop: "16px" }}>
+                    <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#FFFFFF", marginBottom: "16px" }}>
+                      To redeem this offer
+                    </h2>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: "100%",
+                        backgroundColor: "rgba(255, 255, 255, 0.12)",
+                        borderRadius: "9999px",
+                        padding: "4px 6px 4px 20px",
+                        marginBottom: "24px",
+                        border: "none",
+                      }}
+                    >
+                      <input
+                        type="text"
+                        placeholder="Enter Coupon Code"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
                         style={{
-                          width: "100%",
-                          maxWidth: "320px",
+                          flex: 1,
+                          background: "transparent",
+                          border: "none",
+                          outline: "none",
+                          color: "#FFFFFF",
+                          fontSize: "16px",
+                          padding: "12px 0",
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
+                      <button
+                        onClick={handleApplyCoupon}
+                        disabled={isApplyingCoupon}
+                        style={{
+                          width: "180px",
                           padding: "14px",
                           borderRadius: "9999px",
-                          backgroundColor: "#F26E21",
+                          backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
                           color: "#FFFFFF",
                           fontSize: "18px",
                           fontWeight: "700",
                           border: "none",
-                          cursor: "pointer",
+                          cursor: isApplyingCoupon ? "not-allowed" : "pointer",
                           textAlign: "center",
-                          boxShadow: "0 4px 15px rgba(242, 110, 33, 0.4)",
-                        }}
-                      >
-                        LOGIN TO REDEEM OFFER
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ width: "100%", textAlign: "left" }}>
-                      <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#FFFFFF", marginBottom: "16px" }}>
-                        To redeem this offer
-                      </h2>
-
-                      {/* Coupon Input Container */}
-                      <div
-                        style={{
+                          boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
                           display: "flex",
                           alignItems: "center",
-                          width: "100%",
-                          backgroundColor: "rgba(255, 255, 255, 0.12)",
-                          borderRadius: "9999px",
-                          padding: "4px 6px 4px 20px",
-                          marginBottom: "24px",
-                          border: "none",
+                          justifyContent: "center",
+                          gap: "8px",
                         }}
                       >
-                        <input
-                          type="text"
-                          placeholder="Enter Coupon Code"
-                          value={couponInput}
-                          onChange={(e) => setCouponInput(e.target.value)}
-                          style={{
-                            flex: 1,
-                            background: "transparent",
-                            border: "none",
-                            outline: "none",
-                            color: "#FFFFFF",
-                            fontSize: "16px",
-                            padding: "12px 0",
-                          }}
-                        />
-                      </div>
-
-                      {/* Apply Button */}
-                      <div style={{ display: "flex", justifyContent: "flex-start", width: "100%", marginBottom: "32px" }}>
-                        <button
-                          onClick={handleApplyCoupon}
-                          disabled={isApplyingCoupon}
-                          style={{
-                            width: "180px",
-                            padding: "14px",
-                            borderRadius: "9999px",
-                            backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
-                            color: "#FFFFFF",
-                            fontSize: "18px",
-                            fontWeight: "700",
-                            border: "none",
-                            cursor: isApplyingCoupon ? "not-allowed" : "pointer",
-                            textAlign: "center",
-                            boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          {isApplyingCoupon ? (
-                            <>
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
-                                <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
-                                <circle cx="12" cy="12" r="10" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="3" />
-                                <path d="M12 2a10 10 0 0 1 10 10" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
-                              </svg>
-                            </>
-                          ) : (
-                            "Apply"
-                          )}
-                        </button>
-                      </div>
+                        {isApplyingCoupon ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
+                            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+                            <circle cx="12" cy="12" r="10" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="3" />
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+                          </svg>
+                        ) : (
+                          "Apply"
+                        )}
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1155,81 +1139,50 @@ function renderGoldOfferCard({
   );
 }
 
-// Helper component for Accordions with smooth animations
+// Helper component for Accordions — always expanded, no toggle
 function renderAccordions({
   termsList,
-  showTerms,
-  setShowTerms,
 }: any) {
+  if (!termsList || termsList.length === 0) return null;
+
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "28px" }}>
-      {/* Terms & Conditions Accordion */}
-      {termsList && termsList.length > 0 && (
+      <div
+        style={{
+          background: "rgba(255, 255, 255, 0.05)",
+          borderRadius: "20px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Header — static, no toggle */}
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.05)",
-            borderRadius: "20px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            overflow: "hidden",
-            transition: "all 0.3s ease",
+            width: "100%",
+            padding: "1rem 1.25rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
           }}
         >
-          <button
-            type="button"
-            onClick={() => setShowTerms(!showTerms)}
-            aria-expanded={showTerms}
-            style={{
-              width: "100%",
-              background: "none",
-              border: "none",
-              padding: "1rem 1.25rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              cursor: "pointer",
-              textAlign: "left",
-              color: "inherit",
-              outline: "none",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <FiShield color="rgba(255, 255, 255, 0.6)" size={18} />
-              <span style={{ fontSize: "14px", fontWeight: "700", color: "#ffffff" }}>
-                Terms & Conditions
-              </span>
-            </div>
-            <FiChevronDown
-              color="#FAAF3F"
-              style={{
-                transform: showTerms ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-          </button>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateRows: showTerms ? "1fr" : "0fr",
-              transition: "grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
-              opacity: showTerms ? 1 : 0,
-            }}
-          >
-            <div style={{ overflow: "hidden" }}>
-              <div style={{ padding: "0 1.25rem 1.25rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                {termsList.map((term: string, i: number) => (
-                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                    <span style={{ color: "#FAAF3F", fontSize: "14px", lineHeight: "1.4" }}>•</span>
-                    <p style={{ fontSize: "12px", color: "var(--text-secondary)", lineHeight: "1.5", margin: 0 }}>
-                      {term}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <FiShield color="rgba(255, 255, 255, 0.6)" size={18} />
+          <span style={{ fontSize: "14px", fontWeight: "700", color: "#ffffff" }}>
+            Terms &amp; Conditions
+          </span>
         </div>
-      )}
+
+        {/* Content — always visible */}
+        <div style={{ padding: "0 1.25rem 1.25rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+          {termsList.map((term: string, i: number) => (
+            <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+              <span style={{ color: "#FAAF3F", fontSize: "14px", lineHeight: "1.4" }}>•</span>
+              <p style={{ fontSize: "12px", color: "var(--text-secondary)", lineHeight: "1.5", margin: 0 }}>
+                {term}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

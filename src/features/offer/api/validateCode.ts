@@ -31,7 +31,7 @@ export async function validateCode(couponCode: string, campaignId?: string): Pro
 
   const payload: ValidateCodePayload = {
     couponCode: cleanCode,
-    ...(campaignId ? { campaignId } : {}),
+    campaignId: campaignId || "",
   };
 
   logger.info("[Validate Code API] Requesting POST:", { endpoint, payload, headers });

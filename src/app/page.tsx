@@ -1,5 +1,6 @@
 "use client";
 
+import Footer from "@/components/Footer";
 import { FreeTrialForm } from "@/components/FreeTrialForm";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import {
@@ -8,15 +9,13 @@ import {
 import { OtpVerification } from "@/components/OtpVerification";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { slugMap } from "@/enums/enums";
-import { LoginIdentifierType, PageSection, TrialFormStep } from "@/enums/ui.enum";
+import { PageSection, TrialFormStep } from "@/enums/ui.enum";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { completeOtpVerification, initiateOtpFlow } from "@/features/auth/services/auth.service";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { appConfig } from "@/lib/config/app.config";
-import { env } from "@/lib/config/env";
+import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import { REGEX } from "@/lib/constants/regex";
-import Footer from "@/components/Footer";
-import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
@@ -28,16 +27,7 @@ import { useEffect, useRef, useState } from "react";
 import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 import api from "../utils/apiClient";
 import { getUserGeoLocation } from "../utils/userUtil";
-import SubscriptionPlanCard from "./payment/SubscriptionPlanCard";
-import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
-
-/** Map each platform id → the SVG asset filename */
-const SOCIAL_ICON_MAP: Record<string, string> = {
-  facebook: "/assets/facebook.svg",
-  instagram: "/assets/instagram.svg",
-  youtube: "/assets/youtube.svg",
-  linkdin: "/assets/linkdin.svg",
-};
+import SubscriptionPlanCard, { SingleCouponInput } from "./payment/SubscriptionPlanCard";
 
 const renderFooterWithLinks = (text: string) => {
   if (!text) return null;
@@ -126,6 +116,17 @@ export default function page() {
   // Campaign plan data fetched from subscription/allplans-campaign
   const [campaignPlan, setCampaignPlan] = useState<any>(null);
   const [isCampaignLoading, setIsCampaignLoading] = useState(true);
+
+  // Check pending_campaign_id in localStorage
+  const [isCampaignLogin, setIsCampaignLogin] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const pendingCampaignId = localStorage.getItem("pending_campaign_id");
+      const isCampaignLanding = localStorage.getItem("is_campaign_landing") === "true";
+      setIsCampaignLogin(Boolean(pendingCampaignId && isCampaignLanding));
+    }
+  }, []);
 
   const [freshPlans, setFreshPlans] = useState<any>(null);
 
@@ -726,11 +727,19 @@ export default function page() {
 
   return (
     <>
-      <main className="app-container">
+      <main
+        className="app-container"
+        style={{
+          background: isCampaignLogin
+            ? "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a"
+            : "linear-gradient(180deg, #1c0f03 0%, var(--theme-glow-color) 90%)",
+          minHeight: "100vh",
+        }}
+      >
         {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
         <div className="mobile-only" style={{ width: "100%" }}>
 
-          {/* Login Flow: Purple gradient screen for INPUT and OTP steps */}
+          {/* Login Flow: Dynamic background & banner media based on pending_campaign_id */}
           {(step === TrialFormStep.INPUT || step === TrialFormStep.OTP) ? (
             <div
               className="login-flow-screen fade-in"
@@ -743,38 +752,64 @@ export default function page() {
                 alignItems: "center",
                 overflowY: "scroll",
                 scrollbarWidth: "none",
-                background: "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a",
+                background: isCampaignLogin
+                  ? "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a"
+                  : "linear-gradient(180deg, #1c0f03 0%, var(--theme-glow-color) 90%)",
               }}
             >
-              {/* Logo at top — always above the Mask_group image */}
-              <div style={{ width: "100%", display: "flex", justifyContent: "center", paddingTop: "48px", paddingBottom: "0", position: "relative", zIndex: 2 }}>
-                <img
-                  src="/assets/images/Logo/JOJO_LOGO.svg"
-                  alt="JOJO"
-                  style={{ width: "112px", height: "36px", display: "block" }}
-                />
-              </div>
+              {/* Banner media & Logo layout based on pending_campaign_id */}
+              {isCampaignLogin ? (
+                <>
+                  {/* Logo at top */}
+                  <div style={{ width: "100%", display: "flex", justifyContent: "center", paddingTop: "48px", paddingBottom: "0", position: "relative", zIndex: 2 }}>
+                    <img
+                      src="/assets/images/Logo/JOJO_LOGO.svg"
+                      alt="JOJO"
+                      style={{ width: "112px", height: "36px", display: "block" }}
+                    />
+                  </div>
 
-              {/* Mask group — decorative poster collage with top gradient blend */}
-              <div style={{ width: "100%", maxWidth: "480px", overflow: "hidden", flexShrink: 0, position: "relative", marginTop: "-4px" }}>
-                <img
-                  src="/assets/images/Logo/Mask_group.svg"
-                  alt=""
-                  style={{ width: "100%", display: "block", userSelect: "none", pointerEvents: "none" }}
-                />
-                {/* Top gradient to blend logo area seamlessly into the image */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: "48px",
-                    background: "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%)",
-                    pointerEvents: "none",
-                  }}
-                />
-              </div>
+                  {/* Mask group image */}
+                  <div style={{ width: "100%", maxWidth: "480px", overflow: "hidden", flexShrink: 0, position: "relative", marginTop: "-4px" }}>
+                    <img
+                      src="/assets/images/Logo/Mask_group.svg"
+                      alt=""
+                      style={{ width: "100%", display: "block", userSelect: "none", pointerEvents: "none" }}
+                    />
+                    {/* Top gradient to blend logo area seamlessly into the image */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: "48px",
+                        background: "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Lottie touching top */}
+                  <div style={{ width: "100%", height: "210px", overflow: "hidden", flexShrink: 0, position: "relative", margin: 0, padding: 0 }}>
+                    <Lottie
+                      lottieRef={lottieMobileRef}
+                      animationData={thumbnailsJson}
+                      loop={true}
+                      onDOMLoaded={() => lottieMobileRef.current?.setSpeed(0.15)}
+                      style={{ width: "100%", height: "100%", display: "block" }}
+                      rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+                    />
+                  </div>
+
+                  {/* JOJO Gold Logo below Lottie */}
+                  <div style={{ width: "100%", display: "flex", justifyContent: "center", paddingTop: "16px", paddingBottom: "16px" }}>
+                    <JojoLogo />
+                  </div>
+                </>
+              )}
 
               {/* Form content */}
               <div
@@ -912,7 +947,7 @@ export default function page() {
                       )}
                       {step === TrialFormStep.PLANS ? (
                         <div className="fade-in" style={{ width: "100%" }}>
-                          <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
+                          <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1rem", width: "100%" }}>
                             {flatPlansList.map((planObj, idx) => (
                               <SubscriptionPlanCard
                                 key={planObj.uniqueKey}
@@ -920,9 +955,12 @@ export default function page() {
                                 isActive={selectedPlanIndex === idx}
                                 onClick={() => setSelectedPlanIndex(idx)}
                                 isSelectionScreen={true}
+                                showCouponInput={false}
                               />
                             ))}
                           </div>
+
+                          <SingleCouponInput />
 
                           <button
                             onClick={handleSelectPlanAndContinue}
@@ -976,14 +1014,22 @@ export default function page() {
               if (section === PageSection.BANNER) {
                 return (
                   <div key={section} className="posters-banner-container">
-                    <Lottie
-                      lottieRef={lottieDesktopRef}
-                      animationData={thumbnailsJson}
-                      loop={true}
-                      onDOMLoaded={() => lottieDesktopRef.current?.setSpeed(0.15)}
-                      style={{ width: "100%", height: "100%" }}
-                      rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
-                    />
+                    {isCampaignLogin ? (
+                      <img
+                        src="/assets/images/Logo/Mask_group.svg"
+                        alt=""
+                        style={{ width: "100%", height: "100%", objectFit: "cover", userSelect: "none", pointerEvents: "none" }}
+                      />
+                    ) : (
+                      <Lottie
+                        lottieRef={lottieDesktopRef}
+                        animationData={thumbnailsJson}
+                        loop={true}
+                        onDOMLoaded={() => lottieDesktopRef.current?.setSpeed(0.15)}
+                        style={{ width: "100%", height: "100%" }}
+                        rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+                      />
+                    )}
                     <div className="posters-banner-mask" />
                   </div>
                 );
@@ -991,13 +1037,15 @@ export default function page() {
               if (section === PageSection.TOPBAR) {
                 return (
                   <header key={section} style={{ marginBottom: "2rem", display: "flex", justifyContent: "center", width: "100%" }}>
-                    {(step === TrialFormStep.INPUT || step === TrialFormStep.OTP) ? (
+                    {isCampaignLogin ? (
+                      /* Campaign login: show JOJO header logo */
                       <img
                         src="/assets/images/Logo/JOJO_LOGO.svg"
                         alt="JOJO"
                         style={{ width: "112px", height: "36px", display: "block" }}
                       />
                     ) : (
+                      /* Non-campaign: always show JOJO Gold logo (same as mobile view) */
                       <JojoLogo />
                     )}
                   </header>
@@ -1080,7 +1128,7 @@ export default function page() {
                                 <div className="fade-in" style={{ width: "100%" }}>
 
 
-                                  <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
+                                  <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1rem", width: "100%" }}>
                                     {flatPlansList.map((planObj, idx) => (
                                       <SubscriptionPlanCard
                                         key={planObj.uniqueKey}
@@ -1088,9 +1136,12 @@ export default function page() {
                                         isActive={selectedPlanIndex === idx}
                                         onClick={() => setSelectedPlanIndex(idx)}
                                         isSelectionScreen={true}
+                                        showCouponInput={false}
                                       />
                                     ))}
                                   </div>
+
+                                  <SingleCouponInput />
 
                                   <button
                                     onClick={handleSelectPlanAndContinue}

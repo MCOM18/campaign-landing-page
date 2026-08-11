@@ -24,8 +24,12 @@ export async function getOfferByCampaign(campaignId: string, sCouponCode: string
     country: geoData.country_code || "IN",
   };
 
+  const effectiveCouponCode =
+    sCouponCode ||
+    (typeof window !== "undefined" ? localStorage.getItem("sCouponCode") || "" : "");
+
   const payload = {
-    sCouponCode: sCouponCode || "",
+    sCouponCode: effectiveCouponCode,
     sCampaignId: campaignId,
   };
 

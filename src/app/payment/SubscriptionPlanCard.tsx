@@ -1,4 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { validateCode } from "@/features/offer/api/validateCode";
+import { getOfferByCampaign } from "@/features/offer/api/getOfferByCampaign";
+import { logger } from "@/lib/logger/logger";
 import "./payment.css";
 
 interface SubscriptionPlanCardProps {
@@ -10,6 +15,92 @@ interface SubscriptionPlanCardProps {
   onClick?: () => void;
   landscapeUrl?: string | null;
   isSelectionScreen?: boolean;
+  showCouponInput?: boolean;
+}
+
+async function fetchAndStoreCampaignPlan(campaignRefId: string, couponCode: string, fallbackPlan?: any) {
+  try {
+    const offerRes: any = await getOfferByCampaign(campaignRefId, couponCode);
+    const offerData = offerRes?.data?.data || offerRes?.data || offerRes || {};
+    const offerDetails = offerData?.offerDetails || {};
+    const campaignDetails = offerData?.campaignDetails || {};
+    const subscriptionPlansGroup =
+      offerData?.aAllSubscriptionPlans ||
+      offerData?.subscriptionPlansGroup ||
+      offerData?.aSubscriptionProducts ||
+      offerData?.plans ||
+      [];
+
+    const discountVal = offerDetails?.discountValue || 0;
+    const offerType = offerDetails?.offerType || "PERCENTAGE_DISCOUNT";
+
+    const flatPlansList = (Array.isArray(subscriptionPlansGroup) ? subscriptionPlansGroup : []).flatMap((group: any) => {
+      const products = group?.aSubscriptionProducts || (group?.aProviderSkus ? [group] : []);
+      return (Array.isArray(products) ? products : []).map((prod: any) => {
+        const sku = prod?.aProviderSkus?.[0] || prod?.sku || {};
+        const couponDetails = sku?.oCouponDetails || {};
+
+        const origPrice = couponDetails?.nOriginalPrice ?? sku?.oPricing?.nPrice ?? 499;
+
+        let finalPrice = origPrice;
+        if (couponDetails?.nFinalAmount !== undefined && couponDetails?.nFinalAmount !== null) {
+          finalPrice = couponDetails.nFinalAmount;
+        } else if (offerType === "PERCENTAGE_DISCOUNT" && discountVal > 0) {
+          finalPrice = Math.round(origPrice * (1 - discountVal / 100));
+        } else if (offerType === "FLAT_DISCOUNT" && discountVal > 0) {
+          finalPrice = Math.max(0, origPrice - discountVal);
+        }
+
+        const symbol = couponDetails?.sCurrencySymbol || sku?.oPricing?.sCurrencySymbol || "₹";
+
+        const discountLabel =
+          couponDetails?.sSavingsLabel ||
+          (couponDetails?.nDiscountPercentage ? `${couponDetails.nDiscountPercentage}% OFF` : null) ||
+          (discountVal > 0 ? `${discountVal}% OFF` : null);
+
+        const modifiedSku = {
+          ...sku,
+          oPricing: {
+            ...(sku?.oPricing || {}),
+            nPrice: finalPrice,
+            sCurrencySymbol: symbol,
+          },
+        };
+
+        return {
+          ...prod,
+          product: prod,
+          group: group,
+          sku: modifiedSku,
+          providerSku: modifiedSku,
+          pricing: modifiedSku.oPricing,
+          sFormattedPrice: `${symbol}${finalPrice}`,
+          sAltPrice: `${symbol}${finalPrice}`,
+          sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+          nOriginalPrice: origPrice,
+          finalPrice: finalPrice,
+          originalPrice: origPrice,
+          currencySymbol: symbol,
+          sDiscount: discountLabel,
+          discountLabel: discountLabel,
+          nValidity: prod.nValidityDays || 365,
+          aFeatures: prod.aFeatures || [],
+          oOfferDetails: offerDetails,
+          oCampaignDetails: campaignDetails,
+        };
+      });
+    });
+
+    const planToStore = flatPlansList[0] || fallbackPlan;
+    if (planToStore && typeof window !== "undefined") {
+      localStorage.setItem("selectedPlan", JSON.stringify(planToStore));
+    }
+  } catch (err) {
+    logger.warn("[fetchAndStoreCampaignPlan] Failed to fetch campaign plan:", err);
+    if (fallbackPlan && typeof window !== "undefined") {
+      localStorage.setItem("selectedPlan", JSON.stringify(fallbackPlan));
+    }
+  }
 }
 
 const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
@@ -20,7 +111,14 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   isActive = true,
   onClick,
   landscapeUrl = null,
+  showCouponInput = false,
 }) => {
+  const router = useRouter();
+  const [couponCode, setCouponCode] = useState<string>("");
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+
   const planInput = planObjProp || planProp;
   if (!planInput) return null;
 
@@ -29,6 +127,80 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   const group = effectivePlan?.group || effectivePlan?.oSubscriptionGroup;
   const sku = effectivePlan?.sku || effectivePlan?.providerSku || product?.aProviderSkus?.[0];
   const offer = offerDetailsProp || effectivePlan?.oOfferDetails || product?.oOfferDetails || sku?.oOfferDetails || planInput?.offerDetails;
+
+  const handleVerifyCoupon = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const cleanCode = couponCode.trim();
+    if (!cleanCode) {
+      const errText = "Please enter a coupon code";
+      setCouponError(errText);
+      toast.error(errText);
+      return;
+    }
+
+    if (isVerifying) return;
+    setIsVerifying(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+      logger.info("[SubscriptionPlanCard] Validating coupon code:", cleanCode);
+      const response: any = await validateCode(cleanCode, "");
+      logger.info("[SubscriptionPlanCard] Validation response:", response);
+
+      const resData = response?.data?.data || response?.data || response;
+      const metaData = response?.metaData || response?.["meta-data"] || {};
+      const bIsEligible = resData?.bIsEligible ?? (metaData?.status === 200);
+
+      const campaignDetails = resData?.campaignDetails || {};
+      const campaignRefId =
+        campaignDetails?.campaignRefId ||
+        resData?.campaignRefId ||
+        campaignDetails?.campaignId ||
+        resData?.campaignId;
+
+      if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
+        const successMsg = resData?.sReason || metaData?.message || "Coupon code is valid and eligible";
+        setCouponSuccess(successMsg);
+        toast.success(successMsg);
+
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("sCouponCode");
+          if (campaignRefId) {
+            localStorage.setItem("pending_campaign_id", campaignRefId);
+          }
+        }
+
+        if (campaignRefId) {
+          await fetchAndStoreCampaignPlan(campaignRefId, cleanCode, effectivePlan);
+        } else if (effectivePlan && typeof window !== "undefined") {
+          localStorage.setItem("selectedPlan", JSON.stringify(effectivePlan));
+        }
+
+        setCouponCode("");
+
+        setTimeout(() => {
+          router.push("/payment");
+        }, 400);
+      } else {
+        const errorMsg = resData?.sReason || metaData?.message || "Invalid or ineligible coupon code";
+        setCouponError(errorMsg);
+        toast.error(errorMsg);
+      }
+    } catch (err: any) {
+      logger.error("[SubscriptionPlanCard] Validation error:", err);
+      const errorMsg =
+        err?.response?.data?.["meta-data"]?.message ||
+        err?.response?.data?.metaData?.message ||
+        err?.response?.data?.data?.sReason ||
+        err?.message ||
+        "Invalid coupon code. Please try again.";
+      setCouponError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   // 1. Title (e.g. "12 Months", "1 Month")
   const planTitle =
@@ -320,9 +492,298 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
             ))}
           </div>
         )}
+
+        {/* Coupon Code Section */}
+        {showCouponInput && isActive && (
+          <div
+            className="spc-coupon-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              marginTop: "16px",
+              paddingTop: "14px",
+              borderTop: "1px dashed rgba(250, 175, 63, 0.3)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              width: "100%",
+            }}
+          >
+            <label
+              style={{
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#FAAF3F",
+                letterSpacing: "0.4px",
+                textTransform: "uppercase",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAAF3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              Have a Coupon Code?
+            </label>
+
+            <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value.toUpperCase());
+                  setCouponError(null);
+                  setCouponSuccess(null);
+                }}
+                placeholder="ENTER COUPON CODE"
+                disabled={isVerifying}
+                style={{
+                  flex: 1,
+                  backgroundColor: "rgba(0, 0, 0, 0.4)",
+                  border: couponError
+                    ? "1px solid #ff4a4a"
+                    : couponSuccess
+                      ? "1px solid #4caf50"
+                      : "1px solid rgba(250, 175, 63, 0.4)",
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                  color: "#FFFFFF",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  letterSpacing: "1px",
+                  outline: "none",
+                  transition: "border-color 0.2s ease",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleVerifyCoupon}
+                disabled={isVerifying || !couponCode.trim()}
+                style={{
+                  backgroundImage: "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)",
+                  color: "#000000",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 16px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  cursor: isVerifying || !couponCode.trim() ? "not-allowed" : "pointer",
+                  opacity: isVerifying || !couponCode.trim() ? 0.6 : 1,
+                  whiteSpace: "nowrap",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {isVerifying ? "Verifying..." : "Verify Code"}
+              </button>
+            </div>
+
+            {couponError && (
+              <span style={{ color: "#ff4a4a", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
+                {couponError}
+              </span>
+            )}
+
+            {couponSuccess && (
+              <span style={{ color: "#4caf50", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
+                {couponSuccess}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default SubscriptionPlanCard;
+
+interface SingleCouponInputProps {
+  campaignId?: string;
+  onSuccess?: (cleanCode: string, campaignRefId?: string) => void;
+}
+
+export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId, onSuccess }) => {
+  const router = useRouter();
+  const [couponCode, setCouponCode] = useState<string>("");
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+
+  const handleVerifyCoupon = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const cleanCode = couponCode.trim();
+    if (!cleanCode) {
+      const errText = "Please enter a coupon code";
+      setCouponError(errText);
+      toast.error(errText);
+      return;
+    }
+
+    if (isVerifying) return;
+    setIsVerifying(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+      logger.info("[SingleCouponInput] Validating coupon code:", cleanCode);
+      const response: any = await validateCode(cleanCode, campaignId || "");
+      logger.info("[SingleCouponInput] Validation response:", response);
+
+      const resData = response?.data?.data || response?.data || response;
+      const metaData = response?.metaData || response?.["meta-data"] || {};
+      const bIsEligible = resData?.bIsEligible ?? (metaData?.status === 200);
+
+      const campaignDetails = resData?.campaignDetails || {};
+      const campaignRefId =
+        campaignDetails?.campaignRefId ||
+        resData?.campaignRefId ||
+        campaignDetails?.campaignId ||
+        resData?.campaignId;
+
+      if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
+        const successMsg = resData?.sReason || metaData?.message || "Coupon code is valid and eligible";
+        setCouponSuccess(successMsg);
+        toast.success(successMsg);
+
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("sCouponCode");
+          if (campaignRefId) {
+            localStorage.setItem("pending_campaign_id", campaignRefId);
+          }
+        }
+
+        if (campaignRefId) {
+          await fetchAndStoreCampaignPlan(campaignRefId, cleanCode);
+        }
+
+        setCouponCode("");
+
+        if (onSuccess) {
+          onSuccess(cleanCode, campaignRefId);
+        } else {
+          setTimeout(() => {
+            router.push("/payment");
+          }, 400);
+        }
+      } else {
+        const errorMsg = resData?.sReason || metaData?.message || "Invalid or ineligible coupon code";
+        setCouponError(errorMsg);
+        toast.error(errorMsg);
+      }
+    } catch (err: any) {
+      logger.error("[SingleCouponInput] Validation error:", err);
+      const errorMsg =
+        err?.response?.data?.["meta-data"]?.message ||
+        err?.response?.data?.metaData?.message ||
+        err?.response?.data?.data?.sReason ||
+        err?.message ||
+        "Invalid coupon code. Please try again.";
+      setCouponError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  return (
+    <div
+      className="spc-coupon-container"
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        marginBottom: "24px",
+        padding: "16px",
+        borderRadius: "16px",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        border: "1px solid rgba(250, 175, 63, 0.3)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
+      <label
+        style={{
+          fontSize: "12px",
+          fontWeight: "600",
+          color: "#FAAF3F",
+          letterSpacing: "0.4px",
+          textTransform: "uppercase",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAAF3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+        Have a Coupon Code?
+      </label>
+
+      <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+        <input
+          type="text"
+          value={couponCode}
+          onChange={(e) => {
+            setCouponCode(e.target.value.toUpperCase());
+            setCouponError(null);
+            setCouponSuccess(null);
+          }}
+          placeholder="ENTER COUPON CODE"
+          disabled={isVerifying}
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            border: couponError
+              ? "1px solid #ff4a4a"
+              : couponSuccess
+                ? "1px solid #4caf50"
+                : "1px solid rgba(250, 175, 63, 0.4)",
+            borderRadius: "8px",
+            padding: "10px 14px",
+            color: "#FFFFFF",
+            fontSize: "13px",
+            fontWeight: "600",
+            letterSpacing: "1px",
+            outline: "none",
+            transition: "border-color 0.2s ease",
+          }}
+        />
+        <button
+          type="button"
+          onClick={handleVerifyCoupon}
+          disabled={isVerifying || !couponCode.trim()}
+          style={{
+            backgroundImage: "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)",
+            color: "#000000",
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 16px",
+            fontSize: "13px",
+            fontWeight: "700",
+            cursor: isVerifying || !couponCode.trim() ? "not-allowed" : "pointer",
+            opacity: isVerifying || !couponCode.trim() ? 0.6 : 1,
+            whiteSpace: "nowrap",
+            transition: "all 0.2s ease",
+          }}
+        >
+          {isVerifying ? "Verifying..." : "Verify Code"}
+        </button>
+      </div>
+
+      {couponError && (
+        <span style={{ color: "#ff4a4a", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
+          {couponError}
+        </span>
+      )}
+
+      {couponSuccess && (
+        <span style={{ color: "#4caf50", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
+          {couponSuccess}
+        </span>
+      )}
+    </div>
+  );
+};
+

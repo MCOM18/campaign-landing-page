@@ -173,7 +173,7 @@ export default function Footer() {
               </span>
             )}
             {env.timestamp && (
-              <span style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
+              <span suppressHydrationWarning style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
                 {env.timestamp}
               </span>
             )}
@@ -339,7 +339,7 @@ export default function Footer() {
                 </span>
               )}
               {env.timestamp && (
-                <span style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
+                <span suppressHydrationWarning style={{ fontSize: "11px", color: "#f26e21", opacity: 0.7, fontWeight: 400 }}>
                   {env.timestamp}
                 </span>
               )}

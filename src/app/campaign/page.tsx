@@ -28,7 +28,7 @@ import { useEffect, useRef, useState } from "react";
 import thumbnailsJson from "../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 import api from "../../utils/apiClient";
 import { getUserGeoLocation } from "../../utils/userUtil";
-import SubscriptionPlanCard from "../payment/SubscriptionPlanCard";
+import SubscriptionPlanCard, { SingleCouponInput } from "../payment/SubscriptionPlanCard";
 import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 
 /** Map each platform id → the SVG asset filename */
@@ -915,7 +915,7 @@ export default function Home() {
                           You are not eligible for a free trial as this offer has already been claimed on your account. Please choose a plan below to subscribe.
                         </div>
 
-                        <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
+                        <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1rem", width: "100%" }}>
                           {flatPlansList.map((planObj, idx) => (
                             <SubscriptionPlanCard
                               key={planObj.uniqueKey}
@@ -923,9 +923,12 @@ export default function Home() {
                               isActive={selectedPlanIndex === idx}
                               onClick={() => setSelectedPlanIndex(idx)}
                               isSelectionScreen={true}
+                              showCouponInput={false}
                             />
                           ))}
                         </div>
+
+                        <SingleCouponInput />
 
                         <button
                           onClick={handleSelectPlanAndContinue}
@@ -1111,7 +1114,7 @@ export default function Home() {
                                     You are not eligible for a free trial as this offer has already been claimed on your account. Please choose a plan below to subscribe.
                                   </div>
 
-                                  <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "2rem", width: "100%" }}>
+                                  <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1rem", width: "100%" }}>
                                     {flatPlansList.map((planObj, idx) => (
                                       <SubscriptionPlanCard
                                         key={planObj.uniqueKey}
@@ -1119,9 +1122,12 @@ export default function Home() {
                                         isActive={selectedPlanIndex === idx}
                                         onClick={() => setSelectedPlanIndex(idx)}
                                         isSelectionScreen={true}
+                                        showCouponInput={false}
                                       />
                                     ))}
                                   </div>
+
+                                  <SingleCouponInput />
 
                                   <button
                                     onClick={handleSelectPlanAndContinue}
