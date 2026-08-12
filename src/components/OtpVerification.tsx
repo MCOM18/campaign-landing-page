@@ -257,10 +257,19 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         type="button"
         disabled={!isComplete}
         onClick={() => triggerSubmit(otpValue)}
-        className={`btn-primary btn-otp-next`}
+        className={`btn-primary`}
         style={{
           marginBottom: "1.2rem",
           outline: "none",
+          width: "fit-content",
+          minWidth: "100px",
+          padding: "12px 32px",
+          whiteSpace: "nowrap",
+          display: "block",
+          marginLeft: "auto",
+          marginRight: "auto",
+          borderRadius: "9999px",
+          textAlign: "center",
           ...(isComplete
             ? {
               background: "rgba(242, 110, 33, 1)",

@@ -190,6 +190,12 @@ body {
   text-align: left;
 }
 
+.coupon-input::placeholder,
+.spc-coupon-container input::placeholder {
+  color: rgba(255, 255, 255, 0.65) !important;
+  opacity: 1 !important;
+}
+
 /* OTP digit inputs */
 .otp-boxes-container {
   display: flex;

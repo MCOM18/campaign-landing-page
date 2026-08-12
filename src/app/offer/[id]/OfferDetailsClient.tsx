@@ -138,7 +138,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const discountVal = offerDetails?.discountValue || 0;
   const offerType = offerDetails?.offerType || "PERCENTAGE_DISCOUNT";
   const campaignRefId = campaignDetails?.campaignRefId || campaignId;
-  
+
   // Extract dynamic theme color from API response (use dark theme)
   const themeColor = metadata?.theme?.backgroundColor?.dark || "#310A6C";
 
@@ -623,6 +623,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                   >
                     <input
                       type="text"
+                      className="coupon-input"
                       placeholder="Enter Coupon Code"
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
@@ -771,6 +772,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                     >
                       <input
                         type="text"
+                        className="coupon-input"
                         placeholder="Enter Coupon Code"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value)}

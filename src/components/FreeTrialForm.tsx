@@ -260,12 +260,15 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
         style={{
           marginBottom: "1.2rem",
           outline: "none",
-          width: "50%",
+          width: "fit-content",
+          minWidth: "100px",
+          padding: "12px 32px",
+          whiteSpace: "nowrap",
           display: "block",
           marginLeft: "auto",
           marginRight: "auto",
-          padding: "10px 10px 10px 10px",
           borderRadius: "9999px",
+          textAlign: "center",
           ...(isActive
             ? {
               background: "rgba(242, 110, 33, 1)",
