@@ -338,14 +338,6 @@ export default function page() {
   const firstGroup = campaignPlan?.aAllSubscriptionPlans?.[0];
   const firstProduct = firstGroup?.aSubscriptionProducts?.[0];
 
-  // Title: group name from translation
-  const pageTitle = firstGroup?.oGroupTranslation?.sTitle ||
-    firstGroup?.oGroupTranslation?.sName ||
-    "JOJO Gold";
-
-  // Badge: use the sub-product label of the first product (e.g. "12 Months") or empty
-  const badgeText = firstProduct?.sSubProductLabel || "";
-
   // CTA button label – no offer translation, use a sensible default
   const confirmButtonLabel = "Subscribe Now";
 
@@ -1126,8 +1118,6 @@ export default function page() {
                                 />
                               ) : step === TrialFormStep.PLANS ? (
                                 <div className="fade-in" style={{ width: "100%" }}>
-
-
                                   <div className="plans-selection-container" style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "1rem", width: "100%" }}>
                                     {flatPlansList.map((planObj, idx) => (
                                       <SubscriptionPlanCard
