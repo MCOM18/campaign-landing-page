@@ -8,12 +8,78 @@ import { LoginIdentifierType } from "@/enums/ui.enum";
 
 import { REGEX } from "@/lib/constants/regex";
 import { appConfig } from "@/lib/config/app.config";
+import { CoverflowCarousel } from "@/components/CoverflowCarousel";
+
+/** Renders footer note text, turning "Terms of Use" and "Privacy Statement" into gold clickable links. */
+const renderFooterWithLinks = (text: string) => {
+  if (!text) return null;
+
+  const termsText = "Terms of Use";
+  const privacyText = "Privacy Statement";
+
+  const linkStyle: React.CSSProperties = {
+    color: "#FAAF3F",
+    textDecoration: "underline",
+    fontWeight: "600",
+  };
+
+  if (text.includes(termsText) && text.includes(privacyText)) {
+    const partsByTerms = text.split(termsText);
+    const beforeTerms = partsByTerms[0];
+    const afterTerms = partsByTerms.slice(1).join(termsText);
+    const partsByPrivacy = afterTerms.split(privacyText);
+    const betweenTermsAndPrivacy = partsByPrivacy[0];
+    const afterPrivacy = partsByPrivacy.slice(1).join(privacyText);
+    return (
+      <>
+        {beforeTerms}
+        <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+          {termsText}
+        </a>
+        {betweenTermsAndPrivacy}
+        <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+          {privacyText}
+        </a>
+        {afterPrivacy}
+      </>
+    );
+  }
+
+  if (text.includes(termsText)) {
+    const parts = text.split(termsText);
+    return (
+      <>
+        {parts[0]}
+        <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+          {termsText}
+        </a>
+        {parts.slice(1).join(termsText)}
+      </>
+    );
+  }
+
+  if (text.includes(privacyText)) {
+    const parts = text.split(privacyText);
+    return (
+      <>
+        {parts[0]}
+        <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+          {privacyText}
+        </a>
+        {parts.slice(1).join(privacyText)}
+      </>
+    );
+  }
+
+  return <>{text}</>;
+};
 
 interface FreeTrialFormProps {
   onSubmit: (contactInfo: string) => void;
   confirmButtonLabel?: string;
   disclaimerText?: string;
   footerNote?: string;
+  showCarousel?: boolean;
 }
 
 export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
@@ -21,6 +87,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
   confirmButtonLabel,
   disclaimerText,
   footerNote,
+  showCarousel = false,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -237,7 +304,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
         </p>
       )}
 
-      {/* Long disclaimer */}
+      {/* Long disclaimer — highlights "Terms of Use" and "Privacy Statement" as gold links */}
       <p
         style={{
           color: "rgba(255, 255, 255, 0.7)",
@@ -248,7 +315,13 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           width: "100%",
         }}
       >
-        By proceeding with the "Subscribe Now" process, we might send a one-time verification code to the Phone number/Email linked to your account. Standard message and data rates may apply.</p>
+        {footerNote
+          ? renderFooterWithLinks(footerNote)
+          : 'By proceeding with the "Subscribe Now" process, we might send a one-time verification code to the Phone number/Email linked to your account. Standard message and data rates may apply.'}
+      </p>
+
+      {/* 3D Coverflow Card Carousel below footerNote */}
+      {showCarousel && <CoverflowCarousel />}
     </form>
   );
 };

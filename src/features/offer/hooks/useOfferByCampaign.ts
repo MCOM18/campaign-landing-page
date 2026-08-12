@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger/logger";
 
 export function useOfferByCampaign(campaignId: string, sCouponCode: string = "") {
   const { isAppReady } = useBootstrap();
+  const isValidCampaignId = Boolean(campaignId) && campaignId !== "default";
 
   return useQuery({
     queryKey: ["offerByCampaign", campaignId, sCouponCode],
@@ -14,6 +15,6 @@ export function useOfferByCampaign(campaignId: string, sCouponCode: string = "")
       logger.info("[useOfferByCampaign] Fetching offer for campaignId:", campaignId);
       return await getOfferByCampaign(campaignId, sCouponCode);
     },
-    enabled: isAppReady && Boolean(campaignId),
+    enabled: isAppReady && isValidCampaignId,
   });
 }

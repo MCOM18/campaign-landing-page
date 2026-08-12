@@ -50,7 +50,8 @@ const getCampaignIdFromPath = (
     }
   }
   const paramId = (resolvedParams?.id || routeParams?.id || "") as string;
-  return paramId;
+  // Do not return the static placeholder — wait for real ID
+  return paramId !== "default" ? paramId : "";
 };
 
 export default function OfferDetailsClient({ params }: OfferDetailsClientProps) {
@@ -68,6 +69,16 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       setCampaignId(activeId);
     }
   }, [resolvedParams, routeParams, campaignId]);
+
+  // On mount, also read the real campaign ID from window.location in case
+  // params resolved as "default" during static generation
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const pathId = getCampaignIdFromPath(null, null);
+    if (pathId && pathId !== campaignId) {
+      setCampaignId(pathId);
+    }
+  }, []);
 
   const searchParams = useSearchParams();
   const [sCouponCode, setSCouponCode] = useState<string>("");
@@ -108,15 +119,17 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   useEffect(() => {
     if (campaignId) {
       if (typeof window !== "undefined") {
-        localStorage.setItem("pending_campaign_id", campaignId);
-        localStorage.setItem("is_campaign_landing", "true");
+        sessionStorage.setItem("pending_campaign_id", campaignId);
       }
       logger.info(`[OfferDetailsClient] Loaded offer details page for campaignId: ${campaignId}`);
     }
   }, [campaignId]);
 
   // Extract nested API data
-  const offerData = data?.data || data || {};
+  // API client returns: { metaData, data: <decryptedPayload> }
+  // decryptedPayload may itself be: { data: { offerDetails, campaignDetails, aAllSubscriptionPlans } }
+  // or directly: { offerDetails, campaignDetails, aAllSubscriptionPlans }
+  const offerData = data?.data?.data || data?.data || data || {};
   const offerDetails = offerData?.offerDetails || {};
   const campaignDetails = offerData?.campaignDetails || {};
   const metadata = campaignDetails?.metadata || {};
@@ -125,6 +138,9 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const discountVal = offerDetails?.discountValue || 0;
   const offerType = offerDetails?.offerType || "PERCENTAGE_DISCOUNT";
   const campaignRefId = campaignDetails?.campaignRefId || campaignId;
+  
+  // Extract dynamic theme color from API response (use dark theme)
+  const themeColor = metadata?.theme?.backgroundColor?.dark || "#310A6C";
 
   const parseHtmlListItems = (htmlStr: string): string[] => {
     if (!htmlStr) return [];
@@ -228,7 +244,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     localStorage.setItem("sCouponCode", enteredCoupon);
     const codeToSave = campaignRefId || campaignId || "";
     if (codeToSave) {
-      localStorage.setItem("pending_campaign_id", codeToSave);
+      sessionStorage.setItem("pending_campaign_id", codeToSave);
     }
 
     if (checkIsLoggedIn()) {
@@ -383,7 +399,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         }
         const codeToSave = campaignRefId || campaignId || "";
         if (codeToSave) {
-          localStorage.setItem("pending_campaign_id", codeToSave);
+          sessionStorage.setItem("pending_campaign_id", codeToSave);
         }
         router.push("/payment");
       }
@@ -467,7 +483,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     <main
       className="app-container"
       style={{
-        background: "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a",
+        background: `linear-gradient(180deg, ${themeColor} 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a`,
         minHeight: "100vh",
       }}
     >
@@ -565,8 +581,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                   <button
                     onClick={() => {
                       if (campaignId) {
-                        localStorage.setItem("pending_campaign_id", campaignId);
-                        localStorage.setItem("is_campaign_landing", "true");
+                        sessionStorage.setItem("pending_campaign_id", campaignId);
                       }
                       router.push("/login");
                     }}
@@ -716,8 +731,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                     <button
                       onClick={() => {
                         if (campaignId) {
-                          localStorage.setItem("pending_campaign_id", campaignId);
-                          localStorage.setItem("is_campaign_landing", "true");
+                          sessionStorage.setItem("pending_campaign_id", campaignId);
                         }
                         router.push("/login");
                       }}

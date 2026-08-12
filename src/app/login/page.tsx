@@ -62,10 +62,10 @@ export default function LoginPage() {
           const urlParams = new URLSearchParams(window.location.search);
           const queryId = urlParams.get("pending_campaign_id")
           if (queryId) {
-            localStorage.setItem("pending_campaign_id", queryId);
+            sessionStorage.setItem("pending_campaign_id", queryId);
             pendingCampaignId = queryId;
           } else {
-            pendingCampaignId = localStorage.getItem("pending_campaign_id") || "";
+            pendingCampaignId = sessionStorage.getItem("pending_campaign_id") || "";
           }
         }
 
@@ -75,81 +75,80 @@ export default function LoginPage() {
           router.replace("/");
           return;
         }
-
-        logger.info("[LoginPage] Refresh / Mount - Requesting campaign details for pending_campaign_id:", targetCampaignId);
+        
         const offerRes: any = await getOfferByCampaign(targetCampaignId);
         logger.info("[LoginPage] Campaign details response:", offerRes);
 
-          const dataObj = offerRes?.data?.data || offerRes?.data || offerRes || {};
-          setCampaignData(dataObj);
+        const dataObj = offerRes?.data?.data || offerRes?.data || offerRes || {};
+        setCampaignData(dataObj);
 
-          // Map and store default selectedPlan from subscription plans if available
-          const subscriptionPlansGroup = dataObj?.aAllSubscriptionPlans || [];
-          const offerDetails = dataObj?.offerDetails || {};
-          const campaignDetails = dataObj?.campaignDetails || {};
-          const discountVal = offerDetails?.discountValue || 0;
-          const offerType = offerDetails?.offerType || "PERCENTAGE_DISCOUNT";
+        // Map and store default selectedPlan from subscription plans if available
+        const subscriptionPlansGroup = dataObj?.aAllSubscriptionPlans || [];
+        const offerDetails = dataObj?.offerDetails || {};
+        const campaignDetails = dataObj?.campaignDetails || {};
+        const discountVal = offerDetails?.discountValue || 0;
+        const offerType = offerDetails?.offerType || "PERCENTAGE_DISCOUNT";
 
-          const flatPlansList = (Array.isArray(subscriptionPlansGroup) ? subscriptionPlansGroup : []).flatMap((group: any) => {
-            const products = group?.aSubscriptionProducts || (group?.aProviderSkus ? [group] : []);
-            return (Array.isArray(products) ? products : []).map((prod: any) => {
-              const sku = prod?.aProviderSkus?.[0] || prod?.sku || {};
-              const couponDetails = sku?.oCouponDetails || {};
+        const flatPlansList = (Array.isArray(subscriptionPlansGroup) ? subscriptionPlansGroup : []).flatMap((group: any) => {
+          const products = group?.aSubscriptionProducts || (group?.aProviderSkus ? [group] : []);
+          return (Array.isArray(products) ? products : []).map((prod: any) => {
+            const sku = prod?.aProviderSkus?.[0] || prod?.sku || {};
+            const couponDetails = sku?.oCouponDetails || {};
 
-              const origPrice = couponDetails?.nOriginalPrice ?? sku?.oPricing?.nPrice ?? 499;
+            const origPrice = couponDetails?.nOriginalPrice ?? sku?.oPricing?.nPrice ?? 499;
 
-              let finalPrice = origPrice;
-              if (couponDetails?.nFinalAmount !== undefined && couponDetails?.nFinalAmount !== null) {
-                finalPrice = couponDetails.nFinalAmount;
-              } else if (offerType === "PERCENTAGE_DISCOUNT" && discountVal > 0) {
-                finalPrice = Math.round(origPrice * (1 - discountVal / 100));
-              } else if (offerType === "FLAT_DISCOUNT" && discountVal > 0) {
-                finalPrice = Math.max(0, origPrice - discountVal);
-              }
+            let finalPrice = origPrice;
+            if (couponDetails?.nFinalAmount !== undefined && couponDetails?.nFinalAmount !== null) {
+              finalPrice = couponDetails.nFinalAmount;
+            } else if (offerType === "PERCENTAGE_DISCOUNT" && discountVal > 0) {
+              finalPrice = Math.round(origPrice * (1 - discountVal / 100));
+            } else if (offerType === "FLAT_DISCOUNT" && discountVal > 0) {
+              finalPrice = Math.max(0, origPrice - discountVal);
+            }
 
-              const symbol = couponDetails?.sCurrencySymbol || sku?.oPricing?.sCurrencySymbol || "₹";
+            const symbol = couponDetails?.sCurrencySymbol || sku?.oPricing?.sCurrencySymbol || "₹";
 
-              const discountLabel =
-                couponDetails?.sSavingsLabel ||
-                (couponDetails?.nDiscountPercentage ? `${couponDetails.nDiscountPercentage}% OFF` : null) ||
-                (discountVal > 0 ? `${discountVal}% OFF` : null);
+            const discountLabel =
+              couponDetails?.sSavingsLabel ||
+              (couponDetails?.nDiscountPercentage ? `${couponDetails.nDiscountPercentage}% OFF` : null) ||
+              (discountVal > 0 ? `${discountVal}% OFF` : null);
 
-              const modifiedSku = {
-                ...sku,
-                oPricing: {
-                  ...(sku?.oPricing || {}),
-                  nPrice: finalPrice,
-                  sCurrencySymbol: symbol,
-                },
-              };
+            const modifiedSku = {
+              ...sku,
+              oPricing: {
+                ...(sku?.oPricing || {}),
+                nPrice: finalPrice,
+                sCurrencySymbol: symbol,
+              },
+            };
 
-              return {
-                ...prod,
-                product: prod,
-                group: group,
-                sku: modifiedSku,
-                providerSku: modifiedSku,
-                pricing: modifiedSku.oPricing,
-                sFormattedPrice: `${symbol}${finalPrice}`,
-                sAltPrice: `${symbol}${finalPrice}`,
-                sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
-                nOriginalPrice: origPrice,
-                finalPrice: finalPrice,
-                originalPrice: origPrice,
-                currencySymbol: symbol,
-                sDiscount: discountLabel,
-                discountLabel: discountLabel,
-                nValidity: prod.nValidityDays || 365,
-                aFeatures: prod.aFeatures || [],
-                oOfferDetails: offerDetails,
-                oCampaignDetails: campaignDetails,
-              };
-            });
+            return {
+              ...prod,
+              product: prod,
+              group: group,
+              sku: modifiedSku,
+              providerSku: modifiedSku,
+              pricing: modifiedSku.oPricing,
+              sFormattedPrice: `${symbol}${finalPrice}`,
+              sAltPrice: `${symbol}${finalPrice}`,
+              sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+              nOriginalPrice: origPrice,
+              finalPrice: finalPrice,
+              originalPrice: origPrice,
+              currencySymbol: symbol,
+              sDiscount: discountLabel,
+              discountLabel: discountLabel,
+              nValidity: prod.nValidityDays || 365,
+              aFeatures: prod.aFeatures || [],
+              oOfferDetails: offerDetails,
+              oCampaignDetails: campaignDetails,
+            };
           });
+        });
 
-          if (flatPlansList.length > 0 && typeof window !== "undefined") {
-            localStorage.setItem("selectedPlan", JSON.stringify(flatPlansList[0]));
-          }
+        if (flatPlansList.length > 0 && typeof window !== "undefined") {
+          localStorage.setItem("selectedPlan", JSON.stringify(flatPlansList[0]));
+        }
       } catch (err) {
         logger.error("[LoginPage] Failed to fetch campaign details:", err);
       } finally {
@@ -164,8 +163,13 @@ export default function LoginPage() {
   const metadata = campaignDetails?.metadata || {};
   const campaignName = campaignDetails?.campaignName || "JOJO Gold Offer";
   const campaignBannerUrl = metadata?.campaignBannerImage?.url || metadata?.thumbnailImage?.url || "";
+  const sFooterNote = campaignData?.sFooterNote;
+
   const logosList = metadata?.logos || [];
   const mainLogoUrl = logosList.find((l: any) => l.name === "main")?.url || logosList[0]?.url || "";
+  
+  // Extract dynamic theme color from API response (use dark theme)
+  const themeColor = metadata?.theme?.backgroundColor?.dark;
 
   const handleInputSubmit = async (contact: string) => {
     setError(null);
@@ -261,9 +265,102 @@ export default function LoginPage() {
       if (response.user_id) localStorage.setItem("user_id", response.user_id);
       localStorage.setItem("userData", JSON.stringify(user));
 
+      // Re-fetch offer with the authenticated session so selectedPlan has
+      // accurate coupon/pricing data tied to this user's account
+      try {
+        const pendingCampaignId =
+          (typeof window !== "undefined" ? sessionStorage.getItem("pending_campaign_id") : "") || "";
+        if (pendingCampaignId) {
+          logger.info("[LoginPage] Re-fetching offer with authenticated session for campaignId:", pendingCampaignId);
+          const freshOfferRes: any = await getOfferByCampaign(pendingCampaignId);
+          const freshDataObj =
+            freshOfferRes?.data?.data || freshOfferRes?.data || freshOfferRes || {};
+
+          const freshPlansGroup = freshDataObj?.aAllSubscriptionPlans || [];
+          const freshOfferDetails = freshDataObj?.offerDetails || {};
+          const freshCampaignDetails = freshDataObj?.campaignDetails || {};
+          const freshDiscountVal = freshOfferDetails?.discountValue || 0;
+          const freshOfferType = freshOfferDetails?.offerType || "PERCENTAGE_DISCOUNT";
+
+          const freshFlatPlansList = (Array.isArray(freshPlansGroup) ? freshPlansGroup : []).flatMap(
+            (group: any) => {
+              const products =
+                group?.aSubscriptionProducts || (group?.aProviderSkus ? [group] : []);
+              return (Array.isArray(products) ? products : []).map((prod: any) => {
+                const sku = prod?.aProviderSkus?.[0] || prod?.sku || {};
+                const couponDetails = sku?.oCouponDetails || {};
+                const origPrice =
+                  couponDetails?.nOriginalPrice ?? sku?.oPricing?.nPrice ?? 499;
+                let finalPrice = origPrice;
+                if (couponDetails?.nFinalAmount !== undefined && couponDetails?.nFinalAmount !== null) {
+                  finalPrice = couponDetails.nFinalAmount;
+                } else if (freshOfferType === "PERCENTAGE_DISCOUNT" && freshDiscountVal > 0) {
+                  finalPrice = Math.round(origPrice * (1 - freshDiscountVal / 100));
+                } else if (freshOfferType === "FLAT_DISCOUNT" && freshDiscountVal > 0) {
+                  finalPrice = Math.max(0, origPrice - freshDiscountVal);
+                }
+                const symbol =
+                  couponDetails?.sCurrencySymbol || sku?.oPricing?.sCurrencySymbol || "₹";
+                const discountLabel =
+                  couponDetails?.sSavingsLabel ||
+                  (couponDetails?.nDiscountPercentage
+                    ? `${couponDetails.nDiscountPercentage}% OFF`
+                    : null) ||
+                  (freshDiscountVal > 0 ? `${freshDiscountVal}% OFF` : null);
+                const modifiedSku = {
+                  ...sku,
+                  oPricing: { ...(sku?.oPricing || {}), nPrice: finalPrice, sCurrencySymbol: symbol },
+                };
+                return {
+                  ...prod,
+                  product: prod,
+                  group,
+                  sku: modifiedSku,
+                  providerSku: modifiedSku,
+                  pricing: modifiedSku.oPricing,
+                  sFormattedPrice: `${symbol}${finalPrice}`,
+                  sAltPrice: `${symbol}${finalPrice}`,
+                  sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+                  nOriginalPrice: origPrice,
+                  finalPrice,
+                  originalPrice: origPrice,
+                  currencySymbol: symbol,
+                  sDiscount: discountLabel,
+                  discountLabel,
+                  nValidity: prod.nValidityDays || 365,
+                  aFeatures: prod.aFeatures || [],
+                  oOfferDetails: freshOfferDetails,
+                  oCampaignDetails: freshCampaignDetails,
+                };
+              });
+            }
+          );
+
+          if (freshFlatPlansList.length > 0) {
+            localStorage.setItem("selectedPlan", JSON.stringify(freshFlatPlansList[0]));
+            logger.info("[LoginPage] Updated selectedPlan with authenticated offer data");
+          }
+        }
+      } catch (refreshErr) {
+        // Non-blocking — selectedPlan from initial (unauthenticated) fetch is still usable
+        logger.warn("[LoginPage] Failed to refresh offer with session, using initial plan data:", refreshErr);
+      }
+
       clearTimeout(safetyTimeout);
       setIsVerifying(false);
-      router.push("/payment");
+
+      // Redirect back to the offer page so the user can enter the coupon code.
+      // The pending_campaign_id is stored in localStorage from when they first
+      // visited the offer page.
+      const pendingCampaignIdForRedirect =
+        typeof window !== "undefined"
+          ? sessionStorage.getItem("pending_campaign_id") || ""
+          : "";
+      if (pendingCampaignIdForRedirect) {
+        router.push(`/offer/${encodeURIComponent(pendingCampaignIdForRedirect)}`);
+      } else {
+        router.push("/payment");
+      }
     } catch (err: any) {
       clearTimeout(safetyTimeout);
       setIsVerifying(false);
@@ -289,7 +386,7 @@ export default function LoginPage() {
     <main
       className="app-container"
       style={{
-        background: "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a",
+        background: `linear-gradient(180deg, ${themeColor} 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a`,
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -449,7 +546,8 @@ export default function LoginPage() {
               <FreeTrialForm
                 onSubmit={handleInputSubmit}
                 confirmButtonLabel="Next"
-                footerNote=""
+                footerNote={sFooterNote}
+                showCarousel={true}
               />
             </div>
           ) : step === TrialFormStep.OTP ? (

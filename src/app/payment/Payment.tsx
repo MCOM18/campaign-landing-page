@@ -84,6 +84,12 @@ function PaymentPage() {
       }
     }
     setIsMounted(true);
+
+    // Read applied coupon from sessionStorage
+    const storedCoupon = sessionStorage.getItem("applied_coupon_code");
+    if (storedCoupon) {
+      setAppliedCoupon(storedCoupon);
+    }
   }, [router, RAZORPAY_KEY]);
 
   const isOverseasUser = countryCode !== appConfig.DEFAULT_COUNTRY_NAME;
@@ -114,6 +120,7 @@ function PaymentPage() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showFailedPopup, setShowFailedPopup] = useState(false);
   const [failedErrorMsg, setFailedErrorMsg] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
 
   // Overseas users can't use UPI — default to card
   useEffect(() => {
@@ -601,6 +608,31 @@ function PaymentPage() {
             isActive
             landscapeUrl={landscapeUrl}
           />
+
+          {/* Applied Coupon Badge */}
+          {appliedCoupon && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                background: "rgba(76, 175, 80, 0.12)",
+                border: "1px solid rgba(76, 175, 80, 0.4)",
+                borderRadius: "12px",
+                padding: "10px 16px",
+                marginBottom: "4px",
+              }}
+            >
+              {/* Tag icon */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                <line x1="7" y1="7" x2="7.01" y2="7" />
+              </svg>
+              <span style={{ flex: 1, fontSize: "13px", fontWeight: "600", color: "#4caf50", letterSpacing: "0.3px" }}>
+                Coupon Applied: <span style={{ color: "#ffffff", fontWeight: "700", letterSpacing: "1px" }}>{appliedCoupon}</span>
+              </span>
+            </div>
+          )}
 
           {/* Payment methods */}
           <div style={{ marginTop: "24px" }}>

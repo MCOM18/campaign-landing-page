@@ -122,9 +122,8 @@ export default function page() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const pendingCampaignId = localStorage.getItem("pending_campaign_id");
-      const isCampaignLanding = localStorage.getItem("is_campaign_landing") === "true";
-      setIsCampaignLogin(Boolean(pendingCampaignId && isCampaignLanding));
+      const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
+      setIsCampaignLogin(Boolean(pendingCampaignId));
     }
   }, []);
 
@@ -648,7 +647,7 @@ export default function page() {
       }
 
       if (!isGoldUser) {
-        const pendingCampaignId = typeof window !== "undefined" ? localStorage.getItem("pending_campaign_id") : null;
+        const pendingCampaignId = typeof window !== "undefined" ? sessionStorage.getItem("pending_campaign_id") : null;
         if (pendingCampaignId) {
           clearTimeout(safetyTimeout);
           setIsVerifying(false);
@@ -869,6 +868,7 @@ export default function page() {
                       onSubmit={handleInputSubmit}
                       confirmButtonLabel={confirmButtonLabel}
                       footerNote={footerNote}
+                      showCarousel={true}
                     />
                   </div>
                 ) : step === TrialFormStep.OTP ? (

@@ -134,7 +134,6 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     if (!cleanCode) {
       const errText = "Please enter a coupon code";
       setCouponError(errText);
-      toast.error(errText);
       return;
     }
 
@@ -162,12 +161,13 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
         const successMsg = resData?.sReason || metaData?.message || "Coupon code is valid and eligible";
         setCouponSuccess(successMsg);
-        toast.success(successMsg);
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("sCouponCode");
+          // Save coupon code to sessionStorage so Payment page can display it
+          sessionStorage.setItem("applied_coupon_code", cleanCode);
           if (campaignRefId) {
-            localStorage.setItem("pending_campaign_id", campaignRefId);
+            sessionStorage.setItem("pending_campaign_id", campaignRefId);
           }
         }
 
@@ -616,7 +616,6 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
     if (!cleanCode) {
       const errText = "Please enter a coupon code";
       setCouponError(errText);
-      toast.error(errText);
       return;
     }
 
@@ -644,12 +643,13 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
       if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
         const successMsg = resData?.sReason || metaData?.message || "Coupon code is valid and eligible";
         setCouponSuccess(successMsg);
-        toast.success(successMsg);
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("sCouponCode");
+          // Save coupon code to sessionStorage so Payment page can display it
+          sessionStorage.setItem("applied_coupon_code", cleanCode);
           if (campaignRefId) {
-            localStorage.setItem("pending_campaign_id", campaignRefId);
+            sessionStorage.setItem("pending_campaign_id", campaignRefId);
           }
         }
 
