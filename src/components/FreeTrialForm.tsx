@@ -310,7 +310,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           color: "rgba(255, 255, 255, 0.7)",
           fontSize: "14px",
           lineHeight: "22px",
-          textAlign: "inherit",
+          textAlign: "left",
           fontWeight: "400",
           width: "100%",
         }}
