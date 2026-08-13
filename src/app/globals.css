@@ -418,17 +418,17 @@ body {
   display: none !important;
 }
 
-@media (min-width: 9999px) {
-  .mobile-only {
+@media (min-width: 768px) {
+.responsive-view .mobile-only {
     display: none !important;
   }
 
-  .desktop-only {
+.responsive-view .desktop-only {
     display: block !important;
   }
 
   /* Body must stretch on desktop so app-container fills 100vw */
-  body {
+body.responsive-view {
     align-items: stretch !important;
     justify-content: flex-start !important;
     background: var(--desktop-bg) !important;
@@ -436,7 +436,7 @@ body {
 
 
   /* Desktop: full 100% width, no max-width, no card border */
-  .app-container {
+.responsive-view .app-container {
     max-width: 100% !important;
     width: 100% !important;
     min-height: 100vh !important;
@@ -453,7 +453,7 @@ body {
     align-items: stretch !important;
   }
 
-  .posters-banner-container {
+.responsive-view .posters-banner-container {
     height: 258px !important;
     width: 100% !important;
     margin-top: 0 !important;
@@ -469,14 +469,14 @@ body {
     mask-repeat: no-repeat;
   }
 
-  .posters-banner-image {
+.responsive-view .posters-banner-image {
     width: 100% !important;
     left: 0 !important;
     height: auto !important;
   }
 
   /* Web/Desktop Split layout */
-  .web-split-layout {
+.responsive-view .web-split-layout {
     display: flex !important;
     width: 100% !important;
     gap: 72px !important;
@@ -486,7 +486,7 @@ body {
     z-index: 20 !important;
   }
 
-  .web-layout-left {
+.responsive-view .web-layout-left {
     width: 50% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -495,7 +495,7 @@ body {
     text-align: left !important;
   }
 
-  .web-layout-right {
+.responsive-view .web-layout-right {
     width: 50% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -503,13 +503,13 @@ body {
   }
 
   /* Features grid on desktop */
-  .web-features-grid {
+.responsive-view .web-features-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
   }
 
-  .feature-card {
+.responsive-view .feature-card {
     background-color: rgba(var(--gradient-start-rgb), 0.15) !important;
     border-radius: 16px !important;
     padding: 14px 18px !important;
@@ -522,7 +522,7 @@ body {
     flex: none !important;
   }
 
-  .feature-card-mobile {
+.responsive-view .feature-card-mobile {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -532,7 +532,7 @@ body {
     flex: none !important;
   }
 
-  .web-features-header {
+.responsive-view .web-features-header {
     display: flex !important;
     align-items: center !important;
     gap: 11px !important;
@@ -540,20 +540,20 @@ body {
     justify-content: center !important;
   }
 
-  .web-features-header-line {
+.responsive-view .web-features-header-line {
     flex: 1 !important;
     height: 3px !important;
   }
 
-  .web-features-header-line:first-child {
+.responsive-view .web-features-header-line:first-child {
     background: linear-gradient(270deg, var(--gradient-start) 50%, transparent 100%) !important;
   }
 
-  .web-features-header-line:last-child {
+.responsive-view .web-features-header-line:last-child {
     background: linear-gradient(90deg, var(--gradient-start) 50%, transparent 100%) !important;
   }
 
-  .web-features-header-text {
+.responsive-view .web-features-header-text {
     font-size: 16px !important;
     font-weight: 600 !important;
     letter-spacing: 0.5px !important;
@@ -565,7 +565,7 @@ body {
   /* Success Modal Overlay (Mobile & Desktop) - defined at root level */
 
   /* Responsive Form Alignments */
-  .responsive-form-container {
+.responsive-view .responsive-form-container {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -573,31 +573,31 @@ body {
     text-align: left !important;
   }
 
-  .form-input {
+.responsive-view .form-input {
     text-align: left !important;
   }
 
-  .form-input::placeholder {
+.responsive-view .form-input::placeholder {
     text-align: left !important;
   }
 
-  .responsive-text-align {
+.responsive-view .responsive-text-align {
     text-align: left !important;
   }
 
-  .otp-boxes-container {
+.responsive-view .otp-boxes-container {
     justify-content: flex-start !important;
   }
 
   /* Custom Fixed-Width Responsive Buttons */
-  .btn-start-trial {
+.responsive-view .btn-start-trial {
     width: 194px !important;
     height: 48px !important;
     padding: 0 !important;
     border-radius: 30px !important;
   }
 
-  .btn-otp-next {
+.responsive-view .btn-otp-next {
     width: 104px !important;
     height: 48px !important;
     padding: 0 !important;
@@ -606,8 +606,8 @@ body {
     margin-right: auto !important;
   }
 
-  @media (min-width: 9999px) {
-    .btn-otp-next {
+  @media (min-width: 768px) {
+.responsive-view .btn-otp-next {
       margin-left: 0 !important;
       margin-right: auto !important;
     }
@@ -642,8 +642,8 @@ body {
   box-sizing: border-box;
 }
 
-@media (min-width: 9999px) {
-  .web-footer-container {
+@media (min-width: 768px) {
+.responsive-view .web-footer-container {
     padding: 10px 20px !important;
     margin-top: auto !important;
   }
@@ -663,12 +663,12 @@ body {
   width: 100%;
 }
 
-@media (min-width: 9999px) {
-  .mobile-footer-wrapper {
+@media (min-width: 768px) {
+.responsive-view .mobile-footer-wrapper {
     display: none !important;
   }
 
-  .desktop-footer-wrapper {
+.responsive-view .desktop-footer-wrapper {
     display: block !important;
   }
 }
@@ -682,8 +682,8 @@ body {
   width: 100%;
 }
 
-@media (min-width: 9999px) {
-  .web-footer-grid {
+@media (min-width: 768px) {
+.responsive-view .web-footer-grid {
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: flex-start !important;
@@ -704,8 +704,8 @@ body {
   text-align: left;
 }
 
-@media (min-width: 9999px) {
-  .web-footer-column {
+@media (min-width: 768px) {
+.responsive-view .web-footer-column {
     gap: 16px !important;
     font-size: 15px !important;
   }

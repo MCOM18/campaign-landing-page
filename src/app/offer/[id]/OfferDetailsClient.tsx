@@ -1,34 +1,30 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import Lottie from "lottie-react";
-import toast from "react-hot-toast";
-import { JojoLogo, NoAdsIcon, DevicesIcon, ExclusiveIcon, HdIcon } from "@/components/Icons";
-import { FreeTrialForm } from "@/components/FreeTrialForm";
-import { OtpVerification } from "@/components/OtpVerification";
-import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
-import { useOfferByCampaign } from "@/features/offer/hooks/useOfferByCampaign";
-import { validateCode } from "@/features/offer/api/validateCode";
-import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/services/auth.service";
-import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
-import { REGEX } from "@/lib/constants/regex";
-import { useAuthStore } from "@/store/useAuthStore";
-import { appConfig } from "@/lib/config/app.config";
-import { getUserGeoLocation } from "@/utils/userUtil";
-import { logger } from "@/lib/logger/logger";
-import api from "@/utils/apiClient";
-import SubscriptionPlanCard from "@/app/payment/SubscriptionPlanCard";
 import Footer from "@/components/Footer";
-import thumbnailsJson from "../../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
+import { FreeTrialForm } from "@/components/FreeTrialForm";
+import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
+import { JojoLogo } from "@/components/Icons";
+import { OtpVerification } from "@/components/OtpVerification";
+import PageSkeleton from "@/components/PageSkeleton";
+import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
+import { completeOtpVerification, initiateOtpFlow } from "@/features/auth/services/auth.service";
+import { validateCode } from "@/features/offer/api/validateCode";
+import { useOfferByCampaign } from "@/features/offer/hooks/useOfferByCampaign";
+import { appConfig } from "@/lib/config/app.config";
+import { REGEX } from "@/lib/constants/regex";
+import { logger } from "@/lib/logger/logger";
+import { useAuthStore } from "@/store/useAuthStore";
+import api from "@/utils/apiClient";
+import { getUserGeoLocation } from "@/utils/userUtil";
+import Lottie from "lottie-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { use, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import {
-  FiCalendar,
   FiInfo,
-  FiShield,
-  FiChevronDown,
-  FiZap,
-  FiMaximize,
+  FiShield
 } from "react-icons/fi";
+import thumbnailsJson from "../../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 
 interface OfferDetailsClientProps {
   params: Promise<{ id: string }>;
@@ -140,7 +136,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const campaignRefId = campaignDetails?.campaignRefId || campaignId;
 
   // Extract dynamic theme color from API response (use dark theme)
-  const themeColor = metadata?.theme?.backgroundColor?.dark || "#310A6C";
+  const themeColor = metadata?.theme?.backgroundColor?.dark || "";
 
   const parseHtmlListItems = (htmlStr: string): string[] => {
     if (!htmlStr) return [];
@@ -481,30 +477,12 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     <main
       className="app-container"
       style={{
-        background: `linear-gradient(180deg, ${themeColor} 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a`,
+        ...(themeColor ? { background: `linear-gradient(180deg, ${themeColor} 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a` } : {}),
         minHeight: "100vh",
       }}
     >
       {/* Loading View */}
-      {isLoading && (
-        <div
-          className="fade-in"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: "400px",
-            width: "100%",
-            gap: "1.2rem",
-          }}
-        >
-          <div className="premium-loader" />
-          <p style={{ color: "#ffffff", fontSize: "15px", fontWeight: "500" }}>
-            Loading campaign offer details...
-          </p>
-        </div>
-      )}
+      {isLoading && <PageSkeleton />}
 
       {/* Error View */}
       {isError && !isLoading && (

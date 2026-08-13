@@ -7,6 +7,7 @@ import {
   JojoLogo,
 } from "@/components/Icons";
 import { OtpVerification } from "@/components/OtpVerification";
+import PageSkeleton from "@/components/PageSkeleton";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { slugMap } from "@/enums/enums";
 import { PageSection, TrialFormStep } from "@/enums/ui.enum";
@@ -696,24 +697,7 @@ export default function page() {
   };
 
   if (!isAppReady || isCampaignLoading) {
-    return (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#0c0b0a",
-          color: "#ffffff",
-          zIndex: 9999,
-        }}
-      >
-        <div className="premium-loader" />
-        <p style={{ color: "#ffffff", fontSize: "15px" }}>Loading settings...</p>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
@@ -721,9 +705,7 @@ export default function page() {
       <main
         className="app-container"
         style={{
-          background: isCampaignLogin
-            ? "linear-gradient(180deg, #310A6C 0%, rgba(49, 10, 108, 0) 100%), #0c0b0a"
-            : "linear-gradient(180deg, #1c0f03 0%, var(--theme-glow-color) 90%)",
+
           minHeight: "100vh",
         }}
       >

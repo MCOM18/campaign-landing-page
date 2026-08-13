@@ -7,6 +7,7 @@ import { BootstrapProvider } from "@/lib/bootstrap/BootstrapProvider";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import { AnalyticsProvider } from "@/shared/analytics";
 import { StatusLine } from "@/components/StatusLine";
+import { appConfig } from "@/lib/config/app.config";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -152,7 +153,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className={`antialiased ${!appConfig.flags.mobileview_web ? "responsive-view" : ""}`} suppressHydrationWarning>
         <noscript>
           <img height="1" width="1" style={{ display: "none" }}
             src="https://www.facebook.com/tr?id=2043234696276290&ev=PageView&noscript=1"

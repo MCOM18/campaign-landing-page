@@ -79,7 +79,7 @@ export default function LoginPage() {
           router.replace("/");
           return;
         }
-        
+
         const offerRes: any = await fetchOfferByCampaignCached(targetCampaignId);
         logger.info("[LoginPage] Campaign details response (cached):", offerRes);
 
@@ -171,9 +171,9 @@ export default function LoginPage() {
 
   const logosList = metadata?.logos || [];
   const mainLogoUrl = logosList.find((l: any) => l.name === "main")?.url || logosList[0]?.url || "";
-  
-  // Extract dynamic theme color from API response (use dark theme)
-  const themeColor = metadata?.theme?.backgroundColor?.dark;
+
+  // Extract dynamic theme color from API response (use dark theme), with fallback to prevent invalid CSS on initial load
+  const themeColor = metadata?.theme?.backgroundColor?.dark || "";
 
   const handleInputSubmit = async (contact: string) => {
     setError(null);
@@ -301,92 +301,92 @@ export default function LoginPage() {
         try {
           const pendingCampaignId =
             (typeof window !== "undefined" ? sessionStorage.getItem("pending_campaign_id") : "") || "";
-        if (pendingCampaignId) {
-          logger.info("[LoginPage] Reading offer from cache for campaignId:", pendingCampaignId);
-          const freshOfferRes: any = await fetchOfferByCampaignCached(pendingCampaignId);
-          const freshDataObj =
-            freshOfferRes?.data?.data || freshOfferRes?.data || freshOfferRes || {};
+          if (pendingCampaignId) {
+            logger.info("[LoginPage] Reading offer from cache for campaignId:", pendingCampaignId);
+            const freshOfferRes: any = await fetchOfferByCampaignCached(pendingCampaignId);
+            const freshDataObj =
+              freshOfferRes?.data?.data || freshOfferRes?.data || freshOfferRes || {};
 
-          const freshPlansGroup = freshDataObj?.aAllSubscriptionPlans || [];
-          const freshOfferDetails = freshDataObj?.offerDetails || {};
-          const freshCampaignDetails = freshDataObj?.campaignDetails || {};
-          const freshDiscountVal = freshOfferDetails?.discountValue || 0;
-          const freshOfferType = freshOfferDetails?.offerType || "PERCENTAGE_DISCOUNT";
+            const freshPlansGroup = freshDataObj?.aAllSubscriptionPlans || [];
+            const freshOfferDetails = freshDataObj?.offerDetails || {};
+            const freshCampaignDetails = freshDataObj?.campaignDetails || {};
+            const freshDiscountVal = freshOfferDetails?.discountValue || 0;
+            const freshOfferType = freshOfferDetails?.offerType || "PERCENTAGE_DISCOUNT";
 
-          const freshFlatPlansList = (Array.isArray(freshPlansGroup) ? freshPlansGroup : []).flatMap(
-            (group: any) => {
-              const products =
-                group?.aSubscriptionProducts || (group?.aProviderSkus ? [group] : []);
-              return (Array.isArray(products) ? products : []).map((prod: any) => {
-                const sku = prod?.aProviderSkus?.[0] || prod?.sku || {};
-                const couponDetails = sku?.oCouponDetails || {};
-                const origPrice =
-                  couponDetails?.nOriginalPrice ?? sku?.oPricing?.nPrice ?? 499;
-                let finalPrice = origPrice;
-                if (couponDetails?.nFinalAmount !== undefined && couponDetails?.nFinalAmount !== null) {
-                  finalPrice = couponDetails.nFinalAmount;
-                } else if (freshOfferType === "PERCENTAGE_DISCOUNT" && freshDiscountVal > 0) {
-                  finalPrice = Math.round(origPrice * (1 - freshDiscountVal / 100));
-                } else if (freshOfferType === "FLAT_DISCOUNT" && freshDiscountVal > 0) {
-                  finalPrice = Math.max(0, origPrice - freshDiscountVal);
-                }
-                const symbol =
-                  couponDetails?.sCurrencySymbol || sku?.oPricing?.sCurrencySymbol || "₹";
-                const discountLabel =
-                  couponDetails?.sSavingsLabel ||
-                  (couponDetails?.nDiscountPercentage
-                    ? `${couponDetails.nDiscountPercentage}% OFF`
-                    : null) ||
-                  (freshDiscountVal > 0 ? `${freshDiscountVal}% OFF` : null);
-                const modifiedSku = {
-                  ...sku,
-                  oPricing: { ...(sku?.oPricing || {}), nPrice: finalPrice, sCurrencySymbol: symbol },
-                };
-                return {
-                  ...prod,
-                  product: prod,
-                  group,
-                  sku: modifiedSku,
-                  providerSku: modifiedSku,
-                  pricing: modifiedSku.oPricing,
-                  sFormattedPrice: `${symbol}${finalPrice}`,
-                  sAltPrice: `${symbol}${finalPrice}`,
-                  sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
-                  nOriginalPrice: origPrice,
-                  finalPrice,
-                  originalPrice: origPrice,
-                  currencySymbol: symbol,
-                  sDiscount: discountLabel,
-                  discountLabel,
-                  nValidity: prod.nValidityDays || 365,
-                  aFeatures: prod.aFeatures || [],
-                  oOfferDetails: freshOfferDetails,
-                  oCampaignDetails: freshCampaignDetails,
-                };
-              });
+            const freshFlatPlansList = (Array.isArray(freshPlansGroup) ? freshPlansGroup : []).flatMap(
+              (group: any) => {
+                const products =
+                  group?.aSubscriptionProducts || (group?.aProviderSkus ? [group] : []);
+                return (Array.isArray(products) ? products : []).map((prod: any) => {
+                  const sku = prod?.aProviderSkus?.[0] || prod?.sku || {};
+                  const couponDetails = sku?.oCouponDetails || {};
+                  const origPrice =
+                    couponDetails?.nOriginalPrice ?? sku?.oPricing?.nPrice ?? 499;
+                  let finalPrice = origPrice;
+                  if (couponDetails?.nFinalAmount !== undefined && couponDetails?.nFinalAmount !== null) {
+                    finalPrice = couponDetails.nFinalAmount;
+                  } else if (freshOfferType === "PERCENTAGE_DISCOUNT" && freshDiscountVal > 0) {
+                    finalPrice = Math.round(origPrice * (1 - freshDiscountVal / 100));
+                  } else if (freshOfferType === "FLAT_DISCOUNT" && freshDiscountVal > 0) {
+                    finalPrice = Math.max(0, origPrice - freshDiscountVal);
+                  }
+                  const symbol =
+                    couponDetails?.sCurrencySymbol || sku?.oPricing?.sCurrencySymbol || "₹";
+                  const discountLabel =
+                    couponDetails?.sSavingsLabel ||
+                    (couponDetails?.nDiscountPercentage
+                      ? `${couponDetails.nDiscountPercentage}% OFF`
+                      : null) ||
+                    (freshDiscountVal > 0 ? `${freshDiscountVal}% OFF` : null);
+                  const modifiedSku = {
+                    ...sku,
+                    oPricing: { ...(sku?.oPricing || {}), nPrice: finalPrice, sCurrencySymbol: symbol },
+                  };
+                  return {
+                    ...prod,
+                    product: prod,
+                    group,
+                    sku: modifiedSku,
+                    providerSku: modifiedSku,
+                    pricing: modifiedSku.oPricing,
+                    sFormattedPrice: `${symbol}${finalPrice}`,
+                    sAltPrice: `${symbol}${finalPrice}`,
+                    sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+                    nOriginalPrice: origPrice,
+                    finalPrice,
+                    originalPrice: origPrice,
+                    currencySymbol: symbol,
+                    sDiscount: discountLabel,
+                    discountLabel,
+                    nValidity: prod.nValidityDays || 365,
+                    aFeatures: prod.aFeatures || [],
+                    oOfferDetails: freshOfferDetails,
+                    oCampaignDetails: freshCampaignDetails,
+                  };
+                });
+              }
+            );
+
+            if (freshFlatPlansList.length > 0) {
+              localStorage.setItem("selectedPlan", JSON.stringify(freshFlatPlansList[0]));
+              logger.info("[LoginPage] Updated selectedPlan with authenticated offer data");
             }
-          );
-
-          if (freshFlatPlansList.length > 0) {
-            localStorage.setItem("selectedPlan", JSON.stringify(freshFlatPlansList[0]));
-            logger.info("[LoginPage] Updated selectedPlan with authenticated offer data");
           }
+        } catch (refreshErr) {
+          // Non-blocking — selectedPlan from initial (unauthenticated) fetch is still usable
+          logger.warn("[LoginPage] Failed to refresh offer with session, using initial plan data:", refreshErr);
         }
-      } catch (refreshErr) {
-        // Non-blocking — selectedPlan from initial (unauthenticated) fetch is still usable
-        logger.warn("[LoginPage] Failed to refresh offer with session, using initial plan data:", refreshErr);
-      }
 
-      clearTimeout(safetyTimeout);
-      setIsVerifying(false);
+        clearTimeout(safetyTimeout);
+        setIsVerifying(false);
 
-      // Redirect back to the offer page so the user can enter the coupon code.
-      // The pending_campaign_id is stored in localStorage from when they first
-      // visited the offer page.
-      const pendingCampaignIdForRedirect =
-        typeof window !== "undefined"
-          ? sessionStorage.getItem("pending_campaign_id") || ""
-          : "";
+        // Redirect back to the offer page so the user can enter the coupon code.
+        // The pending_campaign_id is stored in localStorage from when they first
+        // visited the offer page.
+        const pendingCampaignIdForRedirect =
+          typeof window !== "undefined"
+            ? sessionStorage.getItem("pending_campaign_id") || ""
+            : "";
         if (pendingCampaignIdForRedirect) {
           router.push(`/offer/${encodeURIComponent(pendingCampaignIdForRedirect)}`);
         } else {
@@ -423,6 +423,85 @@ export default function LoginPage() {
     }
   };
 
+  const renderFormContent = (isMobileLayout: boolean) => (
+    <div style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      {/* Campaign Heading / Skeleton */}
+      {step === TrialFormStep.INPUT && (
+        isLoadingCampaign ? (
+          <div
+            className="skeleton-pulse"
+            style={{
+              width: "70%",
+              height: "24px",
+              borderRadius: "6px",
+              marginBottom: "20px",
+            }}
+          />
+        ) : (
+          <h1
+            className="gold-text-gradient"
+            style={{
+              fontSize: "22px",
+              fontWeight: "700",
+              textTransform: "uppercase",
+              letterSpacing: "0.8px",
+              textAlign: "center",
+              margin: "0 0 20px 0",
+              lineHeight: "1.3",
+            }}
+          >
+            {campaignName || "Login to redeem offer"}
+          </h1>
+        )
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "16px", width: "100%", textAlign: isMobileLayout ? "center" : "left", fontWeight: "500" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Loader or Form Steps */}
+      {isVerifying ? (
+        <div
+          className="fade-in"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: isMobileLayout ? "200px" : "150px",
+            width: "100%",
+          }}
+        >
+          <div className="premium-loader" />
+          <p style={{ color: "#ffffff", fontSize: "15px", marginTop: "16px" }}>Verifying OTP...</p>
+        </div>
+      ) : step === TrialFormStep.INPUT ? (
+        <div style={{ width: "100%" }}>
+          <FreeTrialForm
+            onSubmit={handleInputSubmit}
+            confirmButtonLabel="Next"
+            footerNote={sFooterNote}
+            showCarousel={isMobileLayout}
+          />
+        </div>
+      ) : step === TrialFormStep.OTP ? (
+        <div style={{ width: "100%" }}>
+          <OtpVerification
+            contactInfo={contactInfo}
+            onSubmit={handleOtpSubmit}
+            onBack={handleBack}
+            onResend={handleResendOtp}
+            disclaimerText=""
+            isMobileLayout={isMobileLayout}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+
   return (
     <main
       className="app-container"
@@ -435,178 +514,159 @@ export default function LoginPage() {
         padding: "0",
       }}
     >
-      <div
-        className="login-flow-screen fade-in"
-        style={{
-          width: "100%",
-          maxWidth: "480px",
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "32px 24px 24px",
-        }}
-      >
-        {/* Header: JOJO Logo & Campaign Main Logo */}
+      {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
+      <div className="mobile-only" style={{ width: "100%" }}>
         <div
+          className="login-flow-screen fade-in"
           style={{
+            margin: "0 auto",
             width: "100%",
+            maxWidth: "480px",
+            minHeight: "100vh",
             display: "flex",
-            justifyContent: "center",
+            flexDirection: "column",
             alignItems: "center",
-            gap: "16px",
-            marginBottom: "20px",
-            marginTop: "16px"
+            padding: "32px 24px 24px",
           }}
         >
+          {/* Header: JOJO Logo & Campaign Main Logo */}
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "16px",
+              marginBottom: "20px",
+              marginTop: "16px"
+            }}
+          >
+            {isLoadingCampaign ? (
+              <div
+                className="skeleton-pulse"
+                style={{
+                  width: "120px",
+                  height: "36px",
+                  borderRadius: "8px",
+                }}
+              />
+            ) : mainLogoUrl ? (
+              <img
+                src={mainLogoUrl}
+                alt={campaignName}
+                style={{ height: "36px", maxWidth: "120px", objectFit: "contain" }}
+              />
+            ) : (
+              <img
+                src="/assets/images/Logo/JOJO_LOGO.svg"
+                alt="JOJO"
+                style={{ width: "110px", height: "36px", objectFit: "contain" }}
+              />
+            )}
+          </div>
+
+          {/* Campaign Banner Image / Skeleton */}
           {isLoadingCampaign ? (
             <div
               className="skeleton-pulse"
               style={{
-                width: "120px",
-                height: "36px",
-                borderRadius: "8px",
+                width: "100%",
+                height: "220px",
+                borderRadius: "20px",
+                marginBottom: "20px",
               }}
             />
-          ) : mainLogoUrl ? (
-            <img
-              src={mainLogoUrl}
-              alt={campaignName}
-              style={{ height: "36px", maxWidth: "120px", objectFit: "contain" }}
-            />
-          ) : (
-            <img
-              src="/assets/images/Logo/JOJO_LOGO.svg"
-              alt="JOJO"
-              style={{ width: "110px", height: "36px", objectFit: "contain" }}
-            />
-          )}
-        </div>
-
-        {/* Campaign Banner Image / Skeleton */}
-        {isLoadingCampaign ? (
-          <div
-            className="skeleton-pulse"
-            style={{
-              width: "100%",
-              height: "220px",
-              borderRadius: "20px",
-              marginBottom: "20px",
-            }}
-          />
-        ) : campaignBannerUrl ? (
-          <div
-            style={{
-              width: "100%",
-              borderRadius: "20px",
-              overflow: "hidden",
-              marginBottom: "20px",
-              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
-            }}
-          >
-            <img
-              src={campaignBannerUrl}
-              alt={campaignName}
-              style={{ width: "100%", height: "auto", display: "block", objectFit: "cover" }}
-            />
-          </div>
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              borderRadius: "20px",
-              overflow: "hidden",
-              marginBottom: "20px",
-            }}
-          >
-            <img
-              src="/assets/images/Logo/Mask_group.svg"
-              alt=""
-              style={{ width: "100%", display: "block" }}
-            />
-          </div>
-        )}
-
-        {/* Form Container */}
-        <div style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {/* Campaign Heading / Skeleton */}
-          {step === TrialFormStep.INPUT && (
-            isLoadingCampaign ? (
-              <div
-                className="skeleton-pulse"
-                style={{
-                  width: "70%",
-                  height: "24px",
-                  borderRadius: "6px",
-                  marginBottom: "20px",
-                }}
-              />
-            ) : (
-              <h1
-                className="gold-text-gradient"
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "700",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.8px",
-                  textAlign: "center",
-                  margin: "0 0 20px 0",
-                  lineHeight: "1.3",
-                }}
-              >
-                {campaignName || "Login to redeem offer"}
-              </h1>
-            )
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div style={{ color: "#ff4a4a", fontSize: "14px", marginBottom: "16px", width: "100%", textAlign: "center", fontWeight: "500" }}>
-              {error}
-            </div>
-          )}
-
-          {/* Loader or Form Steps */}
-          {isVerifying ? (
+          ) : campaignBannerUrl ? (
             <div
-              className="fade-in"
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: "200px",
                 width: "100%",
+                borderRadius: "20px",
+                overflow: "hidden",
+                marginBottom: "20px",
+                boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
               }}
             >
-              <div className="premium-loader" />
-              <p style={{ color: "#ffffff", fontSize: "15px", marginTop: "16px" }}>Verifying OTP...</p>
-            </div>
-          ) : step === TrialFormStep.INPUT ? (
-            <div style={{ width: "100%" }}>
-              <FreeTrialForm
-                onSubmit={handleInputSubmit}
-                confirmButtonLabel="Next"
-                footerNote={sFooterNote}
-                showCarousel={true}
+              <img
+                src={campaignBannerUrl}
+                alt={campaignName}
+                style={{ width: "100%", height: "auto", display: "block", objectFit: "cover" }}
               />
             </div>
-          ) : step === TrialFormStep.OTP ? (
-            <div style={{ width: "100%" }}>
-              <OtpVerification
-                contactInfo={contactInfo}
-                onSubmit={handleOtpSubmit}
-                onBack={handleBack}
-                onResend={handleResendOtp}
-                disclaimerText=""
-                isMobileLayout={true}
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                borderRadius: "20px",
+                overflow: "hidden",
+                marginBottom: "20px",
+              }}
+            >
+              <img
+                src="/assets/images/Logo/Mask_group.svg"
+                alt=""
+                style={{ width: "100%", display: "block" }}
               />
             </div>
-          ) : null}
+          )}
+
+          {/* Form Container */}
+          {renderFormContent(true)}
+
+          {/* Footer inside mobile login overlay */}
+          <div style={{ width: "100%", marginTop: "32px" }}>
+            <Footer />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. DESKTOP VIEW (Visible on screens >= 768px) */}
+      <div className="desktop-only" style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column" }}>
+
+        <div className="web-split-layout" style={{ alignItems: "center", flex: 1 }}>
+          {/* Left Side: Campaign Banner */}
+          <div className="web-layout-left">
+            {/* Top Left Logo */}
+            <header style={{ marginTop: "20px", marginBottom: "20px", display: "flex", justifyContent: "flex-start", width: "100%" }}>
+              {mainLogoUrl ? (
+                <img src={mainLogoUrl} alt={campaignName} style={{ height: "48px", maxWidth: "160px", objectFit: "contain" }} />
+              ) : (
+                <img src="/assets/images/Logo/JOJO_LOGO.svg" alt="JOJO" style={{ width: "120px", height: "40px", display: "block" }} />
+              )}
+            </header>
+
+            <div style={{ width: "100%", borderRadius: "20px", overflow: "hidden", boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)" }}>
+              {isLoadingCampaign ? (
+                <div className="skeleton-pulse" style={{ width: "100%", height: "400px", borderRadius: "20px" }} />
+              ) : campaignBannerUrl ? (
+                <img src={campaignBannerUrl} alt={campaignName} style={{ width: "100%", height: "auto", display: "block", objectFit: "cover" }} />
+              ) : (
+                <img src="/assets/images/Logo/Mask_group.svg" alt="" style={{ width: "100%", display: "block" }} />
+              )}
+            </div>
+          </div>
+
+          {/* Right Side: Form */}
+          <div className="web-layout-right">
+            <div
+              className="responsive-form-container"
+              style={{
+                margin: "0 auto",
+                background: "var(--desktop-form-bg)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "24px",
+                padding: "40px",
+                boxShadow: "0 24px 48px rgba(0, 0, 0, 0.4)",
+                width: "100%",
+                maxWidth: "480px",
+              }}
+            >
+              {renderFormContent(false)}
+            </div>
+          </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ width: "100%", marginTop: "32px" }}>
+        {/* Footer for desktop view */}
+        <div style={{ width: "100%", marginTop: "auto" }}>
           <Footer />
         </div>
       </div>
