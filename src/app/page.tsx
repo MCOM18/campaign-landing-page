@@ -174,6 +174,13 @@ export default function page() {
       localStorage.setItem("source_link", window.location.href);
 
       const url = new URL(window.location.href);
+      
+      const campaignIdQuery = url.searchParams.get("campaignId") || url.searchParams.get("campaign_id");
+      if (campaignIdQuery) {
+        router.push(`/offer/${campaignIdQuery}`);
+        return;
+      }
+
       const dataParam = url.searchParams.get("data");
 
       let redirectUrl = "";
