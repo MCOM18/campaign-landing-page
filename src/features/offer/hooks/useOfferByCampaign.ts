@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getOfferByCampaign } from "../api/getOfferByCampaign";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { logger } from "@/lib/logger/logger";
+import { queryClient } from "@/lib/react-query/queryClient";
 
 export function useOfferByCampaign(campaignId: string, sCouponCode: string = "") {
   const { isAppReady } = useBootstrap();
@@ -16,5 +17,16 @@ export function useOfferByCampaign(campaignId: string, sCouponCode: string = "")
       return await getOfferByCampaign(campaignId, sCouponCode);
     },
     enabled: isAppReady && isValidCampaignId,
+  });
+}
+
+export async function fetchOfferByCampaignCached(campaignId: string, sCouponCode: string = "") {
+  return queryClient.fetchQuery({
+    queryKey: ["offerByCampaign", campaignId, sCouponCode],
+    queryFn: async () => {
+      logger.info("[fetchOfferByCampaignCached] Fetching offer for campaignId:", campaignId);
+      return await getOfferByCampaign(campaignId, sCouponCode);
+    },
+    staleTime: 5 * 60 * 1000,
   });
 }

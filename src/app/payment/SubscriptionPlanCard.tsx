@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { validateCode } from "@/features/offer/api/validateCode";
-import { getOfferByCampaign } from "@/features/offer/api/getOfferByCampaign";
+import { fetchOfferByCampaignCached } from "@/features/offer/hooks/useOfferByCampaign";
 import { logger } from "@/lib/logger/logger";
 import "./payment.css";
 
@@ -20,7 +20,7 @@ interface SubscriptionPlanCardProps {
 
 async function fetchAndStoreCampaignPlan(campaignRefId: string, couponCode: string, fallbackPlan?: any) {
   try {
-    const offerRes: any = await getOfferByCampaign(campaignRefId, couponCode);
+    const offerRes: any = await fetchOfferByCampaignCached(campaignRefId, couponCode);
     const offerData = offerRes?.data?.data || offerRes?.data || offerRes || {};
     const offerDetails = offerData?.offerDetails || {};
     const campaignDetails = offerData?.campaignDetails || {};

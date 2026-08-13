@@ -460,8 +460,6 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         setIsApplyingCoupon(false);
         return;
       }
-
-      toast.success("Coupon applied successfully!");
       handleRedeemClick();
     } catch (err: any) {
       logger.error("[Apply Coupon] Validation error:", err);

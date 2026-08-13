@@ -9,13 +9,15 @@ import Footer from "@/components/Footer";
 import { TrialFormStep } from "@/enums/ui.enum";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/services/auth.service";
-import { getOfferByCampaign } from "@/features/offer/api/getOfferByCampaign";
+import { fetchOfferByCampaignCached } from "@/features/offer/hooks/useOfferByCampaign";
 import { useAuthStore } from "@/store/useAuthStore";
 import { appConfig } from "@/lib/config/app.config";
 import { REGEX } from "@/lib/constants/regex";
 import { getUserGeoLocation } from "@/utils/userUtil";
 import { logger } from "@/lib/logger/logger";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
+import api from "@/utils/apiClient";
+import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,6 +30,8 @@ export default function LoginPage() {
 
   const [step, setStep] = useState<TrialFormStep>(TrialFormStep.INPUT);
   const [contactInfo, setContactInfo] = useState<string>("");
+  const [goldSubscriptionInfo, setGoldSubscriptionInfo] = useState<any>(null);
+  const [showGoldPopup, setShowGoldPopup] = useState<boolean>(false);
   const [parsedPhone, setParsedPhone] = useState<string>("");
   const [parsedPhoneCode, setParsedPhoneCode] = useState<string>("");
   const [isExists, setIsExists] = useState<boolean>(false);
@@ -76,8 +80,8 @@ export default function LoginPage() {
           return;
         }
         
-        const offerRes: any = await getOfferByCampaign(targetCampaignId);
-        logger.info("[LoginPage] Campaign details response:", offerRes);
+        const offerRes: any = await fetchOfferByCampaignCached(targetCampaignId);
+        logger.info("[LoginPage] Campaign details response (cached):", offerRes);
 
         const dataObj = offerRes?.data?.data || offerRes?.data || offerRes || {};
         setCampaignData(dataObj);
@@ -265,14 +269,41 @@ export default function LoginPage() {
       if (response.user_id) localStorage.setItem("user_id", response.user_id);
       localStorage.setItem("userData", JSON.stringify(user));
 
-      // Re-fetch offer with the authenticated session so selectedPlan has
-      // accurate coupon/pricing data tied to this user's account
+      let isGoldUser = false;
       try {
-        const pendingCampaignId =
-          (typeof window !== "undefined" ? sessionStorage.getItem("pending_campaign_id") : "") || "";
+        const geoDataVerify = getUserGeoLocation();
+        const payloadVerify = { countryCode: geoDataVerify?.country_code || "IN" };
+        const headersVerify = { sessionid: response.session_id };
+
+        logger.info("[Verify Subscription] Request:", { payload: payloadVerify, headers: headersVerify });
+
+        const subResponse = await api.post("subscription/verify-subscription", payloadVerify, {
+          headers: headersVerify
+        });
+
+        logger.info("[Verify Subscription] Response:", subResponse.data);
+
+        const subData = subResponse.data?.data;
+        if (subData?.planType === "SVOD") {
+          isGoldUser = true;
+          setGoldSubscriptionInfo(subData.subscription || { plan_name: "JOJO Gold Premium" });
+          setShowGoldPopup(true);
+          setIsVerifying(false);
+          handleReset();
+        }
+      } catch (subErr) {
+        logger.error("[Verify Subscription] Failed to verify subscription status:", subErr);
+      }
+
+      if (!isGoldUser) {
+        // Re-fetch offer (will hit cache) so selectedPlan has
+        // accurate coupon/pricing data tied to this user's account
+        try {
+          const pendingCampaignId =
+            (typeof window !== "undefined" ? sessionStorage.getItem("pending_campaign_id") : "") || "";
         if (pendingCampaignId) {
-          logger.info("[LoginPage] Re-fetching offer with authenticated session for campaignId:", pendingCampaignId);
-          const freshOfferRes: any = await getOfferByCampaign(pendingCampaignId);
+          logger.info("[LoginPage] Reading offer from cache for campaignId:", pendingCampaignId);
+          const freshOfferRes: any = await fetchOfferByCampaignCached(pendingCampaignId);
           const freshDataObj =
             freshOfferRes?.data?.data || freshOfferRes?.data || freshOfferRes || {};
 
@@ -356,10 +387,11 @@ export default function LoginPage() {
         typeof window !== "undefined"
           ? sessionStorage.getItem("pending_campaign_id") || ""
           : "";
-      if (pendingCampaignIdForRedirect) {
-        router.push(`/offer/${encodeURIComponent(pendingCampaignIdForRedirect)}`);
-      } else {
-        router.push("/payment");
+        if (pendingCampaignIdForRedirect) {
+          router.push(`/offer/${encodeURIComponent(pendingCampaignIdForRedirect)}`);
+        } else {
+          router.push("/payment");
+        }
       }
     } catch (err: any) {
       clearTimeout(safetyTimeout);
@@ -371,6 +403,15 @@ export default function LoginPage() {
   const handleBack = () => {
     setStep(TrialFormStep.INPUT);
     setError(null);
+  };
+
+  const handleReset = () => {
+    setError(null);
+    setStep(TrialFormStep.INPUT);
+    setContactInfo("");
+    setParsedPhone("");
+    setParsedPhoneCode("");
+    setIsExists(false);
   };
 
   const handleResendOtp = async () => {
@@ -569,6 +610,20 @@ export default function LoginPage() {
           <Footer />
         </div>
       </div>
+
+      {showGoldPopup && (
+        <div className="success-overlay">
+          <GoldRestrictionModal
+            subscription={goldSubscriptionInfo}
+            title="You're already enjoying JOJO GOLD!"
+            description="An active subscription is already running on your account."
+            onClose={() => {
+              setShowGoldPopup(false);
+              handleReset();
+            }}
+          />
+        </div>
+      )}
     </main>
   );
 }

@@ -737,6 +737,8 @@ export default function page() {
               style={{
                 position: "fixed",
                 inset: 0,
+                margin: "0 auto",
+                maxWidth: "480px",
                 zIndex: 100,
                 display: "flex",
                 flexDirection: "column",
