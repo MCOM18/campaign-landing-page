@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
 
+export async function generateStaticParams() {
+  return [{ id: "default" }];
+}
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }

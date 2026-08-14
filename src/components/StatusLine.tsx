@@ -187,6 +187,15 @@ export function StatusLine() {
 
         {/* Right side: Logger states */}
         <div style={rightSectionStyle}>
+          {/* Environment Logger */}
+          <div style={loggerBlockStyle}>
+            <span>ENV:</span>
+            <span style={getStatusTextStyle(true, envType === "PROD" ? "rose" : "emerald")}>
+              <span style={getDotStyle(true, envType === "PROD" ? "rose" : "emerald")} />
+              {envType}
+            </span>
+          </div>
+
           {/* Network Connection Logger */}
           <div style={loggerBlockStyle}>
             <span>NETWORK:</span>
