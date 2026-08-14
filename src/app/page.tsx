@@ -374,7 +374,7 @@ export default function page() {
     : "";
 
   // Footer note comes at the top level of the response data
-  const footerNote = campaignPlan?.sFooterNote || "";
+  const footerNote = "By proceeding with the \"Subscribe Now\" process, we might send a one-time verification code to the Phone number/Email linked to your account. Standard message and data rates may apply.             ";
 
   const [step, setStep] = useState<TrialFormStep>(() => {
     if (typeof window !== "undefined") {
@@ -997,7 +997,7 @@ export default function page() {
               })}
             </div>
           )}
-          {/* Footer for normal (PLANS) view */}
+
           <Footer />
         </div>
 
