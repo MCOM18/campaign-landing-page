@@ -123,6 +123,18 @@ export default function page() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      const dataParam = url.searchParams.get("data");
+      const campaignIdQuery = url.searchParams.get("campaignId") || url.searchParams.get("campaign_id");
+      const sourceLinkQuery = url.searchParams.get("source_link");
+
+      // If we are on the root URL with no campaign-specific parameters, 
+      // clear all cache and localstorage so the normal flow works fresh.
+      if (!dataParam && !campaignIdQuery && !sourceLinkQuery) {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+
       const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
       setIsCampaignLogin(Boolean(pendingCampaignId));
     }
@@ -174,7 +186,7 @@ export default function page() {
       localStorage.setItem("source_link", window.location.href);
 
       const url = new URL(window.location.href);
-      
+
       const campaignIdQuery = url.searchParams.get("campaignId") || url.searchParams.get("campaign_id");
       if (campaignIdQuery) {
         router.push(`/offer/${campaignIdQuery}`);
@@ -256,9 +268,9 @@ export default function page() {
       }
 
       if (!dataParam && !redirectUrl) {
-        localStorage.removeItem("campaign_redirect_url");
-        localStorage.removeItem("campaign_decoded_data");
-        logger.info("[Campaign] Clean URL detected. Removed campaign data from localStorage.");
+        localStorage.clear();
+        sessionStorage.clear();
+        logger.info("[Campaign] Clean URL detected. Cleared all localStorage and sessionStorage.");
       } else {
         const enrichedData = {
           decoded_data: decoded,
@@ -712,7 +724,7 @@ export default function page() {
       <main
         className="app-container"
         style={{
-
+          background: "linear-gradient(180deg, #1c0f03 0%, var(--theme-glow-color) 90%)",
           minHeight: "100vh",
         }}
       >
@@ -1197,26 +1209,29 @@ export default function page() {
         </div>
 
         {/* Unified Success State Overlay Modal */}
-      </main>
+      </main >
       {step === TrialFormStep.SUCCESS && (
         <div className="success-overlay">
           <SuccessScreen onReset={handleReset} />
         </div>
-      )}
+      )
+      }
 
-      {showGoldPopup && (
-        <div className="success-overlay">
-          <GoldRestrictionModal
-            subscription={goldSubscriptionInfo}
-            title="You're already enjoying JOJO GOLD!"
-            description="An active subscription is already running on your account."
-            onClose={() => {
-              setShowGoldPopup(false);
-              handleReset();
-            }}
-          />
-        </div>
-      )}
+      {
+        showGoldPopup && (
+          <div className="success-overlay">
+            <GoldRestrictionModal
+              subscription={goldSubscriptionInfo}
+              title="You're already enjoying JOJO GOLD!"
+              description="An active subscription is already running on your account."
+              onClose={() => {
+                setShowGoldPopup(false);
+                handleReset();
+              }}
+            />
+          </div>
+        )
+      }
     </>
   );
 }

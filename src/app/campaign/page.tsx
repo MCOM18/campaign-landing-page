@@ -1,5 +1,6 @@
 "use client";
 
+import Footer from "@/components/Footer";
 import { FreeTrialForm } from "@/components/FreeTrialForm";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import {
@@ -8,15 +9,13 @@ import {
 import { OtpVerification } from "@/components/OtpVerification";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { slugMap } from "@/enums/enums";
-import { LoginIdentifierType, PageSection, TrialFormStep } from "@/enums/ui.enum";
+import { PageSection, TrialFormStep } from "@/enums/ui.enum";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { completeOtpVerification, initiateOtpFlow } from "@/features/auth/services/auth.service";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { appConfig, AppConfig } from "@/lib/config/app.config";
-import { env } from "@/lib/config/env";
+import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import { REGEX } from "@/lib/constants/regex";
-import Footer from "@/components/Footer";
-import footerData from "@/lib/data/footer.data.json";
 import { logger } from "@/lib/logger/logger";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
@@ -29,15 +28,6 @@ import thumbnailsJson from "../../../public/assets/json/THUMBNAILS SCROLL ANIMAT
 import api from "../../utils/apiClient";
 import { getUserGeoLocation } from "../../utils/userUtil";
 import SubscriptionPlanCard, { SingleCouponInput } from "../payment/SubscriptionPlanCard";
-import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
-
-/** Map each platform id → the SVG asset filename */
-const SOCIAL_ICON_MAP: Record<string, string> = {
-  facebook: "/assets/facebook.svg",
-  instagram: "/assets/instagram.svg",
-  youtube: "/assets/youtube.svg",
-  linkdin: "/assets/linkdin.svg", // currently twitter.svg is used for LinkedIn slot
-};
 
 const renderFooterWithLinks = (text: string) => {
   if (!text) return null;
@@ -122,7 +112,6 @@ export default function Home() {
   const router = useRouter();
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();
-  // logger.info("countries", countries)
 
   const [freshPlans, setFreshPlans] = useState<any>(null);
 

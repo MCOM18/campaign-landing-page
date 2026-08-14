@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 interface GoldRestrictionModalProps {
   subscription: {
@@ -27,6 +27,18 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
   title,
   description,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
   const planName = subscription?.plan_name || "JOJO Gold Premium";
   const endDate = subscription?.end_date ? formatDate(subscription.end_date) : "";
 
@@ -38,6 +50,7 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
 
   return (
     <div
+      ref={modalRef}
       className="fade-in"
       style={{
         width: "355px",
@@ -54,7 +67,6 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
         alignItems: "center",
       }}
     >
-
 
       {/* Title & Description */}
       <div

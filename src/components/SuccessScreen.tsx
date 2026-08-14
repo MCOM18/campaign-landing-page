@@ -1,110 +1,240 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { FiMonitor, FiVideoOff, FiAward, FiClock } from "react-icons/fi";
+import Lottie from "lottie-react";
+import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
+import confettiJson from "../../public/assets/json/confetti.json";
+import { JojoLogo } from "./Icons";
+import Footer from "@/components/Footer";
 
 interface SuccessScreenProps {
   onReset: () => void;
   isTrial?: boolean;
+  isCouponApplied?: boolean;
+  planTitle?: string;
+  discountLabel?: string;
+  offerName?: string;
 }
 
-export const SuccessScreen: React.FC<SuccessScreenProps> = ({ onReset, isTrial = true }) => {
+export const SuccessScreen: React.FC<SuccessScreenProps> = ({
+  onReset,
+  isTrial = true,
+  isCouponApplied: propIsCouponApplied,
+  planTitle: propPlanTitle,
+  discountLabel: propDiscountLabel,
+  offerName: propOfferName,
+}) => {
+  const [couponData, setCouponData] = useState({
+    isCouponApplied: false,
+    planTitle: "1 Month",
+    discountLabel: "20% OFF",
+    offerName: "Navratri",
+  });
+
+  const lottieRef = useRef<any>(null);
+
+  useEffect(() => {
+    try {
+      const selectedPlanRaw = localStorage.getItem("selectedPlan");
+      const sCouponCode = localStorage.getItem("sCouponCode");
+
+      let isApplied = propIsCouponApplied ?? !!sCouponCode;
+      let title = propPlanTitle || "1 Month";
+      let discount = propDiscountLabel || "";
+      let offer = propOfferName || sCouponCode || "";
+
+      if (selectedPlanRaw) {
+        const plan = JSON.parse(selectedPlanRaw);
+        title = plan.sSubProductLabel || plan.sProductName || title;
+        discount = plan.sDiscount || discount;
+      }
+
+      setCouponData({
+        isCouponApplied: isApplied,
+        planTitle: title,
+        discountLabel: discount,
+        offerName: offer,
+      });
+    } catch (e) {
+      // ignore
+    }
+  }, [propIsCouponApplied, propPlanTitle, propDiscountLabel, propOfferName]);
+
+  const { isCouponApplied, planTitle, discountLabel, offerName } = couponData;
+
   return (
     <div
-      className="fade-in"
+      className="fade-in custom-scrollbar"
       style={{
-        width: "355px",
-        borderRadius: "16px",
-        border: "2px solid rgba(250, 175, 63, 0.14)",
-        // Exact Figma background: radial gold glow from top-center + solid #050505 base
-        backgroundImage: `url("data:image/svg+xml;utf8,<svg viewBox='0 0 355 224' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%' width='100%' fill='url(%23grad)' opacity='0.56'/><defs><radialGradient id='grad' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(0.046588 22.4 -38.909 0.074831 177.03 0.0000097384)'><stop stop-color='rgba(250,175,63,1)' offset='0'/><stop stop-color='rgba(188,132,48,0.75)' offset='0.25'/><stop stop-color='rgba(127,90,34,0.5)' offset='0.5'/><stop stop-color='rgba(66,47,19,0.25)' offset='0.75'/><stop stop-color='rgba(5,5,5,0)' offset='1'/></radialGradient></defs></svg>"), linear-gradient(90deg, rgb(5, 5, 5) 0%, rgb(5, 5, 5) 100%)`,
-        backgroundSize: "100% 100%, 100% 100%",
-        backgroundPosition: "center",
-        boxSizing: "border-box",
-        padding: "28px 32px 30px 32px",
+        width: "100%",
+        maxWidth: "480px",
+        height: "100vh",
+        margin: "0 auto",
+        background: "radial-gradient(circle at top, #B87A14 0%, #3B2404 45%, #050300 100%)",
         display: "flex",
         flexDirection: "column",
-        gap: "36px",
         alignItems: "center",
+        position: "relative",
+        overflowY: "auto",
+        boxShadow: "0 0 40px rgba(0,0,0,0.8)",
       }}
     >
-      {/* Title & Description */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          alignItems: "center",
-          width: "100%",
-        }}
-      >
-        {/* Title: Free Trial Unlocked! / Payment Successful! — gold gradient text */}
+      {/* Confetti Animation */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 50 }}>
+        <Lottie
+          animationData={confettiJson}
+          loop={false}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </div>
+
+      {/* Top Lottie Animation */}
+      <div style={{ width: "100%", height: "210px", overflow: "hidden", flexShrink: 0, position: "relative", margin: 0, padding: 0 }}>
+        <Lottie
+          lottieRef={lottieRef}
+          animationData={thumbnailsJson}
+          loop={true}
+          onDOMLoaded={() => lottieRef.current?.setSpeed(0.15)}
+          style={{ width: "100%", height: "100%", display: "block", opacity: 0.7 }}
+          rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+        />
+
+      </div>
+
+      <div style={{ width: "100%", padding: "0 24px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+
+        {/* Top Logo */}
+        <div style={{ marginBottom: "28px", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "20px", position: "relative", zIndex: 2 }}>
+          <JojoLogo />
+        </div>
+
+        {/* Title */}
         <p
           style={{
             backgroundImage: "linear-gradient(4.9542deg, rgb(250, 175, 63) 21.627%, rgb(255, 214, 145) 49.519%, rgb(250, 175, 63) 81.684%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
-            fontSize: "20px",
-            fontWeight: "600",
-            lineHeight: "26px",
-            margin: 0,
+            fontSize: "22px",
+            fontWeight: "700",
+            lineHeight: "30px",
+            margin: "0 0 12px 0",
             textAlign: "center",
             width: "100%",
             fontFamily: "'Poppins', sans-serif",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
           }}
         >
-          {isTrial ? "Free Trial Unlocked!" : "Payment Successful!"}
+          🎉 Congratulations! 🎉
         </p>
 
-        {/* Subtext */}
-        <p
-          style={{
-            fontSize: "16px",
-            fontWeight: "400",
-            lineHeight: "22px",
-            color: "#e2e2e2",
-            margin: 0,
-            textAlign: "center",
-            width: "100%",
-            fontFamily: "'Poppins', sans-serif",
-          }}
-        >
-          {isTrial 
-            ? "You've successfully activated your 7-day JOJO Gold Free Trial. Enjoy!"
-            : "You've successfully subscribed to JOJO Gold Premium. Enjoy!"
-          }
+        <p style={{
+          color: "#FAAF3F",
+          fontSize: "17px",
+          fontWeight: "500",
+          margin: "0 0 32px 0",
+          textAlign: "center"
+        }}>
+          Your subscription is now active!
         </p>
-      </div>
 
-      {/* Button: Start Watching — pill shape, gold gradient */}
-      <div style={{ width: "100%" }}>
+        {/* Unlocked Message */}
+        <p style={{
+          color: "#E2E2E2",
+          fontSize: "15px",
+          fontWeight: "400",
+          textAlign: "center",
+          margin: "0 0 36px 0",
+          lineHeight: "1.6",
+          maxWidth: "320px"
+        }}>
+          {isCouponApplied ? (
+            <>You've unlocked {planTitle} of JOJO Gold with your <br />{discountLabel} {offerName} coupon.</>
+          ) : (
+            <>{isTrial ? "You've successfully activated your 7-day JOJO Gold Free Trial. Enjoy!" : "You've successfully subscribed to JOJO Gold Premium. Enjoy!"}</>
+          )}
+        </p>
+
+        {/* Golden Features Divider */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          marginBottom: "20px"
+        }}>
+          <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(250, 175, 63, 0.4)" }} />
+          <span style={{ color: "#FAAF3F", fontSize: "12px", fontWeight: "600", padding: "0 12px", letterSpacing: "1px" }}>
+            GOLDEN FEATURES
+          </span>
+          <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(250, 175, 63, 0.4)" }} />
+        </div>
+
+        {/* Features Card */}
+        <div style={{
+          width: "100%",
+          background: "linear-gradient(180deg, rgba(45, 30, 12, 0.8) 0%, rgba(23, 16, 5, 0.8) 100%)",
+          border: "1px solid rgba(250, 175, 63, 0.15)",
+          borderRadius: "16px",
+          padding: "24px 12px",
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "40px"
+        }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, textAlign: "center", gap: "10px" }}>
+            <FiVideoOff size={24} color="#FAAF3F" />
+            <span style={{ color: "#FAAF3F", fontSize: "10px", fontWeight: "500", lineHeight: "1.3" }}>No In Video<br />Ads</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, textAlign: "center", gap: "10px" }}>
+            <FiMonitor size={24} color="#FAAF3F" />
+            <span style={{ color: "#FAAF3F", fontSize: "10px", fontWeight: "500", lineHeight: "1.3" }}>Watch on upto<br />4 Devices</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, textAlign: "center", gap: "10px" }}>
+            <FiAward size={24} color="#FAAF3F" />
+            <span style={{ color: "#FAAF3F", fontSize: "10px", fontWeight: "500", lineHeight: "1.3" }}>Exclusive<br />Content</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, textAlign: "center", gap: "10px" }}>
+            <FiClock size={24} color="#FAAF3F" />
+            <span style={{ color: "#FAAF3F", fontSize: "10px", fontWeight: "500", lineHeight: "1.3" }}>Early Bird<br />Access</span>
+          </div>
+        </div>
+
+        {/* Explore Now Button */}
         <button
           onClick={onReset}
           style={{
             width: "100%",
+            maxWidth: "240px",
             height: "48px",
             borderRadius: "100px",
             border: "none",
-            backgroundImage: "linear-gradient(9.09198deg, rgb(250, 175, 63) 21.627%, rgb(255, 214, 145) 49.519%, rgb(250, 175, 63) 81.684%)",
+            background: "linear-gradient(90deg, #FFCD78 0%, #F5A623 50%, #FFCD78 100%)",
             color: "#191919",
-            fontSize: "18px",
-            fontWeight: "500",
-            lineHeight: "24px",
+            fontSize: "16px",
+            fontWeight: "700",
             fontFamily: "'Poppins', sans-serif",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             outline: "none",
-            transition: "opacity 0.2s ease",
+            boxShadow: "0 8px 24px rgba(250, 175, 63, 0.25)",
+            transition: "transform 0.1s ease",
+            marginBottom: "40px"
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
-          onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
-          Start Watching
+          Explore Now
         </button>
+
+        {/* Footer */}
+        <div style={{ width: "100%", paddingBottom: "40px" }}>
+          <Footer />
+        </div>
       </div>
     </div>
   );

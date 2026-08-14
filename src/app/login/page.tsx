@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { FreeTrialForm } from "@/components/FreeTrialForm";
-import { OtpVerification } from "@/components/OtpVerification";
 import Footer from "@/components/Footer";
+import { FreeTrialForm } from "@/components/FreeTrialForm";
+import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
+import { OtpVerification } from "@/components/OtpVerification";
 import { TrialFormStep } from "@/enums/ui.enum";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
-import { initiateOtpFlow, completeOtpVerification } from "@/features/auth/services/auth.service";
+import { completeOtpVerification, initiateOtpFlow } from "@/features/auth/services/auth.service";
 import { fetchOfferByCampaignCached } from "@/features/offer/hooks/useOfferByCampaign";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { appConfig } from "@/lib/config/app.config";
 import { REGEX } from "@/lib/constants/regex";
-import { getUserGeoLocation } from "@/utils/userUtil";
 import { logger } from "@/lib/logger/logger";
-import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
+import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/utils/apiClient";
-import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
+import { getUserGeoLocation } from "@/utils/userUtil";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -166,6 +166,7 @@ export default function LoginPage() {
   const campaignDetails = campaignData?.campaignDetails || {};
   const metadata = campaignDetails?.metadata || {};
   const campaignName = campaignDetails?.campaignName || "JOJO Gold Offer";
+  const loginVia = campaignDetails?.loginVia;
   const campaignBannerUrl = metadata?.campaignBannerImage?.url || metadata?.thumbnailImage?.url || "";
   const sFooterNote = campaignData?.sFooterNote;
 
@@ -296,8 +297,6 @@ export default function LoginPage() {
       }
 
       if (!isGoldUser) {
-        // Re-fetch offer (will hit cache) so selectedPlan has
-        // accurate coupon/pricing data tied to this user's account
         try {
           const pendingCampaignId =
             (typeof window !== "undefined" ? sessionStorage.getItem("pending_campaign_id") : "") || "";
@@ -485,6 +484,7 @@ export default function LoginPage() {
             confirmButtonLabel="Next"
             footerNote={sFooterNote}
             showCarousel={isMobileLayout}
+            loginVia={loginVia}
           />
         </div>
       ) : step === TrialFormStep.OTP ? (

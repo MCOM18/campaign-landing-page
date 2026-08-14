@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { Country } from "@/features/auth/model/types";
 import { trackEvent } from "@/services/analytics/events";
-import { LoginIdentifierType } from "@/enums/ui.enum";
+import { LoginIdentifierType, LoginVia } from "@/enums/ui.enum";
 
 import { REGEX } from "@/lib/constants/regex";
 import { appConfig } from "@/lib/config/app.config";
@@ -80,6 +80,7 @@ interface FreeTrialFormProps {
   disclaimerText?: string;
   footerNote?: string;
   showCarousel?: boolean;
+  loginVia?: LoginVia;
 }
 
 export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
@@ -88,6 +89,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
   disclaimerText,
   footerNote,
   showCarousel = false,
+  loginVia = LoginVia.BOTH_PHONE_EMAIL,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,12 +99,9 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-
-  // Default to India
   const [selectedCountry, setSelectedCountry] = useState<Country>({
     countryCode: appConfig.DEFAULT_COUNTRY_NAME,
     phoneCode: appConfig.DEFAULT_MOBILE_NUMBER_CODE,
@@ -135,17 +134,20 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
     }
   }, [countries]);
 
+  const isPhoneOnly = loginVia === LoginVia.PHONE;
+  const isEmailOnly = loginVia === LoginVia.EMAIL;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = inputValue.trim();
     if (!trimmed) return;
 
     // Detect if input is email
-    const isEmailInput = trimmed.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(trimmed);
+    const isEmailInput = isEmailOnly ? true : isPhoneOnly ? false : (trimmed.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(trimmed));
 
     // Validation check before submission
-    const isValidEmail = isEmailInput && REGEX.EMAIL.test(trimmed);
-    const isValidPhone = !isEmailInput && trimmed.replace(REGEX.NON_DIGIT, "").length > 5;
+    const isValidEmail = (isEmailOnly || loginVia === LoginVia.BOTH_PHONE_EMAIL) && isEmailInput && REGEX.EMAIL.test(trimmed);
+    const isValidPhone = (isPhoneOnly || loginVia === LoginVia.BOTH_PHONE_EMAIL) && !isEmailInput && trimmed.replace(REGEX.NON_DIGIT, "").length > 5;
     if (!isValidEmail && !isValidPhone) return;
 
     let fullIdentifier = trimmed;
@@ -174,13 +176,13 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
   };
 
 
-  const isEmail = inputValue.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(inputValue);
+  const isEmail = isEmailOnly ? true : isPhoneOnly ? false : (inputValue.includes(REGEX.AT_SYMBOL) || REGEX.ALPHABET_REGEX.test(inputValue));
   const showCountryPicker = !isEmail && inputValue.trim().length > 0;
 
   // Validation: Email format validation, and phone number validation after 5 digits
   const cleanValue = inputValue.trim();
-  const isValidEmail = isEmail && REGEX.EMAIL.test(cleanValue);
-  const isValidPhone = !isEmail && cleanValue.replace(REGEX.NON_DIGIT, "").length > 5;
+  const isValidEmail = (isEmailOnly || loginVia === LoginVia.BOTH_PHONE_EMAIL) && isEmail && REGEX.EMAIL.test(cleanValue);
+  const isValidPhone = (isPhoneOnly || loginVia === LoginVia.BOTH_PHONE_EMAIL) && !isEmail && cleanValue.replace(REGEX.NON_DIGIT, "").length > 5;
   const isActive = isValidEmail || isValidPhone;
 
   const filteredCountries = countries.filter(c =>
@@ -245,7 +247,11 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           type="text"
           ref={inputRef}
           className="form-input"
-          placeholder={showCountryPicker ? "Enter your Phone Number" : "Enter your Number/Email ID"}
+          placeholder={
+            isPhoneOnly ? "Enter your Phone Number" :
+              isEmailOnly ? "Enter your Email ID" :
+                showCountryPicker ? "Enter your Phone Number" : "Enter your Number/Email ID"
+          }
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           aria-label="Phone number or Email ID"

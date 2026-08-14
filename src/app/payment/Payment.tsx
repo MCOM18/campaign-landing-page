@@ -187,10 +187,6 @@ function PaymentPage() {
     }
   }, [osPlatform, preparedData, RAZORPAY_KEY]);
 
-
-
-
-
   const toggleMethod = (method: string) => {
     setActiveMethod(activeMethod === method ? null : method);
     setPaymentMethod(method);
@@ -351,7 +347,7 @@ function PaymentPage() {
     executePayment(selectedPlan, paymentMethod, paymentDetails, pricingData, data)
       .then((res: any) => {
         if (res?.success) {
-          setShowSuccessPopup(true);
+          router.push("/success");
         } else {
           setFailedErrorMsg(res?.error || "Payment verification failed. Please try again.");
           setShowFailedPopup(true);
@@ -364,9 +360,6 @@ function PaymentPage() {
       });
   };
   //*********************************************** */
-
-
-
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
@@ -441,7 +434,7 @@ function PaymentPage() {
                     .then((res: any) => {
                       if (!res) return;
                       setActiveAppLoader(null);
-                      if (res?.success) setShowSuccessPopup(true);
+                      if (res?.success) router.push("/success");
                       else {
                         setFailedErrorMsg(res?.error || "Payment verification failed.");
                         setShowFailedPopup(true);
@@ -481,45 +474,14 @@ function PaymentPage() {
       {showSuccessPopup && (
         <div className="success-overlay">
           <SuccessScreen
-            isTrial={!!pricingData?.offerId}
             onReset={() => {
               setShowSuccessPopup(false);
-              const storedRedirectUrl = localStorage.getItem("campaign_redirect_url");
-
-              // Validate it's a real jojoapp.in URL
-              const isCampaignUrl = storedRedirectUrl && (() => {
-                try {
-                  return new URL(storedRedirectUrl).hostname.endsWith("jojoapp.in");
-                } catch { return false; }
-              })();
-
-              if (isCampaignUrl) {
-                localStorage.removeItem("campaign_redirect_url");
-
-                // Track campaign purchase success if data exists
-                const campaignDataRaw = localStorage.getItem("campaign_decoded_data");
-                if (campaignDataRaw) {
-                  try {
-                    const campaignData = JSON.parse(campaignDataRaw);
-                    analyticsService.track("campaign_purchase_success", campaignData);
-                    localStorage.removeItem("campaign_decoded_data");
-                  } catch (e) {
-                    // console.error("Failed to parse/track campaign success:", e);
-                  }
-                }
-
-                // Redirect to the campaign deep-link in the same tab
-                window.location.href = storedRedirectUrl!;
-              } else {
-                // No campaign redirect URL stored — clean up and redirect to jojoapp.in homepage in the same tab
-                localStorage.removeItem("campaign_redirect_url");
-                localStorage.removeItem("campaign_decoded_data");
-                window.location.href = "https://jojoapp.in";
-              }
+              router.push("/");
             }}
           />
         </div>
       )}
+
 
       {showFailedPopup && (
         <div className="success-overlay">

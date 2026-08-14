@@ -133,3 +133,9 @@ export enum PageSection {
   FEATURES = "features",
   FORM = "form",
 }
+
+export enum LoginVia {
+  PHONE = 'phone',
+  EMAIL = 'email',
+  BOTH_PHONE_EMAIL = 'both_phone_email',
+}

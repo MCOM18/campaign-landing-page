@@ -129,6 +129,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const offerDetails = offerData?.offerDetails || {};
   const campaignDetails = offerData?.campaignDetails || {};
   const metadata = campaignDetails?.metadata || {};
+  const tags = metadata?.tags || [];
   const subscriptionPlansGroup = offerData?.aAllSubscriptionPlans || [];
 
   const discountVal = offerDetails?.discountValue || 0;
@@ -549,6 +550,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                 planObj: selectedPlanObj,
                 offerDetails,
                 activeFeatures,
+                tags,
               })}
 
               {/* Coupon Redeem Section / Login Button */}
@@ -700,6 +702,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                   planObj: selectedPlanObj,
                   offerDetails,
                   activeFeatures,
+                  tags,
                 })}
 
                 {/* Action below card */}
@@ -925,10 +928,12 @@ function renderGoldOfferCard({
   planObj,
   offerDetails,
   activeFeatures = [],
+  tags = [],
 }: {
   planObj: any;
   offerDetails?: any;
   activeFeatures?: any[];
+  tags?: string[];
 }) {
   const plan = planObj?.plan || {};
 
@@ -989,6 +994,29 @@ function renderGoldOfferCard({
         marginBottom: "24px",
       }}
     >
+      {/* Tags */}
+      {tags.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+          {tags.map((tag, i) => (
+            <span
+              key={i}
+              style={{
+                backgroundColor: "rgba(0, 0, 0, 0.08)",
+                color: "#4A3510",
+                padding: "4px 10px",
+                borderRadius: "9999px",
+                fontSize: "11px",
+                fontWeight: "700",
+                letterSpacing: "0.5px",
+                textTransform: "uppercase"
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Top Line: Title, Discount Badge, Prices */}
       <div
         style={{
