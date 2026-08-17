@@ -126,7 +126,6 @@ class BackendClient {
         event: event.name,
         properties: {
           ...event.properties,
-          self_link: appConfig.ANALYTICS_SELF_LINK,
           timestamp: new Date().toISOString(),
         },
       };

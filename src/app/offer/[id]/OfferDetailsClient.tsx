@@ -471,6 +471,65 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       setIsApplyingCoupon(false);
     }
   };
+  const isCouponRedeemed = (() => {
+    if (error) {
+      const axiosError = error as any;
+      const metaMessage = axiosError?.response?.data?.["meta-data"]?.message || axiosError?.response?.data?.metaData?.message || axiosError?.message || "";
+      if (metaMessage.toLowerCase().includes("redeemed") || metaMessage.toLowerCase().includes("purchased")) return true;
+    }
+    const metaData = data?.metaData || (data as any)?.["meta-data"];
+    if (metaData?.status === 400 && (metaData?.message?.toLowerCase().includes("redeemed") || metaData?.message?.toLowerCase().includes("purchased"))) {
+      return true;
+    }
+    return false;
+  })();
+
+  const renderRedeemedCouponCard = () => (
+    <div
+      className="fade-in"
+      style={{
+        width: "100%",
+        padding: "24px 20px",
+        borderRadius: "20px",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        border: "1px solid rgba(250, 175, 63, 0.3)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        marginBottom: "28px"
+      }}
+    >
+      <h2 style={{ color: "#FAAF3F", fontSize: "22px", fontWeight: "700", marginBottom: "16px" }}>
+        Offer Already Claimed
+      </h2>
+      <p style={{ color: "var(--text-secondary)", fontSize: "15px", lineHeight: "1.5", marginBottom: "24px" }}>
+        You already purchased coupon code <strong>{sCouponCode || couponInput || "this offer"}</strong>. Please try another coupon code.
+      </p>
+      <button
+        onClick={() => {
+          sessionStorage.removeItem("sCouponCode");
+          localStorage.removeItem("sCouponCode");
+          window.location.href = "/";
+        }}
+        className="btn-primary active"
+        style={{
+          width: "100%",
+          maxWidth: "280px",
+          padding: "14px",
+          borderRadius: "9999px",
+          backgroundColor: "#F26E21",
+          color: "#000000",
+          fontSize: "16px",
+          fontWeight: "600",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Go to Home
+      </button>
+    </div>
+  );
 
   const isLoggedIn = checkIsLoggedIn();
 
@@ -486,7 +545,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       {isLoading && <PageSkeleton />}
 
       {/* Error View */}
-      {isError && !isLoading && (
+      {isError && !isLoading && !isCouponRedeemed && (
         <div
           style={{
             backgroundColor: "rgba(255, 59, 48, 0.08)",
@@ -522,7 +581,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       )}
 
       {/* Content View */}
-      {data && !isLoading && (
+      {(!isLoading && (data || isCouponRedeemed)) && (
         <>
           {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
           <div className="mobile-only" style={{ width: "100%" }}>
@@ -546,115 +605,121 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
               </header>
 
               {/* Gold Offer Card */}
-              {renderGoldOfferCard({
-                planObj: selectedPlanObj,
-                offerDetails,
-                activeFeatures,
-                tags,
-              })}
-
-              {/* Coupon Redeem Section / Login Button */}
-              {!isLoggedIn ? (
-                <div style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: "28px" }}>
-                  <button
-                    onClick={() => {
-                      if (campaignId) {
-                        sessionStorage.setItem("pending_campaign_id", campaignId);
-                      }
-                      router.push("/login");
-                    }}
-                    className="btn-primary active"
-                    style={{
-                      width: "100%",
-                      padding: "14px",
-                      borderRadius: "9999px",
-                      backgroundColor: "#F26E21",
-                      color: "#000000",
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      border: "none",
-                      cursor: "pointer",
-                      textAlign: "center",
-                    }}
-                  >
-                    LOGIN TO REDEEM OFFER
-                  </button>
-                </div>
+              {isCouponRedeemed ? (
+                renderRedeemedCouponCard()
               ) : (
-                <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
-                  <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#FFFFFF", marginBottom: "14px" }}>
-                    To redeem this offer
-                  </h2>
+                <>
+                  {renderGoldOfferCard({
+                    planObj: selectedPlanObj,
+                    offerDetails,
+                    activeFeatures,
+                    tags,
+                  })}
 
-                  {/* Coupon Input Container */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      width: "100%",
-                      backgroundColor: "rgba(255, 255, 255, 0.12)",
-                      borderRadius: "9999px",
-                      padding: "4px 6px 4px 20px",
-                      marginBottom: "24px",
-                      border: "none",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      className="coupon-input"
-                      placeholder="Enter Coupon Code"
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value)}
-                      style={{
-                        flex: 1,
-                        background: "transparent",
-                        border: "none",
-                        outline: "none",
-                        color: "#FFFFFF",
-                        fontSize: "16px",
-                        padding: "10px 0",
-                      }}
-                    />
-                  </div>
+                  {/* Coupon Redeem Section / Login Button */}
+                  {!isLoggedIn ? (
+                    <div style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: "28px" }}>
+                      <button
+                        onClick={() => {
+                          if (campaignId) {
+                            sessionStorage.setItem("pending_campaign_id", campaignId);
+                          }
+                          router.push("/login");
+                        }}
+                        className="btn-primary active"
+                        style={{
+                          width: "100%",
+                          padding: "14px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#F26E21",
+                          color: "#000000",
+                          fontSize: "16px",
+                          fontWeight: "600",
+                          border: "none",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        LOGIN TO REDEEM OFFER
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
+                      <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#FFFFFF", marginBottom: "14px" }}>
+                        To redeem this offer
+                      </h2>
 
-                  {/* Apply Button */}
-                  <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: "28px" }}>
-                    <button
-                      onClick={handleApplyCoupon}
-                      disabled={isApplyingCoupon}
-                      style={{
-                        width: "50%",
-                        minWidth: "160px",
-                        padding: "12px",
-                        borderRadius: "9999px",
-                        backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
-                        color: "#FFFFFF",
-                        fontSize: "18px",
-                        fontWeight: "700",
-                        border: "none",
-                        cursor: isApplyingCoupon ? "not-allowed" : "pointer",
-                        textAlign: "center",
-                        boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      {isApplyingCoupon ? (
-                        <>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
-                            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
-                            <circle cx="12" cy="12" r="10" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="3" />
-                            <path d="M12 2a10 10 0 0 1 10 10" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
-                          </svg>
-                        </>
-                      ) : (
-                        "Apply"
-                      )}
-                    </button>
-                  </div>
-                </div>
+                      {/* Coupon Input Container */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          width: "100%",
+                          backgroundColor: "rgba(255, 255, 255, 0.12)",
+                          borderRadius: "9999px",
+                          padding: "4px 6px 4px 20px",
+                          marginBottom: "24px",
+                          border: "none",
+                        }}
+                      >
+                        <input
+                          type="text"
+                          className="coupon-input"
+                          placeholder="Enter Coupon Code"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value)}
+                          style={{
+                            flex: 1,
+                            background: "transparent",
+                            border: "none",
+                            outline: "none",
+                            color: "#FFFFFF",
+                            fontSize: "16px",
+                            padding: "10px 0",
+                          }}
+                        />
+                      </div>
+
+                      {/* Apply Button */}
+                      <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: "28px" }}>
+                        <button
+                          onClick={handleApplyCoupon}
+                          disabled={isApplyingCoupon}
+                          style={{
+                            width: "50%",
+                            minWidth: "160px",
+                            padding: "12px",
+                            borderRadius: "9999px",
+                            backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
+                            color: "#FFFFFF",
+                            fontSize: "18px",
+                            fontWeight: "700",
+                            border: "none",
+                            cursor: isApplyingCoupon ? "not-allowed" : "pointer",
+                            textAlign: "center",
+                            boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          {isApplyingCoupon ? (
+                            <>
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
+                                <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+                                <circle cx="12" cy="12" r="10" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="3" />
+                                <path d="M12 2a10 10 0 0 1 10 10" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+                              </svg>
+                            </>
+                          ) : (
+                            "Apply"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Terms Accordions */}
@@ -692,114 +757,120 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
             <div className="web-split-layout">
               {/* Left Column: Terms & Conditions */}
               <div className="web-layout-left">
-                {renderAccordions({ termsList, showTerms, setShowTerms })}
+                {!isCouponRedeemed && renderAccordions({ termsList, showTerms, setShowTerms })}
               </div>
 
               {/* Right Column: Gold Offer Card + Action Button */}
               <div className="web-layout-right">
-                {/* Gold Offer Card */}
-                {renderGoldOfferCard({
-                  planObj: selectedPlanObj,
-                  offerDetails,
-                  activeFeatures,
-                  tags,
-                })}
-
-                {/* Action below card */}
-                {!isLoggedIn ? (
-                  <div style={{ width: "100%", display: "flex", justifyContent: "flex-start", marginTop: "16px" }}>
-                    <button
-                      onClick={() => {
-                        if (campaignId) {
-                          sessionStorage.setItem("pending_campaign_id", campaignId);
-                        }
-                        router.push("/login");
-                      }}
-                      className="btn-primary active"
-                      style={{
-                        width: "100%",
-                        padding: "14px",
-                        borderRadius: "9999px",
-                        backgroundColor: "#F26E21",
-                        color: "#000000",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        border: "none",
-                        cursor: "pointer",
-                        textAlign: "center",
-                      }}
-                    >
-                      LOGIN TO REDEEM OFFER
-                    </button>
-                  </div>
+                {isCouponRedeemed ? (
+                  renderRedeemedCouponCard()
                 ) : (
-                  <div style={{ width: "100%", textAlign: "left", marginTop: "16px" }}>
-                    <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#FFFFFF", marginBottom: "16px" }}>
-                      To redeem this offer
-                    </h2>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        width: "100%",
-                        backgroundColor: "rgba(255, 255, 255, 0.12)",
-                        borderRadius: "9999px",
-                        padding: "4px 6px 4px 20px",
-                        marginBottom: "24px",
-                        border: "none",
-                      }}
-                    >
-                      <input
-                        type="text"
-                        className="coupon-input"
-                        placeholder="Enter Coupon Code"
-                        value={couponInput}
-                        onChange={(e) => setCouponInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          background: "transparent",
-                          border: "none",
-                          outline: "none",
-                          color: "#FFFFFF",
-                          fontSize: "16px",
-                          padding: "12px 0",
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
-                      <button
-                        onClick={handleApplyCoupon}
-                        disabled={isApplyingCoupon}
-                        style={{
-                          width: "180px",
-                          padding: "14px",
-                          borderRadius: "9999px",
-                          backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
-                          color: "#FFFFFF",
-                          fontSize: "18px",
-                          fontWeight: "700",
-                          border: "none",
-                          cursor: isApplyingCoupon ? "not-allowed" : "pointer",
-                          textAlign: "center",
-                          boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        {isApplyingCoupon ? (
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
-                            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
-                            <circle cx="12" cy="12" r="10" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="3" />
-                            <path d="M12 2a10 10 0 0 1 10 10" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
-                          </svg>
-                        ) : (
-                          "Apply"
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  <>
+                    {/* Gold Offer Card */}
+                    {renderGoldOfferCard({
+                      planObj: selectedPlanObj,
+                      offerDetails,
+                      activeFeatures,
+                      tags,
+                    })}
+
+                    {/* Action below card */}
+                    {!isLoggedIn ? (
+                      <div style={{ width: "100%", display: "flex", justifyContent: "flex-start", marginTop: "16px" }}>
+                        <button
+                          onClick={() => {
+                            if (campaignId) {
+                              sessionStorage.setItem("pending_campaign_id", campaignId);
+                            }
+                            router.push("/login");
+                          }}
+                          className="btn-primary active"
+                          style={{
+                            width: "100%",
+                            padding: "14px",
+                            borderRadius: "9999px",
+                            backgroundColor: "#F26E21",
+                            color: "#000000",
+                            fontSize: "16px",
+                            fontWeight: "600",
+                            border: "none",
+                            cursor: "pointer",
+                            textAlign: "center",
+                          }}
+                        >
+                          LOGIN TO REDEEM OFFER
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ width: "100%", textAlign: "left", marginTop: "16px" }}>
+                        <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#FFFFFF", marginBottom: "16px" }}>
+                          To redeem this offer
+                        </h2>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            width: "100%",
+                            backgroundColor: "rgba(255, 255, 255, 0.12)",
+                            borderRadius: "9999px",
+                            padding: "4px 6px 4px 20px",
+                            marginBottom: "24px",
+                            border: "none",
+                          }}
+                        >
+                          <input
+                            type="text"
+                            className="coupon-input"
+                            placeholder="Enter Coupon Code"
+                            value={couponInput}
+                            onChange={(e) => setCouponInput(e.target.value)}
+                            style={{
+                              flex: 1,
+                              background: "transparent",
+                              border: "none",
+                              outline: "none",
+                              color: "#FFFFFF",
+                              fontSize: "16px",
+                              padding: "12px 0",
+                            }}
+                          />
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
+                          <button
+                            onClick={handleApplyCoupon}
+                            disabled={isApplyingCoupon}
+                            style={{
+                              width: "180px",
+                              padding: "14px",
+                              borderRadius: "9999px",
+                              backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
+                              color: "#FFFFFF",
+                              fontSize: "18px",
+                              fontWeight: "700",
+                              border: "none",
+                              cursor: isApplyingCoupon ? "not-allowed" : "pointer",
+                              textAlign: "center",
+                              boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            {isApplyingCoupon ? (
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
+                                <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+                                <circle cx="12" cy="12" r="10" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="3" />
+                                <path d="M12 2a10 10 0 0 1 10 10" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+                              </svg>
+                            ) : (
+                              "Apply"
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

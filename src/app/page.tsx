@@ -168,8 +168,12 @@ export default function page() {
         setCampaignPlan(data);
         // Pre-populate freshPlans so plan cards are ready even before OTP
         setFreshPlans(data);
-      } catch (err) {
+      } catch (err: any) {
         logger.error("[CampaignPage] Failed to fetch allplans-campaign:", err);
+        const meta = err.response?.data?.["meta-data"];
+        if (meta?.status === 400 && meta?.message?.toLowerCase().includes("redeemed")) {
+          setRedeemedCouponError(meta.message);
+        }
       } finally {
         setIsCampaignLoading(false);
       }
@@ -268,9 +272,11 @@ export default function page() {
       }
 
       if (!dataParam && !redirectUrl) {
+        const savedSourceLink = localStorage.getItem("source_link");
         localStorage.clear();
         sessionStorage.clear();
-        logger.info("[Campaign] Clean URL detected. Cleared all localStorage and sessionStorage.");
+        if (savedSourceLink) localStorage.setItem("source_link", savedSourceLink);
+        logger.info("[Campaign] Clean URL detected. Cleared all localStorage and sessionStorage, but preserved source_link.");
       } else {
         const enrichedData = {
           decoded_data: decoded,
@@ -296,16 +302,7 @@ export default function page() {
         platform: "web",
         os: devicePayload.os || "unknown",
         browser: devicePayload.browser || "unknown",
-        page_url: window.location.href,
-        utm_source: url.searchParams.get("utm_source") || queryParams.utm_source || "",
-        utm_medium: url.searchParams.get("utm_medium") || queryParams.utm_medium || "",
-        utm_campaign: url.searchParams.get("utm_campaign") || queryParams.utm_campaign || "",
-        utm_content: url.searchParams.get("utm_content") || queryParams.utm_content || "",
-        ad_id: url.searchParams.get("ad_id") || queryParams.ad_id || "",
-        ad_type: url.searchParams.get("ad_type") || queryParams.ad_type || "",
-        ad_placement: url.searchParams.get("ad_placement") || queryParams.ad_placement || "",
-        cta_type: url.searchParams.get("cta_type") || queryParams.cta_type || "",
-        target_screen: url.searchParams.get("target_screen") || queryParams.target_screen || "",
+
         language: DEFAULT_HEADER_VALUES.LANGUAGE,
         lat: getUserGeoLocation()?.lat || null,
         lng: getUserGeoLocation()?.lng || null,
@@ -392,12 +389,21 @@ export default function page() {
   const [isExists, setIsExists] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [redeemedCouponError, setRedeemedCouponError] = useState<string | null>(null);
   const [goldSubscriptionInfo, setGoldSubscriptionInfo] = useState<any>(null);
   const [showGoldPopup, setShowGoldPopup] = useState(false);
 
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
+
+  const handleClearAndGoHome = () => {
+    localStorage.removeItem("campaign_decoded_data");
+    localStorage.removeItem("campaign_redirect_url");
+    sessionStorage.removeItem("pending_campaign_id");
+    sessionStorage.removeItem("pending_campaign_params");
+    window.location.href = "/";
+  };
 
   // Restore auth store state on mount if session exists
   useEffect(() => {
@@ -843,19 +849,10 @@ export default function page() {
 
                 {/* Verifying state */}
                 {isVerifying ? (
-                  <div
-                    className="fade-in"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: "200px",
-                      width: "100%",
-                    }}
-                  >
-                    <div className="premium-loader" />
-                    <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
+                  <div className="fade-in" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px", padding: "16px 0" }}>
+                    <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                    <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                    <div className="skeleton-pulse" style={{ width: "100%", height: "48px", borderRadius: "30px", marginTop: "8px" }} />
                   </div>
                 ) : step === TrialFormStep.INPUT ? (
                   <div style={{ width: "100%" }}>
@@ -933,6 +930,19 @@ export default function page() {
                   );
                 }
                 if (section === PageSection.FORM) {
+                  if (redeemedCouponError) {
+                    return (
+                      <div key={section} className="fade-in" style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "2rem" }}>
+                        <h2 style={{ color: "#FAAF3F", marginBottom: "1rem", fontSize: "20px" }}>Offer Already Claimed</h2>
+                        <p style={{ color: "rgba(255,255,255,0.8)", marginBottom: "2rem", fontSize: "14px", lineHeight: "1.5" }}>
+                          You have already applied this coupon code. Please try again with another offer.
+                        </p>
+                        <button onClick={handleClearAndGoHome} className="btn-primary active" style={{ padding: "12px 32px", fontSize: "16px", fontWeight: "bold", borderRadius: "30px", width: "100%" }}>
+                          Try Again
+                        </button>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={section} style={{ width: "100%" }}>
                       {error && (
@@ -1081,6 +1091,9 @@ export default function page() {
                   <div key="split-layout" className="web-split-layout">
                     {columns.map((col) => {
                       if (col === PageSection.FORM) {
+                        if (redeemedCouponError) {
+                          return <div key={col} className="web-layout-left" />;
+                        }
                         return (
                           <div key={col} className="web-layout-left">
                             <div style={{ width: "100%" }}>
@@ -1090,19 +1103,10 @@ export default function page() {
                                 </div>
                               )}
                               {isVerifying ? (
-                                <div
-                                  className="fade-in"
-                                  style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    minHeight: "150px",
-                                    width: "100%"
-                                  }}
-                                >
-                                  <div className="premium-loader" />
-                                  <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
+                                <div className="fade-in" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px", padding: "16px 0" }}>
+                                  <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                                  <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                                  <div className="skeleton-pulse" style={{ width: "100%", height: "48px", borderRadius: "30px", marginTop: "8px" }} />
                                 </div>
                               ) : step === TrialFormStep.INPUT ? (
                                 <FreeTrialForm
@@ -1176,22 +1180,36 @@ export default function page() {
                       if (col === PageSection.FEATURES) {
                         return (
                           <div key={col} className="web-layout-right">
-                            <div className="web-features-header">
-                              <div className="web-features-header-line" />
-                              <span className="web-features-header-text gold-text-gradient">GOLD FEATURES</span>
-                              <div className="web-features-header-line" />
-                            </div>
-
-                            <div className="web-features-grid">
-                              {activeFeatures.map((feature: any) => (
-                                <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card">
-                                  <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
-                                  <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600", textAlign: "center" }}>
-                                    {feature.sFeatureName}
-                                  </span>
+                            {redeemedCouponError ? (
+                              <div className="fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", padding: "2rem" }}>
+                                <h2 style={{ color: "#FAAF3F", marginBottom: "1rem", fontSize: "24px" }}>Offer Already Claimed</h2>
+                                <p style={{ color: "rgba(255,255,255,0.8)", marginBottom: "2rem", fontSize: "16px", lineHeight: "1.5" }}>
+                                  You have already applied this coupon code. Please try again with another offer.
+                                </p>
+                                <button onClick={handleClearAndGoHome} className="btn-primary active" style={{ padding: "12px 32px", fontSize: "16px", fontWeight: "bold", borderRadius: "30px" }}>
+                                  Try Again
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="web-features-header">
+                                  <div className="web-features-header-line" />
+                                  <span className="web-features-header-text gold-text-gradient">GOLD FEATURES</span>
+                                  <div className="web-features-header-line" />
                                 </div>
-                              ))}
-                            </div>
+
+                                <div className="web-features-grid">
+                                  {activeFeatures.map((feature: any) => (
+                                    <div key={feature.sFeatureId || feature.sFeatureName} className="feature-card">
+                                      <img src={feature.sFeatureImageUrl} alt={feature.sFeatureName} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+                                      <span className="gold-text-gradient" style={{ fontSize: "12px", fontWeight: "600", textAlign: "center" }}>
+                                        {feature.sFeatureName}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
                           </div>
                         );
                       }

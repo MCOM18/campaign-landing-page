@@ -240,16 +240,7 @@ export default function Home() {
         platform: "web",
         os: devicePayload.os || "unknown",
         browser: devicePayload.browser || "unknown",
-        page_url: window.location.href,
-        utm_source: url.searchParams.get("utm_source") || queryParams.utm_source || "",
-        utm_medium: url.searchParams.get("utm_medium") || queryParams.utm_medium || "",
-        utm_campaign: url.searchParams.get("utm_campaign") || queryParams.utm_campaign || "",
-        utm_content: url.searchParams.get("utm_content") || queryParams.utm_content || "",
-        ad_id: url.searchParams.get("ad_id") || queryParams.ad_id || "",
-        ad_type: url.searchParams.get("ad_type") || queryParams.ad_type || "",
-        ad_placement: url.searchParams.get("ad_placement") || queryParams.ad_placement || "",
-        cta_type: url.searchParams.get("cta_type") || queryParams.cta_type || "",
-        target_screen: url.searchParams.get("target_screen") || queryParams.target_screen || "",
+
         language: DEFAULT_HEADER_VALUES.LANGUAGE,
         lat: getUserGeoLocation()?.lat || null,
         lng: getUserGeoLocation()?.lng || null,
@@ -856,18 +847,10 @@ export default function Home() {
                       </div>
                     )}
                     {isVerifying ? (
-                      <div
-                        className="fade-in"
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          minHeight: "200px",
-                        }}
-                      >
-                        <div className="premium-loader" />
-                        <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
+                      <div className="fade-in" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px" }}>
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "48px", borderRadius: "30px", marginTop: "8px" }} />
                       </div>
                     ) : step === TrialFormStep.INPUT ? (
                       <FreeTrialForm
@@ -1054,19 +1037,10 @@ export default function Home() {
                                 </div>
                               )}
                               {isVerifying ? (
-                                <div
-                                  className="fade-in"
-                                  style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    minHeight: "150px",
-                                    width: "100%"
-                                  }}
-                                >
-                                  <div className="premium-loader" />
-                                  <p style={{ color: "#ffffff", fontSize: "15px" }}>Verifying OTP...</p>
+                                <div className="fade-in" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px" }}>
+                                  <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                                  <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
+                                  <div className="skeleton-pulse" style={{ width: "100%", height: "48px", borderRadius: "30px", marginTop: "8px" }} />
                                 </div>
                               ) : step === TrialFormStep.INPUT ? (
                                 <FreeTrialForm

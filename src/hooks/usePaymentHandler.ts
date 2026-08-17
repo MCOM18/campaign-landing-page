@@ -611,6 +611,11 @@ export const usePaymentHandler = () => {
 
       logger.info("Initiate Payment Response:", response);
 
+      const metaData = response?.data?.["meta-data"] || response?.data?.metaData;
+      if (metaData?.status && metaData.status >= 400) {
+        throw new Error(metaData.message || "Failed to initiate payment");
+      }
+
       const newInitiateData = response?.data?.data?.initiateData || response?.data?.initiateData || response?.initiateData;
       if (!newInitiateData) {
         throw new Error(`Invalid initiate response: ${JSON.stringify(response?.data || response)}`);

@@ -378,6 +378,5 @@ export const appConfig = {
     USE_APP_NAVIGATION_STALETIME: 10 * 60 * 1000,
     USE_APP_NAVIGATION_RETRY: 2,
     ANALYTICS_SUFFIX_TEXT: "7 days Free Trial",
-    ANALYTICS_SELF_LINK: "https://subscription.jojoapp.in",
     DEFAULT_MOBILE_NUMBER_CODE: "+91"
 }

@@ -6,7 +6,7 @@ import { analyticsService } from '../services/analytics.service';
 import { useAuthStore } from '@/store/useAuthStore'; // Match your store path
 import { useBootstrap } from '@/lib/bootstrap/BootstrapContext';
 
-import { getSourceLink, parseSourceLinkParams } from '../utils/getSourceLink';
+
 import { EVENT_NAMES } from '../constants/analytics.constants';
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
@@ -59,18 +59,13 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const previous = lastPathname.current;
     lastPathname.current = pathname;
 
-    const sourceLink = getSourceLink();
-    const sourceLinkParams = parseSourceLinkParams(sourceLink);
 
     analyticsService.track({
       name: EVENT_NAMES.SCREEN_VIEWED,
       properties: {
         screen_name: pathname === '/' ? 'Home' : pathname.slice(1).replace(/\//g, ' '),
         screen_path: pathname,
-        referrer: typeof document !== 'undefined' ? document.referrer : undefined,
         previous_screen: previous || undefined,
-        ...(sourceLink ? { source_link: sourceLink } : {}),
-        ...sourceLinkParams,
       }
     });
   }, [isInitialized, pathname]);

@@ -34,6 +34,7 @@ export async function initiateOtpFlow(
 ): Promise<{ isSpecialUser: boolean; isExists: boolean }> {
   const isEmail = phone.includes('@');
   const source = isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE;
+  const identifierProps = isEmail ? { email: phone } : { phone: phone, phone_code: phoneCode };
 
   logger.info('[Auth Service] initiateOtpFlow', { phone, phoneCode, isEmail, source });
 
@@ -91,8 +92,7 @@ export async function initiateOtpFlow(
   if (otpResponse.metaData?.status !== 200) {
     // Track OTP failure
     trackEvent("otp_failed", {
-      phone_code: phoneCode,
-      phone: phone,
+      ...identifierProps,
       source: source,
       error_code: String(otpResponse.metaData?.status || 'unknown'),
       error_message: otpResponse.metaData?.message || 'Send OTP failed',
@@ -113,8 +113,7 @@ export async function initiateOtpFlow(
   if (otpResponse.data !== null && !otp.otp_sent) {
     // Track OTP failure
     trackEvent("otp_failed", {
-      phone_code: phoneCode,
-      phone: phone,
+      ...identifierProps,
       source: source,
       error_code: 'otp_not_sent',
       error_message: 'Failed to send OTP',
@@ -126,8 +125,7 @@ export async function initiateOtpFlow(
 
   // Track OTP sent successfully
   trackEvent("otp_sent", {
-    phone_code: phoneCode,
-    phone: phone,
+    ...identifierProps,
     source: source,
     is_register: isRegistration,
   });
@@ -151,6 +149,7 @@ export async function completeOtpVerification(
   // Detect if input is email or phone
   const isEmail = phone.includes('@');
   const source = isEmail ? LoginIdentifierType.EMAIL : LoginIdentifierType.PHONE;
+  const identifierProps = isEmail ? { email: phone } : { phone: phone, phone_code: phoneCode };
 
   const startTime = Date.now();
 
@@ -180,8 +179,7 @@ export async function completeOtpVerification(
   if (status !== 200 && status !== 201) {
     // Track OTP verification failure
     trackEvent("otp_failed", {
-      phone_code: phoneCode,
-      phone: phone,
+      ...identifierProps,
       source: source,
       error_code: String(status || 'unknown'),
       error_message: response.metaData?.message || 'OTP verification failed',
@@ -202,8 +200,7 @@ export async function completeOtpVerification(
 
   // Track OTP verification success
   trackEvent("otp_verified", {
-    phone_code: phoneCode,
-    phone: phone,
+    ...identifierProps,
     source: source,
     is_register: isRegister,
     verification_time_seconds: verificationTime,
@@ -215,16 +212,12 @@ export async function completeOtpVerification(
   trackEvent("login_completed", {
     method: 'otp',
     is_new_user: status === 201,
-    phone_code: phoneCode,
-    phone: phone,
+    ...identifierProps,
     source: source,
     user_id: mapped.user_id,
     session_id: mapped.session_id,
-    source_link: sourceLink,
     value: phone.includes('@') ? phone : `+${phoneCode.replace(/\D/g, '')}${phone.replace(/\D/g, '')}`,
     otp: otp,
-    phoneCode: `+${phoneCode.replace(/\D/g, '')}`,
-    phoneOnly: phone.replace(/\D/g, '')
   });
 
   return mapped;
@@ -277,7 +270,6 @@ export async function socialLoginService(
     source: 'phone',
     user_id: mapped.user_id,
     session_id: mapped.session_id,
-    source_link: sourceLink,
     value: mapped.email || mapped.phone || '',
     phone: mapped.phone || '',
     email: mapped.email || '',

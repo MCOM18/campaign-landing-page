@@ -230,7 +230,6 @@ class AnalyticsService {
       timestamp: new Date().toISOString(),
       suffix: appConfig.ANALYTICS_SUFFIX_TEXT,
       environment: isProduction() ? 'production' : 'development',
-      self_link: appConfig.ANALYTICS_SELF_LINK,
       ...(campaign ? { campaign } : {}),
       ...additionalContext
     };
