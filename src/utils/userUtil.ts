@@ -1,3 +1,16 @@
+import { useAuthStore } from "@/store/useAuthStore";
+
+export const clearUserDataAndReload = () => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("session_id");
+  localStorage.removeItem("user_id");
+  localStorage.removeItem("userData");
+  localStorage.removeItem("user_phone");
+  localStorage.removeItem("user_phone_code");
+  useAuthStore.getState().clearAuth();
+  window.location.reload();
+};
+
 export const getUserGeoLocation = () => {
   try {
     if (typeof window === "undefined") return {};

@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import thumbnailsJson from "../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 import api from "../../utils/apiClient";
-import { getUserGeoLocation } from "../../utils/userUtil";
+import { getUserGeoLocation, clearUserDataAndReload } from "../../utils/userUtil";
 import SubscriptionPlanCard, { SingleCouponInput } from "../payment/SubscriptionPlanCard";
 
 const renderFooterWithLinks = (text: string) => {
@@ -846,18 +846,13 @@ export default function Home() {
                         {error}
                       </div>
                     )}
-                    {isVerifying ? (
-                      <div className="fade-in" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px" }}>
-                        <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
-                        <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
-                        <div className="skeleton-pulse" style={{ width: "100%", height: "48px", borderRadius: "30px", marginTop: "8px" }} />
-                      </div>
-                    ) : step === TrialFormStep.INPUT ? (
+                    {step === TrialFormStep.INPUT ? (
                       <FreeTrialForm
                         onSubmit={handleInputSubmit}
                         confirmButtonLabel={confirmButtonLabel}
                         disclaimerText={disclaimerText}
                         footerNote={footerNote}
+                        isLoading={isVerifying}
                       />
                     ) : step === TrialFormStep.OTP ? (
                       <OtpVerification
@@ -867,6 +862,7 @@ export default function Home() {
                         onResend={handleResendOtp}
                         disclaimerText={disclaimerText}
                         isMobileLayout={true}
+                        isLoading={isVerifying}
                       />
                     ) : step === TrialFormStep.PLANS ? (
                       <div className="fade-in" style={{ width: "100%" }}>
@@ -1036,18 +1032,13 @@ export default function Home() {
                                   {error}
                                 </div>
                               )}
-                              {isVerifying ? (
-                                <div className="fade-in" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px" }}>
-                                  <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
-                                  <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "12px" }} />
-                                  <div className="skeleton-pulse" style={{ width: "100%", height: "48px", borderRadius: "30px", marginTop: "8px" }} />
-                                </div>
-                              ) : step === TrialFormStep.INPUT ? (
+                              {step === TrialFormStep.INPUT ? (
                                 <FreeTrialForm
                                   onSubmit={handleInputSubmit}
                                   confirmButtonLabel={confirmButtonLabel}
                                   disclaimerText={disclaimerText}
                                   footerNote={footerNote}
+                                  isLoading={isVerifying}
                                 />
                               ) : step === TrialFormStep.OTP ? (
                                 <OtpVerification
@@ -1057,6 +1048,7 @@ export default function Home() {
                                   onResend={handleResendOtp}
                                   disclaimerText={disclaimerText}
                                   isMobileLayout={false}
+                                  isLoading={isVerifying}
                                 />
                               ) : step === TrialFormStep.PLANS ? (
                                 <div className="fade-in" style={{ width: "100%" }}>
@@ -1181,6 +1173,9 @@ export default function Home() {
             onClose={() => {
               setShowGoldPopup(false);
               handleReset();
+            }}
+            onPurchaseAnother={() => {
+              clearUserDataAndReload();
             }}
           />
         </div>

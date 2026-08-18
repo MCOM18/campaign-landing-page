@@ -12,20 +12,21 @@ export function useOfferByCampaign(campaignId: string, sCouponCode: string = "")
 
   return useQuery({
     queryKey: ["offerByCampaign", campaignId, sCouponCode],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       logger.info("[useOfferByCampaign] Fetching offer for campaignId:", campaignId);
-      return await getOfferByCampaign(campaignId, sCouponCode);
+      return await getOfferByCampaign(campaignId, sCouponCode, signal);
     },
     enabled: isAppReady && isValidCampaignId,
+    retry: false,
   });
 }
 
 export async function fetchOfferByCampaignCached(campaignId: string, sCouponCode: string = "") {
   return queryClient.fetchQuery({
     queryKey: ["offerByCampaign", campaignId, sCouponCode],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       logger.info("[fetchOfferByCampaignCached] Fetching offer for campaignId:", campaignId);
-      return await getOfferByCampaign(campaignId, sCouponCode);
+      return await getOfferByCampaign(campaignId, sCouponCode, signal);
     },
     staleTime: 5 * 60 * 1000,
   });

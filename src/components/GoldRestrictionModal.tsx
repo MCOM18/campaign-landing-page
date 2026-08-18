@@ -10,6 +10,7 @@ interface GoldRestrictionModalProps {
   onClose: () => void;
   title?: string;
   description?: string;
+  onPurchaseAnother?: () => void;
 }
 
 function formatDate(dateString?: string) {
@@ -26,17 +27,12 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
   onClose,
   title,
   description,
+  onPurchaseAnother,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    // Intentionally disabled click outside to close so users must explicitly choose an action.
   }, [onClose]);
 
   const planName = subscription?.plan_name || "JOJO Gold Premium";
@@ -117,7 +113,6 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
         <button
           onClick={() => {
             window.open("https://jojoapp.in", "_blank", "noopener,noreferrer");
-            onClose();
           }}
           style={{
             width: "100%",
@@ -142,6 +137,42 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
         >
           Explore Gold
         </button>
+
+        {onPurchaseAnother && (
+          <button
+            onClick={() => {
+              onPurchaseAnother();
+              onClose();
+            }}
+            style={{
+              width: "100%",
+              height: "44px",
+              borderRadius: "100px",
+              border: "2px solid #FAAF3F",
+              backgroundColor: "transparent",
+              color: "#FAAF3F",
+              fontSize: "14px",
+              fontWeight: "600",
+              lineHeight: "24px",
+              fontFamily: "'Poppins', sans-serif",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              outline: "none",
+              transition: "all 0.2s ease",
+              marginTop: "12px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(250, 175, 63, 0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            Purchase Plan With Another Number
+          </button>
+        )}
       </div>
     </div>
   );

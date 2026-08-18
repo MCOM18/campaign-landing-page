@@ -9,7 +9,11 @@ import { getUserAuthData, getUserGeoLocation } from "@/utils/userUtil";
 import { logger } from "@/lib/logger/logger";
 import type { ApiResponse } from "@/lib/types/api.types";
 
-export async function getOfferByCampaign(campaignId: string, sCouponCode: string = ""): Promise<ApiResponse<any>> {
+export async function getOfferByCampaign(
+  campaignId: string, 
+  sCouponCode: string = "",
+  signal?: AbortSignal
+): Promise<ApiResponse<any>> {
   if (!campaignId) {
     throw new Error("Campaign ID is required");
   }
@@ -36,7 +40,7 @@ export async function getOfferByCampaign(campaignId: string, sCouponCode: string
   logger.info("[Get Offer By Campaign API] Requesting:", { endpoint, headers, payload });
 
   try {
-    const response = await apiClient.post<any>(endpoint, payload, { headers, encrypt: true });
+    const response = await apiClient.post<any>(endpoint, payload, { headers, encrypt: true, signal });
 
     logger.info("[Get Offer By Campaign API] Response:", {
       metaData: response.metaData,

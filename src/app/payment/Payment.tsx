@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import { FiChevronUp, FiChevronDown, FiChevronLeft, FiEye, FiEyeOff } from "react-icons/fi";
 import SubscriptionPlanCard from "./SubscriptionPlanCard";
 import { usePaymentHandler, getPricingData, checkCardRecurringEligibility, loadRazorpayScript } from "../../hooks/usePaymentHandler";
-import { getUserGeoLocation } from "../../utils/userUtil";
+import { getUserGeoLocation, clearUserDataAndReload } from "../../utils/userUtil";
 import { PAYMENT_METHOD } from "@/enums/enums";
 import PhoneCollectModal from "./PhoneCollectModal";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
@@ -17,6 +17,7 @@ import { trackEvent } from "@/services/analytics/events";
 import "./payment.css";
 import { appConfig } from "@/lib/config/app.config";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
+import { useAuthStore } from "@/store/useAuthStore";
 
 function PaymentPage() {
   const router = useRouter();
@@ -466,6 +467,9 @@ function PaymentPage() {
             onClose={() => {
               setShowGoldPopup(false);
               router.push("/");
+            }}
+            onPurchaseAnother={() => {
+              clearUserDataAndReload();
             }}
           />
         </div>

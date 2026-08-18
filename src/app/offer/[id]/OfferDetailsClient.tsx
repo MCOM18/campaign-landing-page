@@ -13,9 +13,10 @@ import { useOfferByCampaign } from "@/features/offer/hooks/useOfferByCampaign";
 import { appConfig } from "@/lib/config/app.config";
 import { REGEX } from "@/lib/constants/regex";
 import { logger } from "@/lib/logger/logger";
+import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/utils/apiClient";
-import { getUserGeoLocation } from "@/utils/userUtil";
+import { getUserGeoLocation, clearUserDataAndReload } from "@/utils/userUtil";
 import Lottie from "lottie-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react";
@@ -88,7 +89,10 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     setCouponInput(effectiveCode);
   }, [searchParams]);
 
-  const { data, isLoading, isError, error, refetch } = useOfferByCampaign(campaignId, sCouponCode);
+  const { isAppReady } = useBootstrap();
+  const { data, isLoading, isFetching, isError, error, refetch } = useOfferByCampaign(campaignId, sCouponCode);
+
+  const showLoader = isLoading || isFetching || !isAppReady;
 
   const lottieMobileRef = useRef<any>(null);
   const lottieDesktopRef = useRef<any>(null);
@@ -542,46 +546,99 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       }}
     >
       {/* Loading View */}
-      {isLoading && <PageSkeleton />}
+      {showLoader && <PageSkeleton />}
 
       {/* Error View */}
-      {isError && !isLoading && !isCouponRedeemed && (
-        <div
-          style={{
-            backgroundColor: "rgba(255, 59, 48, 0.08)",
-            border: "1px solid rgba(255, 59, 48, 0.25)",
-            borderRadius: "20px",
-            padding: "2.5rem 1.5rem",
-            width: "100%",
-            textAlign: "center",
-            margin: "2rem 0",
-          }}
-        >
-          <FiInfo size={40} color="#FF3B30" style={{ marginBottom: "1rem" }} />
-          <h2 style={{ color: "#ffffff", fontSize: "20px", fontWeight: "700", marginBottom: "0.5rem" }}>
-            Campaign Offer Unavailable
-          </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: "14px", marginBottom: "1.5rem" }}>
-            {error instanceof Error ? error.message : "Unable to load this campaign offer."}
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="btn-primary active"
+      {(!showLoader && !isCouponRedeemed && (isError || ((data as any)?.metaData?.status >= 400) || !selectedPlanObj)) && (
+        <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "2rem 1rem", marginTop: "10vh" }}>
+          <div
             style={{
-              padding: "12px 28px",
-              borderRadius: "12px",
-              fontWeight: "700",
-              fontSize: "14px",
-              cursor: "pointer",
+              backgroundColor: "rgba(20, 20, 20, 0.6)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(255, 59, 48, 0.3)",
+              borderRadius: "24px",
+              padding: "3rem 2rem",
+              width: "100%",
+              maxWidth: "480px",
+              textAlign: "center",
+              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
             }}
           >
-            Retry
-          </button>
+            <div
+              style={{
+                width: "64px",
+                height: "64px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(255, 59, 48, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 1.5rem",
+                boxShadow: "0 0 20px rgba(255, 59, 48, 0.2)"
+              }}
+            >
+              <FiInfo size={32} color="#FF3B30" />
+            </div>
+            <h2 style={{ color: "#ffffff", fontSize: "24px", fontWeight: "700", marginBottom: "0.75rem", letterSpacing: "-0.02em" }}>
+              Offer Unavailable
+            </h2>
+            <p style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: "15px", lineHeight: "1.6", marginBottom: "2rem", padding: "0 10px" }}>
+              {error instanceof Error ? error.message : (data as any)?.metaData?.message || (data as any)?.["meta-data"]?.message || "We couldn't load this campaign offer. It may have expired or doesn't exist."}
+            </p>
+            <div style={{ display: "flex", gap: "12px", width: "100%" }}>
+              <button
+                onClick={() => refetch()}
+                className="btn-primary active"
+                style={{
+                  flex: 1,
+                  padding: "14px 20px",
+                  borderRadius: "14px",
+                  fontWeight: "600",
+                  fontSize: "15px",
+                  cursor: "pointer",
+                  border: "none",
+                  backgroundColor: "#F26E21",
+                  color: "#000",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    localStorage.removeItem("session_id");
+                    localStorage.removeItem("user_id");
+                    localStorage.removeItem("userData");
+                    localStorage.removeItem("user_phone");
+                    localStorage.removeItem("user_phone_code");
+                    useAuthStore.getState().clearAuth();
+                  }
+                  router.push("/");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "14px 20px",
+                  borderRadius: "14px",
+                  fontWeight: "600",
+                  fontSize: "15px",
+                  cursor: "pointer",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  color: "#ffffff",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Go to Home
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Content View */}
-      {(!isLoading && (data || isCouponRedeemed)) && (
+      {(!showLoader && !isError && ((data as any)?.metaData?.status < 400 || (data as any)?.metaData?.status === undefined) && (isCouponRedeemed || selectedPlanObj)) && (
         <>
           {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
           <div className="mobile-only" style={{ width: "100%" }}>
@@ -987,6 +1044,9 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
               setShowGoldPopup(false);
               handleReset();
             }}
+            onPurchaseAnother={() => {
+              clearUserDataAndReload();
+            }}
           />
         </div>
       )}
@@ -1017,10 +1077,8 @@ function renderGoldOfferCard({
     plan?.sProductName ||
     "";
 
-  // 2. Savings / Discount Badge (e.g. "20% OFF")
-  const discountLabel =
-    plan?.sDiscount ||
-    (offerDetails?.discountValue ? `${offerDetails.discountValue}% OFF` : "");
+  // 2. Savings / Discount Badge (e.g. "20% OFF" or "7 Day Free Trial")
+  const discountLabel = offerDetails?.offerName || "";
 
   // 3. Currency and Prices (e.g. original ₹499, final ₹399.2)
   const currencySym = planObj?.currencySymbol || plan?.providerSku?.oPricing?.sCurrencySymbol || "₹";

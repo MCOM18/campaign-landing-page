@@ -81,6 +81,7 @@ interface FreeTrialFormProps {
   footerNote?: string;
   showCarousel?: boolean;
   loginVia?: LoginVia;
+  isLoading?: boolean;
 }
 
 export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
@@ -90,6 +91,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
   footerNote,
   showCarousel = false,
   loginVia = LoginVia.BOTH_PHONE_EMAIL,
+  isLoading = false,
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -201,6 +203,8 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
               type="button"
               className="country-selector-btn"
               onClick={() => setIsOpen(!isOpen)}
+              disabled={isLoading}
+              style={{ opacity: isLoading ? 0.5 : 1, cursor: isLoading ? "not-allowed" : "pointer" }}
             >
               <span className="country-flag">{selectedCountry.flag}</span>
               <span className="country-code">{selectedCountry.phoneCode}</span>
@@ -255,13 +259,14 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           aria-label="Phone number or Email ID"
+          disabled={isLoading}
         />
       </div>
 
       {/* Action Button */}
       <button
         type="submit"
-        disabled={!isActive}
+        disabled={!isActive || isLoading}
         className={`btn-primary btn-start-trial`}
         style={{
           marginBottom: "1.2rem",
@@ -270,12 +275,15 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           minWidth: "100px",
           padding: "12px 32px",
           whiteSpace: "nowrap",
-          display: "block",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "8px",
           marginLeft: "auto",
           marginRight: "auto",
           borderRadius: "9999px",
           textAlign: "center",
-          ...(isActive
+          ...(isActive && !isLoading
             ? {
               background: "rgba(242, 110, 33, 1)",
               backgroundImage: "none",
@@ -293,7 +301,14 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
             }),
         }}
       >
-        {confirmButtonLabel}
+        {isLoading ? (
+          <>
+            <div className="spinner-small" style={{ width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+            Please wait...
+          </>
+        ) : (
+          confirmButtonLabel
+        )}
       </button>
 
       {/* Helper text under button */}

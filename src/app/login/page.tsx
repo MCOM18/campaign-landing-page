@@ -14,7 +14,7 @@ import { REGEX } from "@/lib/constants/regex";
 import { logger } from "@/lib/logger/logger";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/utils/apiClient";
-import { getUserGeoLocation } from "@/utils/userUtil";
+import { getUserGeoLocation, clearUserDataAndReload } from "@/utils/userUtil";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -462,22 +462,7 @@ export default function LoginPage() {
       )}
 
       {/* Loader or Form Steps */}
-      {isVerifying ? (
-        <div
-          className="fade-in"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: isMobileLayout ? "200px" : "150px",
-            width: "100%",
-          }}
-        >
-          <div className="premium-loader" />
-          <p style={{ color: "#ffffff", fontSize: "15px", marginTop: "16px" }}>Verifying OTP...</p>
-        </div>
-      ) : step === TrialFormStep.INPUT ? (
+      {step === TrialFormStep.INPUT ? (
         <div style={{ width: "100%" }}>
           <FreeTrialForm
             onSubmit={handleInputSubmit}
@@ -485,6 +470,7 @@ export default function LoginPage() {
             footerNote={sFooterNote}
             showCarousel={isMobileLayout}
             loginVia={loginVia}
+            isLoading={isVerifying}
           />
         </div>
       ) : step === TrialFormStep.OTP ? (
@@ -496,6 +482,7 @@ export default function LoginPage() {
             onResend={handleResendOtp}
             disclaimerText=""
             isMobileLayout={isMobileLayout}
+            isLoading={isVerifying}
           />
         </div>
       ) : null}
@@ -680,6 +667,9 @@ export default function LoginPage() {
             onClose={() => {
               setShowGoldPopup(false);
               handleReset();
+            }}
+            onPurchaseAnother={() => {
+              clearUserDataAndReload();
             }}
           />
         </div>

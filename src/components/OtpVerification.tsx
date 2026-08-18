@@ -9,6 +9,7 @@ interface OtpVerificationProps {
   onResend?: () => void;
   disclaimerText?: string;
   isMobileLayout?: boolean;
+  isLoading?: boolean;
 }
 
 export const OtpVerification: React.FC<OtpVerificationProps> = ({
@@ -18,6 +19,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
   onResend,
   disclaimerText,
   isMobileLayout,
+  isLoading = false,
 }) => {
   const [otpValue, setOtpValue] = useState("");
   const [timer, setTimer] = useState(15);
@@ -156,14 +158,16 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         </p>
         <button
           onClick={onBack}
+          disabled={isLoading}
           style={{
             background: "none",
             border: "none",
             fontWeight: "600",
-            cursor: "pointer",
+            cursor: isLoading ? "not-allowed" : "pointer",
             padding: 0,
             outline: "none",
             textDecoration: "underline",
+            opacity: isLoading ? 0.5 : 1,
           }}
         >
           <span className="gold-text-gradient">
@@ -189,6 +193,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
           value={otpValue}
           onChange={handleChange}
           autoComplete="one-time-code"
+          disabled={isLoading}
           style={{
             position: "absolute",
             top: 0,
@@ -201,10 +206,10 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
             backgroundColor: "transparent",
             border: "none",
             outline: "none",
-            cursor: "text",
+            cursor: isLoading ? "not-allowed" : "text",
             fontSize: "24px",
             zIndex: -1,
-            pointerEvents: "none",
+            pointerEvents: isLoading ? "none" : "auto",
           }}
         />
 
@@ -238,13 +243,15 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         ) : (
           <button
             onClick={handleResend}
+            disabled={isLoading}
             style={{
               background: "none",
               border: "none",
               fontWeight: "600",
-              cursor: "pointer",
+              cursor: isLoading ? "not-allowed" : "pointer",
               padding: 0,
               outline: "none",
+              opacity: isLoading ? 0.5 : 1,
             }}
           >
             <span className="gold-text-gradient">Resend OTP</span>
@@ -255,7 +262,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       {/* Next Button */}
       <button
         type="button"
-        disabled={!isComplete}
+        disabled={!isComplete || isLoading}
         onClick={() => triggerSubmit(otpValue)}
         className={`btn-primary`}
         style={{
@@ -265,12 +272,15 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
           minWidth: "100px",
           padding: "12px 32px",
           whiteSpace: "nowrap",
-          display: "block",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "8px",
           marginLeft: "auto",
           marginRight: "auto",
           borderRadius: "9999px",
           textAlign: "center",
-          ...(isComplete
+          ...(isComplete && !isLoading
             ? {
               background: "rgba(242, 110, 33, 1)",
               backgroundImage: "none",
@@ -288,7 +298,14 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
             }),
         }}
       >
-        Next
+        {isLoading ? (
+          <>
+            <div className="spinner-small" style={{ width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+            Verifying...
+          </>
+        ) : (
+          "Next"
+        )}
       </button>
 
       {/* Subscription Pricing line */}

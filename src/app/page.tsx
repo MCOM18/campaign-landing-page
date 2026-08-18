@@ -27,7 +27,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 import api from "../utils/apiClient";
-import { getUserGeoLocation } from "../utils/userUtil";
+import { getUserGeoLocation, clearUserDataAndReload } from "../utils/userUtil";
 import SubscriptionPlanCard, { SingleCouponInput } from "./payment/SubscriptionPlanCard";
 
 const renderFooterWithLinks = (text: string) => {
@@ -1245,6 +1245,9 @@ export default function page() {
               onClose={() => {
                 setShowGoldPopup(false);
                 handleReset();
+              }}
+              onPurchaseAnother={() => {
+                clearUserDataAndReload();
               }}
             />
           </div>
