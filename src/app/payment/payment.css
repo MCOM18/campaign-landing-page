@@ -38,6 +38,7 @@
 
 /* ── Back header ──────────────────────────────────────────── */
 .pay-head {
+  justify-content: space-between;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -49,6 +50,12 @@
   cursor: pointer;
   transition: opacity 0.2s;
   user-select: none;
+}
+
+.pay-head-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .pay-head:hover {
@@ -304,16 +311,19 @@
     align-items: flex-start;
     padding: 24px 12px;
   }
+
   .phone-modal {
     padding: 24px 16px;
     border-radius: 16px;
     margin-top: 20px;
     margin-bottom: 20px;
   }
+
   .phone-modal-country-btn {
     padding: 12px 10px;
     font-size: 13px;
   }
+
   .phone-modal-input {
     padding: 12px 14px;
     font-size: 14px;
@@ -900,14 +910,37 @@
   color: #fff;
 }
 
-.app-gpay { background: linear-gradient(135deg, #4285f4, #34a853); }
-.app-phonepe { background: linear-gradient(135deg, #5f259f, #7f39d5); }
-.app-paytm { background: linear-gradient(135deg, #00baf2, #002e6e); }
-.app-bhim { background: linear-gradient(135deg, #e05e26, #147e45); }
-.app-cred { background: linear-gradient(135deg, #000000, #333333); }
-.app-mobikwik { background: linear-gradient(135deg, #0076a8, #004d6f); }
-.app-amazon { background: linear-gradient(135deg, #ff9900, #232f3e); }
-.app-generic { background: linear-gradient(135deg, #4b5563, #1f2937); }
+.app-gpay {
+  background: linear-gradient(135deg, #4285f4, #34a853);
+}
+
+.app-phonepe {
+  background: linear-gradient(135deg, #5f259f, #7f39d5);
+}
+
+.app-paytm {
+  background: linear-gradient(135deg, #00baf2, #002e6e);
+}
+
+.app-bhim {
+  background: linear-gradient(135deg, #e05e26, #147e45);
+}
+
+.app-cred {
+  background: linear-gradient(135deg, #000000, #333333);
+}
+
+.app-mobikwik {
+  background: linear-gradient(135deg, #0076a8, #004d6f);
+}
+
+.app-amazon {
+  background: linear-gradient(135deg, #ff9900, #232f3e);
+}
+
+.app-generic {
+  background: linear-gradient(135deg, #4b5563, #1f2937);
+}
 
 .app-name {
   font-size: 0.9rem;

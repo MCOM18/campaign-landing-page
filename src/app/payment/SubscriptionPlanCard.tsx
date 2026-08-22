@@ -169,6 +169,12 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
           if (campaignRefId) {
             sessionStorage.setItem("pending_campaign_id", campaignRefId);
           }
+          
+          const nCouponLockMinutes = resData?.nCouponLockMinutes ?? campaignDetails?.nCouponLockMinutes;
+          if (nCouponLockMinutes) {
+            sessionStorage.setItem("coupon_lock_minutes", nCouponLockMinutes.toString());
+            sessionStorage.setItem("coupon_lock_timestamp", Date.now().toString());
+          }
         }
 
         if (campaignRefId) {
@@ -650,6 +656,12 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
           sessionStorage.setItem("applied_coupon_code", cleanCode);
           if (campaignRefId) {
             sessionStorage.setItem("pending_campaign_id", campaignRefId);
+          }
+
+          const nCouponLockMinutes = resData?.nCouponLockMinutes ?? campaignDetails?.nCouponLockMinutes;
+          if (nCouponLockMinutes) {
+            sessionStorage.setItem("coupon_lock_minutes", nCouponLockMinutes.toString());
+            sessionStorage.setItem("coupon_lock_timestamp", Date.now().toString());
           }
         }
 

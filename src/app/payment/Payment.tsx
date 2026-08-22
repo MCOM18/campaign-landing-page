@@ -12,12 +12,10 @@ import PhoneCollectModal from "./PhoneCollectModal";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { FailureScreen } from "@/components/FailureScreen";
-import { analyticsService } from "@/shared/analytics";
 import { trackEvent } from "@/services/analytics/events";
 import "./payment.css";
 import { appConfig } from "@/lib/config/app.config";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
-import { useAuthStore } from "@/store/useAuthStore";
 
 function PaymentPage() {
   const router = useRouter();
@@ -29,6 +27,30 @@ function PaymentPage() {
   const [osPlatform, setOsPlatform] = useState<"android" | "ios" | "web">("web");
   const [upiApps, setUpiApps] = useState<any[]>([]);
   const [activeAppLoader, setActiveAppLoader] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [lockTimeLeft, setLockTimeLeft] = useState<number | null>(null);
+
+  const handleCouponExpire = () => {
+    sessionStorage.removeItem("applied_coupon_code");
+    sessionStorage.removeItem("coupon_lock_minutes");
+    sessionStorage.removeItem("coupon_lock_timestamp");
+    setAppliedCoupon(null);
+    setLockTimeLeft(null);
+    toast.error("Your coupon code has expired. The price has been updated.");
+
+    const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
+    if (pendingCampaignId) {
+      router.push(`/offer/${pendingCampaignId}`);
+    } else {
+      router.push("/");
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
 
@@ -90,8 +112,46 @@ function PaymentPage() {
     const storedCoupon = sessionStorage.getItem("applied_coupon_code");
     if (storedCoupon) {
       setAppliedCoupon(storedCoupon);
+
+      const lockMinutesStr = sessionStorage.getItem("coupon_lock_minutes");
+      const lockTimestampStr = sessionStorage.getItem("coupon_lock_timestamp");
+      if (lockMinutesStr && lockTimestampStr) {
+        const lockMinutes = parseInt(lockMinutesStr, 10);
+        const lockTimestamp = parseInt(lockTimestampStr, 10);
+        const expireTime = lockTimestamp + (lockMinutes * 60 * 1000);
+        const remainingMs = expireTime - Date.now();
+        if (remainingMs > 0) {
+          setLockTimeLeft(Math.floor(remainingMs / 1000));
+        } else {
+          handleCouponExpire();
+        }
+      }
     }
   }, [router, RAZORPAY_KEY]);
+
+  // Countdown Timer for Coupon Lock
+  useEffect(() => {
+    if (lockTimeLeft === null) return;
+
+    if (lockTimeLeft <= 0) {
+      handleCouponExpire();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setLockTimeLeft(prev => {
+        if (prev === null) return null;
+        const next = prev - 1;
+        if (next <= 0) {
+          clearInterval(timer);
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lockTimeLeft, router]);
 
   const isOverseasUser = countryCode !== appConfig.DEFAULT_COUNTRY_NAME;
 
@@ -121,7 +181,6 @@ function PaymentPage() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showFailedPopup, setShowFailedPopup] = useState(false);
   const [failedErrorMsg, setFailedErrorMsg] = useState<string | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
 
   // Overseas users can't use UPI — default to card
   useEffect(() => {
@@ -564,8 +623,21 @@ function PaymentPage() {
               }
             }}
           >
-            <FiChevronLeft size={26} />
-            <span>Payment</span>
+            <div className="pay-head-text">
+              <FiChevronLeft size={26} />
+              <span>Payment</span>
+            </div>
+            <div>
+              {lockTimeLeft !== null && lockTimeLeft > 0 && (
+                <span style={{ fontSize: "12px", fontWeight: "700", color: "#ff4a4a", background: "rgba(255, 74, 74, 0.1)", padding: "4px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4a4a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  Expires in {formatTime(lockTimeLeft)}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Selected plan card */}

@@ -461,6 +461,19 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         setIsApplyingCoupon(false);
         return;
       }
+      
+      const resData = res?.data?.data || res?.data || res;
+      const campaignDetails = resData?.campaignDetails || {};
+      const nCouponLockMinutes = resData?.nCouponLockMinutes ?? campaignDetails?.nCouponLockMinutes;
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("applied_coupon_code", codeToApply);
+        if (nCouponLockMinutes) {
+          sessionStorage.setItem("coupon_lock_minutes", nCouponLockMinutes.toString());
+          sessionStorage.setItem("coupon_lock_timestamp", Date.now().toString());
+        }
+      }
+
       handleRedeemClick();
     } catch (err: any) {
       logger.error("[Apply Coupon] Validation error:", err);
