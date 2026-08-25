@@ -10,6 +10,7 @@ interface OtpVerificationProps {
   disclaimerText?: string;
   isMobileLayout?: boolean;
   isLoading?: boolean;
+  error?: string | null;
 }
 
 export const OtpVerification: React.FC<OtpVerificationProps> = ({
@@ -20,6 +21,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
   disclaimerText,
   isMobileLayout,
   isLoading = false,
+  error,
 }) => {
   const [otpValue, setOtpValue] = useState("");
   const [timer, setTimer] = useState(15);
@@ -225,7 +227,11 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
                 zIndex: 1,
                 backgroundColor: "rgba(255, 255, 255, 0.15)",
                 borderRadius: "25px",
-                border: isFocused ? "1.5px solid #FAAF3F" : "none",
+                border: error
+                  ? "1.5px solid #ff4a4a"
+                  : isFocused
+                    ? "1.5px solid #FAAF3F"
+                    : "none",
               }}
             >
               <span style={{ fontSize: "16px", color: "#ffffff", fontWeight: "400" }}>{char}</span>
@@ -233,6 +239,15 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
           );
         })}
       </div>
+
+      {error && (
+        <div
+          className="responsive-text-align"
+          style={{ color: "#ff4a4a", fontSize: "14px", fontWeight: "500", marginBottom: "1rem", width: "100%" }}
+        >
+          {error}
+        </div>
+      )}
 
       {/* Timer / Resend OTP Link */}
       <div className="responsive-text-align" style={{ marginBottom: "2.5rem", fontSize: "14px", width: "100%" }}>
@@ -309,17 +324,19 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
       </button>
 
       {/* Subscription Pricing line */}
-      <p
-        style={{
-          color: "#ffffff",
-          fontSize: "14px",
-          textAlign: "inherit",
-          fontWeight: "400",
-          width: "100%",
-        }}
-      >
-        {disclaimerText || "Free for 7 days, then ₹499/year. Cancel anytime."}
-      </p>
+      {disclaimerText !== "" && (
+        <p
+          style={{
+            color: "#ffffff",
+            fontSize: "14px",
+            textAlign: "inherit",
+            fontWeight: "400",
+            width: "100%",
+          }}
+        >
+          {disclaimerText || "Free for 7 days, then ₹499/year. Cancel anytime."}
+        </p>
+      )}
 
       {/* Temporary Debug Console */}
       {/* <div style={{

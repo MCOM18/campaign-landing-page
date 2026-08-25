@@ -336,7 +336,7 @@ export const appConfig = {
          */
         MOBILE_RESPONSIVE_WITH_AUTH: false,
         MOBILE_RESPONSIVE_WITHOUT_AUTH: true,
-        mobileview_web: true,
+        mobileview_web: false,
     },
     BreakPoint: {
         SM: "(max-width: 640px)",

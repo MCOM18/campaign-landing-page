@@ -337,6 +337,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
           textAlign: "left",
           fontWeight: "400",
           width: "100%",
+          marginBottom: "3.5rem",
         }}
       >
         {footerNote
