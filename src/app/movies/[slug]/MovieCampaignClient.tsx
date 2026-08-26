@@ -8,7 +8,8 @@ import PageSkeleton from "@/components/PageSkeleton";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
 import { completeOtpVerification, initiateOtpFlow } from "@/features/auth/services/auth.service";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
-import { appConfig } from "@/lib/config/app.config";
+import { appConfig, AppConfig } from "@/lib/config/app.config";
+import { resolveContentByPath } from "@/lib/content/resolveContentByPath";
 import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import { REGEX } from "@/lib/constants/regex";
 import { logger } from "@/lib/logger/logger";
@@ -18,22 +19,25 @@ import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/utils/apiClient";
 import { clearUserDataAndReload, getUserGeoLocation } from "@/utils/userUtil";
 import Lottie from "lottie-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { use, useEffect, useRef, useState } from "react";
 import thumbnailsJson from "../../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 
-// Movie Configuration Constantsx
-const MOVIE_IMAGE = "/movie-images/dhabkaro-image.png";
-const MOVIE_IMAGE_MOBILE = "/movie-images/dhabkaro-image.png";
-// Set these to a hosted .mp4 URL to play a trailer instead of the static poster.
-// Leave empty to keep showing the poster image (current default behaviour).
-const MOVIE_VIDEO = "";
-const MOVIE_VIDEO_MOBILE = "";
-const MOVIE_TITLE = "Dhabkaaro";
-// Optional stylised title-logo image, drawn over the poster instead of the plain text title.
-// Leave empty to fall back to the MOVIE_TITLE text above.
-const MOVIE_TITLE_IMAGE = "/movie-images/dhabkaro-title-image.png";
-const MOVIE_PANEL_BG = "rgba(48, 24, 11, 1)";
+const DEFAULT_PANEL_BG = "rgba(48, 24, 11, 1)";
+
+// This app builds as a static export, so the server only ever generates a "default"
+// placeholder page for this route. The real path the visitor requested must be read
+// from the browser's own URL instead of the route params.
+const getMoviePathname = (
+    resolvedParams?: { slug?: string } | null,
+    routeParams?: any
+): string => {
+    if (typeof window !== "undefined") {
+        return window.location.pathname;
+    }
+    const slug = (resolvedParams?.slug || routeParams?.slug || "") as string;
+    return slug && slug !== "default" ? `/movies/${slug}` : "";
+};
 
 const renderFooterWithLinks = (text: string) => {
     if (!text) return null;
@@ -115,22 +119,24 @@ const renderFooterWithLinks = (text: string) => {
 };
 
 interface MovieTitleOverlayProps {
+    movieTitle: string;
+    movieTitleImage?: string;
     style?: React.CSSProperties;
     imgStyle?: React.CSSProperties;
 }
 
-const MovieTitleOverlay: React.FC<MovieTitleOverlayProps> = ({ style, imgStyle }) => {
-    if (MOVIE_TITLE_IMAGE) {
+const MovieTitleOverlay: React.FC<MovieTitleOverlayProps> = ({ movieTitle, movieTitleImage, style, imgStyle }) => {
+    if (movieTitleImage) {
         return (
             <img
-                src={MOVIE_TITLE_IMAGE}
-                alt={MOVIE_TITLE}
+                src={movieTitleImage}
+                alt={movieTitle}
                 style={{
                     position: "absolute",
                     left: "50%",
-                    bottom: "18px",
+                    bottom: "35px",
                     transform: "translateX(-50%)",
-                    maxWidth: "80%",
+                    maxWidth: "70%",
                     pointerEvents: "none",
                     ...imgStyle,
                 }}
@@ -138,7 +144,7 @@ const MovieTitleOverlay: React.FC<MovieTitleOverlayProps> = ({ style, imgStyle }
         );
     }
 
-    if (!MOVIE_TITLE) return null;
+    if (!movieTitle) return null;
 
     return (
         <h1
@@ -161,7 +167,7 @@ const MovieTitleOverlay: React.FC<MovieTitleOverlayProps> = ({ style, imgStyle }
                 ...style,
             }}
         >
-            {MOVIE_TITLE}
+            {movieTitle}
         </h1>
     );
 };
@@ -189,7 +195,7 @@ const MovieHeroMedia: React.FC<MovieHeroMediaProps> = ({ imageSrc, videoSrc, lot
     }
 
     if (imageSrc) {
-        return <img src={imageSrc} alt="Dhabkaaro" style={{ width: "100%", display: "block", ...style }} />;
+        return <img src={imageSrc} alt="Movie" style={{ width: "100%", display: "block", ...style }} />;
     }
 
     return (
@@ -233,8 +239,10 @@ const MoviePlanCard: React.FC<MoviePlanCardProps> = ({
                 cursor: "pointer",
                 flex: 1,
                 minWidth: 0,
-                background: isActive ? "rgb(49, 38, 20)" : "rgba(255, 255, 255, 0.08)",
-                border: isActive ? "2px solid #FAAF3F" : "none",
+                background: isActive
+                    ? "linear-gradient(24.12deg, rgba(var(--gradient-start-rgb), 0.35) 21.627%, rgba(255, 214, 145, 0.35) 49.519%, rgba(var(--gradient-start-rgb), 0.35) 81.684%), rgb(49, 38, 20)"
+                    : "rgba(255, 255, 255, 0.08)",
+                border: isActive ? "2px solid var(--gradient-start)" : "none",
                 borderRadius: badge ? "0 16px 16px 16px" : "16px",
                 padding: "16px 18px",
                 display: "flex",
@@ -261,7 +269,7 @@ const MoviePlanCard: React.FC<MoviePlanCardProps> = ({
                         position: "absolute",
                         top: "-30px",
                         left: "-2px",
-                        backgroundColor: "#FAAF3F",
+                        background: "linear-gradient(24.12deg, var(--gradient-start) 21.627%, var(--gradient-middle) 49.519%, var(--gradient-end) 81.684%)",
                         color: "#000000",
                         fontSize: "11px",
                         fontWeight: "600",
@@ -336,11 +344,49 @@ const MoviePlanCard: React.FC<MoviePlanCardProps> = ({
     );
 };
 
-export default function MovieDhabkaroPage() {
+interface MovieCampaignClientProps {
+    params: Promise<{ slug: string }>;
+}
+
+export default function MovieCampaignClient({ params }: MovieCampaignClientProps) {
     const router = useRouter();
+    const routeParams = useParams();
+    const resolvedParams = params ? use(params) : null;
+
+    const pathname = getMoviePathname(resolvedParams, routeParams);
+
     const { isAppReady } = useBootstrap();
     const { data: countries = [] } = useGetCountries();
     const setAuth = useAuthStore((state) => state.setAuth);
+
+    // Movie content resolved directly from appConfig's devices.platform.misc[].campaign-object,
+    // matched against the browser pathname (e.g. "/movies/dhabkaaro" -> path "movies/dhabkaaro").
+    const contentResult = isAppReady
+        ? resolveContentByPath(pathname, { movies: AppConfig.movies, shows: AppConfig.shows })
+        : undefined;
+    const movieCampaign = contentResult?.type === "movie" ? contentResult.data : undefined;
+
+    // Redirect home if the path doesn't resolve to a configured movie
+    useEffect(() => {
+        if (isAppReady && !movieCampaign) {
+            router.replace("/");
+        }
+    }, [isAppReady, movieCampaign, router]);
+
+    // Movie media/theme values derived from the resolved campaign config
+    const MOVIE_TITLE = movieCampaign?.title || "";
+    const MOVIE_IMAGE = movieCampaign
+        ? `${movieCampaign.imageBaseUrl || ""}${movieCampaign.images?.poster || ""}`
+        : "";
+    const MOVIE_IMAGE_MOBILE = movieCampaign
+        ? `${movieCampaign.imageBaseUrl || ""}${movieCampaign.images?.posterMobile || movieCampaign.images?.poster || ""}`
+        : "";
+    const MOVIE_TITLE_IMAGE = movieCampaign?.images?.title
+        ? `${movieCampaign.imageBaseUrl || ""}${movieCampaign.images.title}`
+        : "";
+    const MOVIE_VIDEO = movieCampaign?.videos?.trailer || "";
+    const MOVIE_VIDEO_MOBILE = movieCampaign?.videos?.trailerMobile || MOVIE_VIDEO;
+    const MOVIE_PANEL_BG = movieCampaign?.panel?.background || movieCampaign?.panel?.backgroundHex || DEFAULT_PANEL_BG;
 
     // Campaign plan data fetched from subscription/allplans-campaign
     const [campaignPlan, setCampaignPlan] = useState<any>(null);
@@ -404,9 +450,9 @@ export default function MovieDhabkaroPage() {
             ];
             sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
 
-            logger.info("[MovieDhabkaro] Stale payment details cleared.");
+            logger.info("[MovieCampaign] Stale payment details cleared.");
         } catch (e) {
-            logger.error("[MovieDhabkaro] Failed to clear storage", e);
+            logger.error("[MovieCampaign] Failed to clear storage", e);
         }
     }, []);
 
@@ -436,7 +482,7 @@ export default function MovieDhabkaroPage() {
                     try {
                         const payloadVerify = { countryCode: geoData?.country_code || "IN" };
                         const headersVerify = { sessionid: sessionId };
-                        logger.info("[MovieDhabkaro] Verifying subscription on mount...", {
+                        logger.info("[MovieCampaign] Verifying subscription on mount...", {
                             payload: payloadVerify,
                             headers: headersVerify,
                         });
@@ -444,7 +490,7 @@ export default function MovieDhabkaroPage() {
                         const subResponse = await api.post("subscription/verify-subscription", payloadVerify, {
                             headers: headersVerify,
                         });
-                        logger.info("[MovieDhabkaro] Verify Subscription response:", subResponse.data);
+                        logger.info("[MovieCampaign] Verify Subscription response:", subResponse.data);
 
                         const subData = subResponse.data?.data;
                         if (subData?.planType === "SVOD") {
@@ -452,12 +498,12 @@ export default function MovieDhabkaroPage() {
                             setShowGoldPopup(true);
                         }
                     } catch (verErr) {
-                        logger.error("[MovieDhabkaro] Failed to verify subscription on mount:", verErr);
+                        logger.error("[MovieCampaign] Failed to verify subscription on mount:", verErr);
                     }
                 }
 
                 // Fetch /subscription/allplans-campaign
-                logger.info("[MovieDhabkaro] Fetching allplans-campaign...", {
+                logger.info("[MovieCampaign] Fetching allplans-campaign...", {
                     payload: payloadPlans,
                     headers: headersPlans,
                 });
@@ -465,11 +511,11 @@ export default function MovieDhabkaroPage() {
                     headers: headersPlans,
                 });
                 const data = response.data?.data;
-                logger.info("[MovieDhabkaro] allplans-campaign response:", data);
+                logger.info("[MovieCampaign] allplans-campaign response:", data);
                 setCampaignPlan(data);
                 setFreshPlans(data);
             } catch (err: any) {
-                logger.error("[MovieDhabkaro] Failed to initialize allplans-campaign:", err);
+                logger.error("[MovieCampaign] Failed to initialize allplans-campaign:", err);
             } finally {
                 setIsCampaignLoading(false);
             }
@@ -480,7 +526,7 @@ export default function MovieDhabkaroPage() {
 
     // Analytics impression tracking
     useEffect(() => {
-        if (typeof window === "undefined" || !isAppReady || impressionTracked.current) return;
+        if (typeof window === "undefined" || !isAppReady || !movieCampaign || impressionTracked.current) return;
         impressionTracked.current = true;
 
         try {
@@ -491,8 +537,8 @@ export default function MovieDhabkaroPage() {
 
             const impressionPayload = {
                 event_name: "campaign_landing_impression",
-                campaign_id: "movie-dhabkaro",
-                campaign_name: "Dhabkaro",
+                campaign_id: `movie-${movieCampaign.key || movieCampaign.slug}`,
+                campaign_name: movieCampaign.title,
                 campaign_type: "movie_campaign",
                 device_type: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
                 platform: "web",
@@ -505,12 +551,12 @@ export default function MovieDhabkaroPage() {
                 timestamp: new Date().toISOString(),
             };
 
-            logger.info("[MovieDhabkaro Analytics] Impression event:", impressionPayload);
+            logger.info("[MovieCampaign Analytics] Impression event:", impressionPayload);
             trackEvent("campaign_landing_impression", impressionPayload);
         } catch (err) {
-            logger.error("[MovieDhabkaro Analytics] Error tracking impression:", err);
+            logger.error("[MovieCampaign Analytics] Error tracking impression:", err);
         }
-    }, [isAppReady]);
+    }, [isAppReady, movieCampaign]);
 
     useEffect(() => {
         if (lottieDesktopRef.current) {
@@ -629,7 +675,7 @@ export default function MovieDhabkaroPage() {
                     return;
                 }
             } catch (verErr) {
-                logger.error("[MovieDhabkaro] Verify subscription error:", verErr);
+                logger.error("[MovieCampaign] Verify subscription error:", verErr);
             } finally {
                 setIsVerifying(false);
             }
@@ -771,7 +817,7 @@ export default function MovieDhabkaroPage() {
             try {
                 if (otpCode) useAuthStore.getState().setLoginOtp(otpCode);
             } catch (err) {
-                logger.error("[MovieDhabkaro OTP] Error updating auth store with OTP", err);
+                logger.error("[MovieCampaign OTP] Error updating auth store with OTP", err);
             }
 
             let isGoldUser = false;
@@ -781,7 +827,7 @@ export default function MovieDhabkaroPage() {
                 const payloadVerify = { countryCode: geoData?.country_code || "IN" };
                 const headersVerify = { sessionid: response.session_id };
 
-                logger.info("[MovieDhabkaro Verify Subscription] Request:", {
+                logger.info("[MovieCampaign Verify Subscription] Request:", {
                     payload: payloadVerify,
                     headers: headersVerify,
                 });
@@ -790,7 +836,7 @@ export default function MovieDhabkaroPage() {
                     headers: headersVerify,
                 });
 
-                logger.info("[MovieDhabkaro Verify Subscription] Response:", subResponse.data);
+                logger.info("[MovieCampaign Verify Subscription] Response:", subResponse.data);
 
                 const subData = subResponse.data?.data;
                 if (subData?.planType === "SVOD") {
@@ -799,7 +845,7 @@ export default function MovieDhabkaroPage() {
                     setShowGoldPopup(true);
                 }
             } catch (subErr) {
-                logger.error("[MovieDhabkaro] Failed to verify subscription status:", subErr);
+                logger.error("[MovieCampaign] Failed to verify subscription status:", subErr);
             }
 
             clearTimeout(safetyTimeout);
@@ -830,7 +876,7 @@ export default function MovieDhabkaroPage() {
         }
     };
 
-    if (!isAppReady || isCampaignLoading) {
+    if (!isAppReady || isCampaignLoading || !movieCampaign) {
         return <PageSkeleton />;
     }
 
@@ -869,7 +915,7 @@ export default function MovieDhabkaroPage() {
                                     pointerEvents: "none",
                                 }}
                             />
-                            <MovieTitleOverlay />
+                            <MovieTitleOverlay movieTitle={MOVIE_TITLE} movieTitleImage={MOVIE_TITLE_IMAGE} />
                         </div>
 
                         {/* Dark Content Panel */}
@@ -1147,21 +1193,25 @@ export default function MovieDhabkaroPage() {
                                         pointerEvents: "none",
                                     }}
                                 />
-                                <MovieTitleOverlay style={{ fontSize: "clamp(30px, 3.6vw, 46px)" }} />
+                                <MovieTitleOverlay
+                                    movieTitle={MOVIE_TITLE}
+                                    movieTitleImage={MOVIE_TITLE_IMAGE}
+                                    style={{ fontSize: "clamp(30px, 3.6vw, 46px)" }}
+                                />
                             </div>
 
                             {/* Content */}
                             <div style={{ flex: "1 1 360px", minWidth: "300px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                <header style={{ marginBottom: "1.8rem" }}>
+                                <header style={{ marginBottom: "2.5rem", transform: "scale(1.05)" }}>
                                     <JojoLogo />
                                 </header>
 
                                 {pageStep === "plans" && activeFeatures.length > 0 && (
-                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginBottom: "1.8rem", justifyContent: "center" }}>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginBottom: "2.8rem", justifyContent: "center", maxWidth: "480px" }}>
                                         {activeFeatures.map((feature: any) => (
                                             <div
                                                 key={feature.sFeatureId || feature.sFeatureName}
-                                                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", width: "76px" }}
+                                                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", width: "95px" }}
                                             >
                                                 <img
                                                     src={feature.sFeatureImageUrl}
@@ -1256,8 +1306,8 @@ export default function MovieDhabkaroPage() {
                                                 <p
                                                     style={{
                                                         color: "rgba(255, 255, 255, 0.7)",
-                                                        fontSize: "13px",
-                                                        lineHeight: "20px",
+                                                        fontSize: "11px",
+                                                        lineHeight: "17px",
                                                         textAlign: "left",
                                                         fontWeight: "400",
                                                         width: "100%",

@@ -31,6 +31,32 @@ export interface ApiUpdate {
 }
 
 /**
+ * Campaign Content Config (movie or show)
+ * Parsed from devices.platform.misc[].campaign-object (JSON string) in the appConfig response.
+ * The `path` field ("movies/<slug>" or "shows/<slug>") decides which bucket an entry belongs to.
+ */
+export interface CampaignContentConfig {
+    key: string;
+    slug: string;
+    path: string;
+    title: string;
+    imageBaseUrl: string;
+    images: {
+        poster?: string;
+        posterMobile?: string;
+        title?: string;
+    };
+    videos: {
+        trailer?: string;
+        trailerMobile?: string;
+    };
+    panel: {
+        background?: string;
+        backgroundHex?: string;
+    };
+}
+
+/**
  * Runtime Configuration
  * Fetched from API and stored in memory
  */
@@ -47,6 +73,41 @@ export interface RuntimeConfig {
         city: string;
     };
     specialOfferPlan?: any;
+    movies?: CampaignContentConfig[];
+    shows?: CampaignContentConfig[];
+}
+
+/**
+ * Parses the `misc` array from the appConfig response into movie/show CampaignContentConfig entries.
+ * Each entry may contain a `campaign-object` field holding a JSON-encoded object of the shape
+ * `{ movies: CampaignContentConfig[], shows: CampaignContentConfig[] }`.
+ */
+function parseCampaignContent(
+    misc: Record<string, unknown>[] | undefined
+): { movies: CampaignContentConfig[]; shows: CampaignContentConfig[] } {
+    const movies: CampaignContentConfig[] = [];
+    const shows: CampaignContentConfig[] = [];
+    if (!Array.isArray(misc)) return { movies, shows };
+
+    for (const item of misc) {
+        const raw = item?.["campaign-object"];
+        if (!raw || typeof raw !== "string") continue;
+
+        try {
+            const parsed = JSON.parse(raw);
+
+            for (const entry of Array.isArray(parsed?.movies) ? parsed.movies : []) {
+                if (entry?.slug && entry?.path) movies.push(entry as CampaignContentConfig);
+            }
+            for (const entry of Array.isArray(parsed?.shows) ? parsed.shows : []) {
+                if (entry?.slug && entry?.path) shows.push(entry as CampaignContentConfig);
+            }
+        } catch (error) {
+            logger.warn("[Config] Failed to parse campaign-object entry", { error });
+        }
+    }
+
+    return { movies, shows };
 }
 
 // In-memory config storage
@@ -228,6 +289,10 @@ function decryptConfig(encrypted: string): RuntimeConfig {
         const apiUpdates = data.apiUpdate || [];
         logger.info("[Config] API Updates:", apiUpdates);
 
+        // Extract movie/show content configs from devices.platform.misc[].campaign-object
+        const { movies, shows } = parseCampaignContent(data.devices?.platform?.misc);
+        logger.info("[Config] Content campaigns parsed:", { movies, shows });
+
         // Map to RuntimeConfig structure
         const config: RuntimeConfig = {
             apiBaseUrl: envType === "prod" ? api.prodBaseUrl : api.stageBaseUrl,
@@ -236,6 +301,8 @@ function decryptConfig(encrypted: string): RuntimeConfig {
             envType: envType,
             publicIp: data.publicIp,
             apiUpdates: apiUpdates,
+            movies: movies,
+            shows: shows,
         };
 
         logger.info("[Config] Mapped config", {
@@ -243,7 +310,9 @@ function decryptConfig(encrypted: string): RuntimeConfig {
             apiBaseUrl: config.apiBaseUrl,
             socketUrl: config.socketUrl,
             publicIp: config.publicIp,
-            apiUpdatesCount: apiUpdates.length
+            apiUpdatesCount: apiUpdates.length,
+            moviesCount: movies.length,
+            showsCount: shows.length
         });
 
         return config;
@@ -288,6 +357,20 @@ export const AppConfig = {
             return getAppConfig().specialOfferPlan;
         } catch {
             return undefined;
+        }
+    },
+    get movies() {
+        try {
+            return getAppConfig().movies || [];
+        } catch {
+            return [];
+        }
+    },
+    get shows() {
+        try {
+            return getAppConfig().shows || [];
+        } catch {
+            return [];
         }
     }
 };
