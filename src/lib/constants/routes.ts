@@ -36,9 +36,6 @@ export const ROUTES = {
   GOOGLE_CALLBACK: '/auth/google/callback',
   FACEBOOK_CALLBACK: '/auth/facebook/callback',
 
-  // Debug routes (development only)
-  DEBUG_API_RESPONSE: '/debug/api-response',
-
   // Demo (remove before production)
   PLAYER_DEMO: '/watch/demo',
 
@@ -71,7 +68,6 @@ export const PUBLIC_ROUTES = [
   ROUTES.APPLE_CALLBACK,
   ROUTES.GOOGLE_CALLBACK,
   ROUTES.FACEBOOK_CALLBACK,
-  ROUTES.DEBUG_API_RESPONSE,
   ROUTES.PLAYER_DEMO,
 ] as const;
 
