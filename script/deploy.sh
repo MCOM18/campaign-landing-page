@@ -26,18 +26,26 @@ node -v
 echo "NPM Version:"
 npm -v
 
-echo "========================================"
-echo "Updating App Version"
-echo "========================================"
+echo "========================================="
+echo "Reading Build Version"
+echo "========================================="
 
 if [ ! -f build_version.txt ]; then
-    echo "ERROR: build_version.txt not found"
+    echo "ERROR: build_version.txt not found!"
     exit 1
 fi
 
 VERSION=$(cat build_version.txt)
 
-echo "Version: $VERSION"
+if [ -z "$VERSION" ]; then
+    echo "ERROR: Version is empty!"
+    exit 1
+fi
+
+echo "Build Version : $VERSION"
+
+echo
+
 
 if grep -q "^NEXT_PUBLIC_APP_VERSION=" .env.production; then
     sed -i "s/^NEXT_PUBLIC_APP_VERSION=.*/NEXT_PUBLIC_APP_VERSION=${VERSION}/" .env.production
@@ -55,7 +63,8 @@ echo "========================================"
 echo "Building Next.js"
 echo "========================================"
 
-npm run build
+NODE_OPTIONS="--max-old-space-size=4096" \
+npm run build:prod -- --version="$VERSION"
 
 echo "========================================"
 echo "Deployment Completed"
