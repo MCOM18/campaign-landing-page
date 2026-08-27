@@ -13,17 +13,46 @@ import { resolveContentByPath } from "@/lib/content/resolveContentByPath";
 import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import { REGEX } from "@/lib/constants/regex";
 import { logger } from "@/lib/logger/logger";
+import { isHlsUrl, VIDEO_CONSTANTS } from "@/lib/constants/video";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/utils/apiClient";
 import { clearUserDataAndReload, getUserGeoLocation } from "@/utils/userUtil";
+import Hls from "hls.js";
 import Lottie from "lottie-react";
 import { useParams, useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react";
 import thumbnailsJson from "../../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 
 const DEFAULT_PANEL_BG = "rgba(48, 24, 11, 1)";
+
+// Returns the given CSS color (hex or rgb/rgba) as an rgba string with a custom alpha,
+// so gradient fades always match the campaign's own panel color instead of a fixed hue.
+const withAlpha = (color: string, alpha: number): string => {
+    if (!color) return color;
+
+    const rgbaMatch = color.match(/rgba?\(([^)]+)\)/i);
+    if (rgbaMatch) {
+        const parts = rgbaMatch[1].split(",").map((p) => p.trim());
+        const [r, g, b] = parts;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    const hexMatch = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (hexMatch) {
+        let hex = hexMatch[1];
+        if (hex.length === 3) {
+            hex = hex.split("").map((c) => c + c).join("");
+        }
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    return color;
+};
 
 // This app builds as a static export, so the server only ever generates a "default"
 // placeholder page for this route. The real path the visitor requested must be read
@@ -180,10 +209,37 @@ interface MovieHeroMediaProps {
 }
 
 const MovieHeroMedia: React.FC<MovieHeroMediaProps> = ({ imageSrc, videoSrc, lottieRef, style }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    // Native <video src="...m3u8"> only plays HLS in Safari/iOS. Everywhere else
+    // needs hls.js to demux the stream via MediaSource Extensions.
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || !videoSrc) return;
+
+        const isHls = isHlsUrl(videoSrc);
+
+        // Prefer hls.js (MediaSource) whenever it's supported. Native canPlayType()
+        // for HLS returns "maybe" in Chrome/Firefox/Edge too - it's not a reliable
+        // signal, so it's only used as the last-resort fallback (old Safari/iOS).
+        if (isHls && Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            return () => hls.destroy();
+        }
+
+        if (isHls && !video.canPlayType(VIDEO_CONSTANTS.HLS_MIME_TYPE)) {
+            return;
+        }
+
+        video.src = videoSrc;
+    }, [videoSrc]);
+
     if (videoSrc) {
         return (
             <video
-                src={videoSrc}
+                ref={videoRef}
                 poster={imageSrc || undefined}
                 autoPlay
                 loop
@@ -375,15 +431,9 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
 
     // Movie media/theme values derived from the resolved campaign config
     const MOVIE_TITLE = movieCampaign?.title || "";
-    const MOVIE_IMAGE = movieCampaign
-        ? `${movieCampaign.imageBaseUrl || ""}${movieCampaign.images?.poster || ""}`
-        : "";
-    const MOVIE_IMAGE_MOBILE = movieCampaign
-        ? `${movieCampaign.imageBaseUrl || ""}${movieCampaign.images?.posterMobile || movieCampaign.images?.poster || ""}`
-        : "";
-    const MOVIE_TITLE_IMAGE = movieCampaign?.images?.title
-        ? `${movieCampaign.imageBaseUrl || ""}${movieCampaign.images.title}`
-        : "";
+    const MOVIE_IMAGE = movieCampaign?.images?.poster || "";
+    const MOVIE_IMAGE_MOBILE = movieCampaign?.images?.posterMobile || movieCampaign?.images?.poster || "";
+    const MOVIE_TITLE_IMAGE = movieCampaign?.images?.title || "";
     const MOVIE_VIDEO = movieCampaign?.videos?.trailer || "";
     const MOVIE_VIDEO_MOBILE = movieCampaign?.videos?.trailerMobile || MOVIE_VIDEO;
     const MOVIE_PANEL_BG = movieCampaign?.panel?.background || movieCampaign?.panel?.backgroundHex || DEFAULT_PANEL_BG;
@@ -903,7 +953,7 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
                         <div style={{ position: "relative", width: "calc(100% + 3rem)", margin: "-2.5rem -1.5rem 0", aspectRatio: "1 / 1", overflow: "hidden" }}>
                             <MovieHeroMedia
                                 imageSrc={MOVIE_IMAGE_MOBILE || MOVIE_IMAGE}
-                                videoSrc={MOVIE_VIDEO_MOBILE || MOVIE_VIDEO}
+                                videoSrc={MOVIE_VIDEO_MOBILE}
                                 lottieRef={lottieMobileRef}
                                 style={{ height: "100%", objectFit: "cover" }}
                             />
@@ -911,7 +961,7 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
                                 style={{
                                     position: "absolute",
                                     inset: 0,
-                                    background: `linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(48, 24, 11, 0.85) 92%, ${MOVIE_PANEL_BG} 100%)`,
+                                    background: `linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, ${withAlpha(MOVIE_PANEL_BG, 0.85)} 92%, ${MOVIE_PANEL_BG} 100%)`,
                                     pointerEvents: "none",
                                 }}
                             />
@@ -1189,7 +1239,7 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
                                     style={{
                                         position: "absolute",
                                         inset: 0,
-                                        background: `linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(48, 24, 11, 0.85) 92%, ${MOVIE_PANEL_BG} 100%)`,
+                                        background: `linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, ${withAlpha(MOVIE_PANEL_BG, 0.85)} 92%, ${MOVIE_PANEL_BG} 100%)`,
                                         pointerEvents: "none",
                                     }}
                                 />
