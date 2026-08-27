@@ -4,8 +4,6 @@ set -e
 
 source /home/ec2-user/.bashrc || source /etc/profile
 
-export NVM_DIR="/home/ec2-user/.nvm"
-
 if [ -s "$NVM_DIR/nvm.sh" ]; then
     . "$NVM_DIR/nvm.sh"
 fi
