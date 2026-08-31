@@ -1,15 +1,15 @@
 export enum ApiEndpoint {
   // Config
   CONFIG = "/app-config",
-  CHECK_AVAILABILITY = "/v3/auth/check-availability",
-  GEO_LOCATION = "/auth/geo-location",
-  GET_COUNTRIES = "/v3/auth/country-list",
+  CHECK_AVAILABILITY = "/check-availability",
+  GEO_LOCATION = "/geo-location",
+  GET_COUNTRIES = "/country-list",
 
   // Auth - OTP Flow
-  CHECK_USER = "/auth/check-user",
-  SEND_OTP = "/auth/send-otp",
-  VERIFY_OTP = "/auth/verify-otp",
-  VERIFY_SPECIAL_USER = "/v3/auth/verify-special-user",
+  CHECK_USER = "/v3/auth/check-user",
+  SEND_OTP = "/v3/auth/send-otp",
+  VERIFY_OTP = "/v3/auth/verify-otp",
+  VERIFY_SPECIAL_USER = "/auth/verify-special-user",
 
   // Auth - Captcha
   VERIFY_CAPTCHA = "/v3/jojo/verify-captcha",

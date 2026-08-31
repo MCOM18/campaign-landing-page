@@ -298,7 +298,7 @@ export default function page() {
         campaign_id: decoded?.campaign_id || decoded?.id || url.searchParams.get("campaign_id") || "",
         campaign_name: decoded?.campaign_name || decoded?.name || decoded?.nameAnalytic || url.searchParams.get("campaign_name") || "",
         campaign_type: decoded?.campaign_type || url.searchParams.get("campaign_type") || "landing_page",
-        device_type: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
+        deviceTypeCode: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
         platform: "web",
         os: devicePayload.os || "unknown",
         browser: devicePayload.browser || "unknown",

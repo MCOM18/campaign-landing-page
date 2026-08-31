@@ -6,7 +6,7 @@ export interface SessionContext {
 
 export interface DeviceContext {
   device_id: string;
-  device_type: string;
+  deviceTypeCode: string;
   browser: string;
   browser_version: string;
   os: string;

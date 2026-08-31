@@ -590,7 +590,7 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
                 campaign_id: `movie-${movieCampaign.key || movieCampaign.slug}`,
                 campaign_name: movieCampaign.title,
                 campaign_type: "movie_campaign",
-                device_type: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
+                deviceTypeCode: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
                 platform: "web",
                 os: devicePayload.os || "unknown",
                 browser: devicePayload.browser || "unknown",
