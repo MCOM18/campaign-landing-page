@@ -60,7 +60,7 @@ function parseUserAgent() {
 export function buildDevicePayload(): DeviceContext {
   if (typeof window === 'undefined') {
     return {
-      device_id: '', device_type: 'server', browser: 'unknown', browser_version: 'unknown',
+      device_id: '', deviceTypeCode: 'server', browser: 'unknown', browser_version: 'unknown',
       os: 'unknown', os_version: 'unknown', screen_width: 0, screen_height: 0,
       viewport_width: 0, viewport_height: 0, timezone: 'UTC', language: 'en'
     };
@@ -68,7 +68,7 @@ export function buildDevicePayload(): DeviceContext {
   const uaInfo = parseUserAgent();
   return {
     device_id: getDeviceId(),
-    device_type: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+    deviceTypeCode: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
     ...uaInfo,
     screen_width: window.screen.width,
     screen_height: window.screen.height,

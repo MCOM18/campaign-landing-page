@@ -13,10 +13,10 @@ export const HEADERS = {
   MULTIPART: "multipart/form-data",
 
   // Custom headers (keys)
-  DEVICE_TYPE_CODE: "devicetypecode",
+  DEVICE_TYPE_CODE: "deviceTypeCode",
   DEVICE_ID: "deviceid",
   LANGUAGE: "language",
-  APP_VERSION: "appversion",
+  APP_VERSION: "appVersion",
   PROJECT: "project",
   SESSION_ID: "sessionid",
 } as const;

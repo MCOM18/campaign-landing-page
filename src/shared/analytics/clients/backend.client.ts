@@ -8,6 +8,7 @@ import { getUserGeoLocation } from "@/utils/userUtil";
 import type { AnalyticsEvent } from '../model/common.types';
 import { EVENT_NAMES } from '../constants/analytics.constants';
 import { getSourceLink } from '../utils/getSourceLink';
+import { env } from "@/lib/config/env";
 
 class BackendClient {
   private isEnabled = true;
@@ -18,6 +19,19 @@ class BackendClient {
 
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
+  }
+
+  /** 
+   * Reads the device ID from localStorage.
+   * Priority: browser_uid (set by native/external) → ott_device_id (auto-generated uuid by analytics)
+   */
+  private getDeviceId(): string {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return '';
+    return (
+      localStorage.getItem('browser_uid') ||
+      localStorage.getItem('ott_device_id') ||
+      ''
+    );
   }
 
   private postEvent(endpointPath: string, payload: Record<string, unknown>, eventName: string): void {
@@ -61,7 +75,12 @@ class BackendClient {
 
       // Case 1: campaign_landing_impression
       if (event.name === EVENT_NAMES.CAMPAIGN_LANDING_IMPRESSION) {
-        this.postEvent(ApiEndpoint.CAMPAIGN_IMPRESSION, (event.properties || {}) as Record<string, unknown>, event.name);
+        const payload = {
+          ...(event.properties || {}),
+          appVersion: env.appVersion,
+          device_id: this.getDeviceId(),
+        } as Record<string, unknown>;
+        this.postEvent(ApiEndpoint.CAMPAIGN_IMPRESSION, payload, event.name);
         return;
       }
 
@@ -85,6 +104,8 @@ class BackendClient {
             user_id: eventUserId,
             session_id: eventSessionId,
             timestamp: Date.now(),
+            appVersion: env.appVersion,
+            device_id: this.getDeviceId(),
           }
         };
         this.postEvent(ApiEndpoint.LOGIN_STARTED_EVENT, payloadObject, event.name);
@@ -115,6 +136,8 @@ class BackendClient {
             user_id: eventUserId,
             session_id: eventSessionId,
             timestamp: Date.now(),
+            appVersion: env.appVersion,
+            device_id: this.getDeviceId(),
           }
         };
         this.postEvent(ApiEndpoint.LOGIN_COMPLETED_EVENT, payloadObject, event.name);
@@ -127,6 +150,8 @@ class BackendClient {
         properties: {
           ...event.properties,
           timestamp: new Date().toISOString(),
+          appVersion: env.appVersion,
+          device_id: this.getDeviceId(),
         },
       };
       this.postEvent(`/v1/jojoevents/${event.name}`, payloadObject, event.name);
