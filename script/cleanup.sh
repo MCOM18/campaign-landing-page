@@ -24,4 +24,14 @@ find . -mindepth 1 \
 
 echo "Cleanup completed successfully."
 
+echo "===== Verifying .next removal ====="
+
+if [ ! -d ".next" ]; then
+    echo "SUCCESS: .next directory removed."
+else
+    echo "ERROR: .next directory still exists."
+fi
+
+echo "===== Cleanup completed successfully ====="
+
 exit 0
