@@ -129,51 +129,6 @@ class AnalyticsService {
     }
   }
 
-  // ─── AUTH EVENTS ───
-  // trackLoginSuccess(data: any): void {
-  //   this.track((authEvents as any).loginSuccess(data));
-  // }
-
-  // trackLoginFailed(data: Parameters<typeof authEvents.loginFailed>[0]): void {
-  //   this.track(authEvents.loginFailed(data));
-  // }
-
-  // trackOtpSent(data: Parameters<typeof authEvents.otpSent>[0]): void {
-  //   this.track(authEvents.otpSent(data));
-  // }
-
-  // trackOtpVerified(data: Parameters<typeof authEvents.otpVerified>[0]): void {
-  //   this.track(authEvents.otpVerified(data));
-  // }
-
-  // trackOtpFailed(data: Parameters<typeof authEvents.otpFailed>[0]): void {
-  //   this.track(authEvents.otpFailed(data));
-  // }
-
-  // trackLogout(data?: Parameters<typeof authEvents.logout>[0]): void {
-  //   this.track(authEvents.logout(data));
-  // }
-
-  // trackCampaignLandingImpression(data: Record<string, unknown>): void {
-  //   this.track(EVENT_NAMES.CAMPAIGN_LANDING_IMPRESSION, data);
-  // }
-
-  // trackLoginStarted(method: string, value?: string): void {
-  //   this.track(EVENT_NAMES.LOGIN_STARTED, { method, value });
-  // }
-
-  // trackLoginCompleted(data: Record<string, unknown>): void {
-  //   this.track(EVENT_NAMES.LOGIN_COMPLETED, data);
-  // }
-
-  // trackPaymentSuccess(properties: Record<string, any>): void {
-  //   this.track(EVENT_NAMES.PAYMENT_SUCCESS, properties);
-  // }
-
-  // trackPaymentFailure(properties: Record<string, any>): void {
-  //   this.track(EVENT_NAMES.PAYMENT_FAILURE, properties);
-  // }
-
   // ─── USER IDENTIFICATION ───
   identifyUser(userId: string, properties?: Record<string, any>): void {
     if (!this.isEnabled) return;
