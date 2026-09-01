@@ -160,24 +160,39 @@ export async function completeOtpVerification(
   const finalCity = city || geoData?.city || undefined;
 
   // Step 1: Verify OTP (raw response)
-  const response = await verifyOtp({
-    phone_code: phoneCode,
-    phone: phone,
-    otp: otp,
-    is_register: isRegister,
-    source: source,
-    country: finalCountry,
-    state: finalState,
-    city: finalCity,
-    lat: geoData?.lat,
-    lng: geoData?.lng
-  }, sessionId) as ApiResponse<any>;
+  // NOTE: The API client throws an AppError for 4xx responses (e.g. 400 wrong OTP)
+  // instead of returning the response. We catch that here to fire otp_failed before re-throwing.
+  let response: ApiResponse<any>;
+  try {
+    response = await verifyOtp({
+      phone_code: phoneCode,
+      phone: phone,
+      otp: otp,
+      is_register: isRegister,
+      source: source,
+      country: finalCountry,
+      state: finalState,
+      city: finalCity,
+      lat: geoData?.lat,
+      lng: geoData?.lng
+    }, sessionId) as ApiResponse<any>;
+  } catch (apiError) {
+    // Track OTP failure when API throws (e.g. 400 wrong OTP)
+    trackEvent("otp_failed", {
+      ...identifierProps,
+      source: source,
+      error_code: apiError instanceof AppError ? String(apiError.status) : 'unknown',
+      error_message: apiError instanceof Error ? apiError.message : 'OTP verification failed',
+      attempts: 1,
+    });
+    throw apiError;
+  }
 
   // Step 2: Validate metaData status
   // Accept both 200 (existing user) and 201 (new user registration)
   const status = response.metaData?.status;
   if (status !== 200 && status !== 201) {
-    // Track OTP verification failure
+    // Track OTP verification failure (for cases where API returns 200 HTTP but error in metaData)
     trackEvent("otp_failed", {
       ...identifierProps,
       source: source,
