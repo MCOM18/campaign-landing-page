@@ -14,6 +14,10 @@ fi
 
 cd "$APP_DIR"
 
+echo "===== Removing .next directory ====="
+rm -rf .next
+echo ".next directory removal command completed."
+
 find . -mindepth 1 \
     ! -name ".env" \
     ! -name ".env.*" \
