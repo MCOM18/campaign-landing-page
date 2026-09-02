@@ -1,23 +1,20 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import MovieCampaignClient from "./MovieCampaignClient";
 import PageSkeleton from "@/components/PageSkeleton";
 import { fetchConfig } from "@/lib/config/app.config";
 import { resolveContentByPath } from "@/lib/content/resolveContentByPath";
+import MovieCampaignClient from "./InMovieCampaignClient";
 
+// Unlike movies/[slug], country codes aren't a bounded list known at build time, so this
+// route only prebuilds a single "default" fallback (country/default/movies/default.html).
+// Hosting must rewrite unmatched /country/*/movies/* requests to that file; the client
+// then reads the real country_code and slug back off window.location at runtime.
 export async function generateStaticParams() {
-    try {
-        const config = await fetchConfig();
-        const slugs = (config.movies ?? []).map((movie) => movie.slug).filter(Boolean);
-        return [...new Set(["default", ...slugs])].map((slug) => ({ slug }));
-    } catch (error) {
-        console.warn("[movies/[slug]] Failed to fetch campaign config at build time, only 'default' will be prebuilt", error);
-        return [{ slug: "default" }];
-    }
+    return [{ country_code: "default", slug: "default" }];
 }
 
 interface PageProps {
-    params: Promise<{ slug: string }>;
+    params: Promise<{ country_code: string; slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

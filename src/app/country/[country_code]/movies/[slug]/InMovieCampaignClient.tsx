@@ -2,7 +2,6 @@
 
 import { FreeTrialForm } from "@/components/FreeTrialForm";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
-import { JojoLogo } from "@/components/Icons";
 import { OtpVerification } from "@/components/OtpVerification";
 import PageSkeleton from "@/components/PageSkeleton";
 import { useGetCountries } from "@/features/auth/hooks/useOtpLogin";
@@ -23,7 +22,7 @@ import Hls from "hls.js";
 import Lottie from "lottie-react";
 import { useParams, useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react";
-import thumbnailsJson from "../../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
+import thumbnailsJson from "../../../../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 
 const DEFAULT_PANEL_BG = "rgba(48, 24, 11, 1)";
 
@@ -57,15 +56,34 @@ const withAlpha = (color: string, alpha: number): string => {
 // This app builds as a static export, so the server only ever generates a "default"
 // placeholder page for this route. The real path the visitor requested must be read
 // from the browser's own URL instead of the route params.
+// This variant is served under an extra "/country/<country_code>" prefix, but the
+// campaign config's `path` field is still "movies/<slug>" (no prefix), so the prefix
+// must be stripped before matching or resolveContentByPath() never finds the movie
+// and the page bounces home.
 const getMoviePathname = (
     resolvedParams?: { slug?: string } | null,
     routeParams?: any
 ): string => {
     if (typeof window !== "undefined") {
-        return window.location.pathname;
+        return window.location.pathname.replace(/^\/country\/[^/]+(?=\/|$)/, "");
     }
     const slug = (resolvedParams?.slug || routeParams?.slug || "") as string;
     return slug && slug !== "default" ? `/movies/${slug}` : "";
+};
+
+// The country comes from the route's own dynamic segment (/country/<country_code>/movies/<slug>),
+// not from geolocation. Only the allplans-campaign payload uses it; every other API call
+// (verify-subscription, OTP, analytics) keeps using geoData as before.
+const getCountryFromRoute = (routeParams?: any): string => {
+    const fromRoute = (routeParams?.country_code || "") as string;
+    if (fromRoute) return fromRoute.toUpperCase();
+
+    if (typeof window !== "undefined") {
+        const match = window.location.pathname.match(/^\/country\/([^/]+)/);
+        if (match?.[1]) return decodeURIComponent(match[1]).toUpperCase();
+    }
+
+    return "IN";
 };
 
 const Button_name = "Subscribe Now";
@@ -457,6 +475,8 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
 
     const [goldSubscriptionInfo, setGoldSubscriptionInfo] = useState<any>(null);
     const [showGoldPopup, setShowGoldPopup] = useState(false);
+    const [showGeoMismatchPopup, setShowGeoMismatchPopup] = useState(false);
+    const [geoMismatchCountry, setGeoMismatchCountry] = useState("");
     const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
 
     const lottieMobileRef = useRef<any>(null);
@@ -519,8 +539,10 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
                 const geoData = getUserGeoLocation();
                 const sessionId = typeof window !== "undefined" ? localStorage.getItem("session_id") : null;
 
+                // The plans API's country comes from the route's country_code segment
+                // (e.g. /country/us/movies/<slug> -> "US"), not from IP-based geolocation.
                 const payloadPlans = {
-                    country: geoData?.country_code || "IN",
+                    country: getCountryFromRoute(routeParams),
                     deviceTypeId: 3,
                     languageId: 1,
                 };
@@ -696,10 +718,28 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
         }
     }, [selectedPlanIndex, flatPlansList.length]);
 
-    // When "Upgrade Now" is clicked:
-    // If user is already logged in -> verify subscription then proceed to /payment
-    // If user is NOT logged in -> open Login Modal (Mobile / Email + OTP)
+    const handleGeoMismatchContinue = () => {
+        setShowGeoMismatchPopup(false);
+        if (typeof window !== "undefined") {
+            window.location.href = pathname;
+        }
+    };
+
     const handleSelectPlanAndContinue = async () => {
+        const geoDataForCountryCheck = getUserGeoLocation();
+        const routeCountry = getCountryFromRoute(routeParams);
+        const geoCountry = (geoDataForCountryCheck?.country_code || "").toUpperCase();
+
+        if (geoCountry && geoCountry !== routeCountry) {
+            logger.info("[MovieCampaign] Geo country mismatch with route country, showing popup", {
+                geoCountry,
+                routeCountry,
+            });
+            setGeoMismatchCountry(geoCountry);
+            setShowGeoMismatchPopup(true);
+            return;
+        }
+
         const selected = flatPlansList[selectedPlanIndex];
         if (selected && typeof window !== "undefined") {
             sessionStorage.setItem("selectedPlan", JSON.stringify(selected.plan));
@@ -1449,6 +1489,103 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
                             clearUserDataAndReload();
                         }}
                     />
+                </div>
+            )}
+
+            {/* Geo/Route Country Mismatch Popup */}
+            {showGeoMismatchPopup && (
+                <div className="success-overlay">
+                    <div
+                        className="fade-in"
+                        style={{
+                            width: "355px",
+                            maxWidth: "90vw",
+                            borderRadius: "16px",
+                            border: "2px solid rgba(250, 175, 63, 0.14)",
+                            background: "linear-gradient(90deg, rgb(5, 5, 5) 0%, rgb(5, 5, 5) 100%)",
+                            boxSizing: "border-box",
+                            padding: "28px 32px 30px 32px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "30px",
+                            alignItems: "center",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "12px",
+                                alignItems: "center",
+                                width: "100%",
+                            }}
+                        >
+                            <p
+                                style={{
+                                    backgroundImage:
+                                        "linear-gradient(4.9542deg, rgb(250, 175, 63) 21.627%, rgb(255, 214, 145) 49.519%, rgb(250, 175, 63) 81.684%)",
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    backgroundClip: "text",
+                                    fontSize: "20px",
+                                    fontWeight: "600",
+                                    lineHeight: "26px",
+                                    margin: 0,
+                                    textAlign: "center",
+                                    width: "100%",
+                                    fontFamily: "'Poppins', sans-serif",
+                                }}
+                            >
+                                You're Browsing From a Different Region
+                            </p>
+
+                            <p
+                                style={{
+                                    fontSize: "14px",
+                                    fontWeight: "400",
+                                    lineHeight: "20px",
+                                    color: "#cccccc",
+                                    margin: 0,
+                                    textAlign: "center",
+                                    width: "100%",
+                                    fontFamily: "'Poppins', sans-serif",
+                                }}
+                            >
+                                {geoMismatchCountry
+                                    ? `Based on your location (${geoMismatchCountry}), the plans on this page may not apply to you. Continue to see plans available in your region.`
+                                    : "Based on your location, the plans on this page may not apply to you. Continue to see plans available in your region."}
+                            </p>
+                        </div>
+
+                        <div style={{ width: "100%" }}>
+                            <button
+                                onClick={handleGeoMismatchContinue}
+                                style={{
+                                    width: "100%",
+                                    height: "44px",
+                                    borderRadius: "100px",
+                                    border: "none",
+                                    backgroundImage:
+                                        "linear-gradient(9.09198deg, rgb(250, 175, 63) 21.627%, rgb(255, 214, 145) 49.519%, rgb(250, 175, 63) 81.684%)",
+                                    color: "#191919",
+                                    fontSize: "16px",
+                                    fontWeight: "600",
+                                    lineHeight: "24px",
+                                    fontFamily: "'Poppins', sans-serif",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    outline: "none",
+                                    transition: "opacity 0.2s ease",
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </>
