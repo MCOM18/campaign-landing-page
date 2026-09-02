@@ -16,6 +16,7 @@ import { logger } from "@/lib/logger/logger";
 import { isHlsUrl, VIDEO_CONSTANTS } from "@/lib/constants/video";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
+import { parseSourceLinkParams } from "@/shared/analytics/utils/getSourceLink";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/utils/apiClient";
 import { clearUserDataAndReload, getUserGeoLocation } from "@/utils/userUtil";
@@ -567,6 +568,76 @@ export default function MovieCampaignClient({ params }: MovieCampaignClientProps
                 logger.info("[MovieCampaign] allplans-campaign response:", data);
                 setCampaignPlan(data);
                 setFreshPlans(data);
+
+                // Track all_plan_data event with only essential plan details (count, price, symbol, month, country)
+                try {
+                    if (typeof window !== "undefined" && !localStorage.getItem("source_link")) {
+                        localStorage.setItem("source_link", window.location.href);
+                    }
+                    const sourceLink = typeof window !== "undefined" ? (localStorage.getItem("source_link") || window.location.href) : "";
+                    const devicePayload = buildDevicePayload();
+                    const utmParams = parseSourceLinkParams(sourceLink);
+
+                    // Extract only price, symbol, month, and country from API response
+                    const parsedPlans: Array<{
+                        price: number;
+                        symbol: string;
+                        month: string | number;
+                        country: string;
+                    }> = [];
+
+                    if (data?.aAllSubscriptionPlans) {
+                        for (const group of data.aAllSubscriptionPlans) {
+                            if (group.aSubscriptionProducts) {
+                                for (const prod of group.aSubscriptionProducts) {
+                                    if (prod.aProviderSkus) {
+                                        for (const sku of prod.aProviderSkus) {
+                                            const pricing = sku?.oPricing || prod?.oPricing || {};
+                                            const symbol = pricing?.sCurrencySymbol;
+                                            const price = pricing?.nPrice;
+                                            const validityDays = prod?.nValidityDays || prod?.nValidity;
+                                            const month = validityDays ? (validityDays >= 300 ? 12 : Math.round(validityDays / 30)) : (prod?.sSubProductLabel || 1);
+
+                                            parsedPlans.push({
+                                                price: price ?? 0,
+                                                symbol: symbol,
+                                                month: month,
+                                                country: payloadPlans.country,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    const allPlanDataPayload = {
+                        event_name: "all_plan_data",
+                        campaign_id: movieCampaign ? `movie-${movieCampaign.key || movieCampaign.slug}` : undefined,
+                        campaign_name: movieCampaign?.title,
+                        campaign_type: "movie_campaign",
+                        country_code: payloadPlans.country,
+                        deviceTypeCode: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
+                        platform: "web",
+                        os: devicePayload.os || "unknown",
+                        browser: devicePayload.browser || "unknown",
+                        language: DEFAULT_HEADER_VALUES.LANGUAGE,
+                        lat: geoData?.lat || null,
+                        lng: geoData?.lng || null,
+                        geo_country: geoData?.country_code || "IN",
+                        source_link: sourceLink,
+                        api_payload: payloadPlans,
+                        total_plans: parsedPlans.length,
+                        plans: parsedPlans,
+                        ...utmParams,
+                        timestamp: new Date().toISOString(),
+                    };
+
+                    logger.info("[MovieCampaign Analytics] All plan data event:", allPlanDataPayload);
+                    trackEvent("all_plan_data", allPlanDataPayload);
+                } catch (eventErr) {
+                    logger.error("[MovieCampaign Analytics] Error tracking all_plan_data event:", eventErr);
+                }
             } catch (err: any) {
                 logger.error("[MovieCampaign] Failed to initialize allplans-campaign:", err);
             } finally {

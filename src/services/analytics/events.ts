@@ -12,7 +12,8 @@ export type AnalyticsEvent =
   | "payment_success"
   | "payment_failure"
   | "campaign_landing_impression"
-  | "initiate_checkout";
+  | "initiate_checkout"
+  | "all_plan_data";
 
 /**
  * Single entry point for all frontend analytics tracking.
