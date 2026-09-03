@@ -1,12 +1,8 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/offer/:id", "destination": "/offer/default.html" },
-    { "source": "/offer/:id/**", "destination": "/offer/default.html" },
-    { "source": "/movies/:slug", "destination": "/movies/default.html" },
-    { "source": "/movies/:slug/**", "destination": "/movies/default.html" },
-    { "source": "/shows/:slug", "destination": "/shows/default.html" },
-    { "source": "/shows/:slug/**", "destination": "/shows/default.html" },
+    { "source": "/offer/:id", "destination": "/offer/default/index.html" },
+    { "source": "/offer/:id/**", "destination": "/offer/default/index.html" },
     { "source": "/link=**", "destination": "/index.html" },
     { "source": "**/link=**", "destination": "/index.html" }
   ]

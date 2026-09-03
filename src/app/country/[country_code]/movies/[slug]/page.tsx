@@ -5,12 +5,34 @@ import { fetchConfig } from "@/lib/config/app.config";
 import { resolveContentByPath } from "@/lib/content/resolveContentByPath";
 import MovieCampaignClient from "./InMovieCampaignClient";
 
-// Unlike movies/[slug], country codes aren't a bounded list known at build time, so this
-// route only prebuilds a single "default" fallback (country/default/movies/default.html).
-// Hosting must rewrite unmatched /country/*/movies/* requests to that file; the client
-// then reads the real country_code and slug back off window.location at runtime.
+// Country codes aren't a bounded list known at build time in general, so this route also
+// prebuilds a "default" fallback (country/default/movies/default.html) the same way it did
+// before. Hosting can rewrite unmatched /country/*/movies/* requests to that file, and the
+// client reads the real country_code and slug back off window.location at runtime.
+//
+// "in" is the one country this campaign is actually live for today (see
+// appConfig.DEFAULT_COUNTRY_NAME / GEO_DEFAULT_COUNTRY_CODE), so we additionally prebuild a
+// real static file per movie under /country/in/movies/<slug> — the same way movies/[slug]
+// prebuilds every slug. That removes the dependency on a hosting-level rewrite for the one
+// country that actually needs to work, without requiring one for every possible country.
+// Add more codes here if/when this campaign goes live in additional countries.
+const SUPPORTED_COUNTRY_CODES = ["in", "us"];
+
 export async function generateStaticParams() {
-    return [{ country_code: "default", slug: "default" }];
+    try {
+        const config = await fetchConfig();
+        const slugs = (config.movies ?? []).map((movie) => movie.slug).filter(Boolean);
+        const uniqueSlugs = [...new Set(slugs)];
+
+        const params = SUPPORTED_COUNTRY_CODES.flatMap((country_code) =>
+            uniqueSlugs.map((slug) => ({ country_code, slug }))
+        );
+
+        return [{ country_code: "default", slug: "default" }, ...params];
+    } catch (error) {
+        console.warn("[country/[country_code]/movies/[slug]] Failed to fetch campaign config at build time, only 'default' will be prebuilt", error);
+        return [{ country_code: "default", slug: "default" }];
+    }
 }
 
 interface PageProps {
