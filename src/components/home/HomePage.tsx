@@ -25,10 +25,10 @@ import { decrypt } from "@lib/crypto/decrypt";
 import Lottie from "lottie-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import thumbnailsJson from "../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
-import api from "../utils/apiClient";
-import { getUserGeoLocation, clearUserDataAndReload } from "../utils/userUtil";
-import SubscriptionPlanCard, { SingleCouponInput } from "./payment/SubscriptionPlanCard";
+import thumbnailsJson from "../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
+import api from "@/utils/apiClient";
+import { getUserGeoLocation, clearUserDataAndReload } from "@/utils/userUtil";
+import SubscriptionPlanCard, { SingleCouponInput } from "@/app/payment/SubscriptionPlanCard";
 
 const renderFooterWithLinks = (text: string) => {
   if (!text) return null;
@@ -109,7 +109,7 @@ const renderFooterWithLinks = (text: string) => {
   return text;
 };
 
-export default function page() {
+export default function HomePage() {
   const router = useRouter();
   const { isAppReady } = useBootstrap();
   const { data: countries = [] } = useGetCountries();

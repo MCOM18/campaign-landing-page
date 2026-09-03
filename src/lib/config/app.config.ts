@@ -1,4 +1,5 @@
 import { HttpStatus } from "@/enums/http.enum";
+import { parseCampaignObject } from "@/lib/campaign/campaign.parser";
 import { DEFAULT_HEADER_VALUES, HEADERS } from "@lib/constants/headers";
 import { decrypt } from "@lib/crypto/decrypt";
 import { encrypt } from "@lib/crypto/encrypt";
@@ -75,6 +76,14 @@ export interface RuntimeConfig {
     specialOfferPlan?: any;
     movies?: CampaignContentConfig[];
     shows?: CampaignContentConfig[];
+    devices?: {
+        platform?: {
+            misc?: Array<Record<string, unknown>>;
+            [key: string]: unknown;
+        };
+        [key: string]: unknown;
+    };
+    campaign?: Record<string, unknown>;
 }
 
 /**
@@ -290,6 +299,8 @@ function decryptConfig(encrypted: string): RuntimeConfig {
         logger.info("[Config] API Updates:", apiUpdates);
 
         // Extract movie/show content configs from devices.platform.misc[].campaign-object
+        const campaignString = data.devices?.platform?.misc?.[0]?.["campaign-object"];
+        const parsedCampaign = parseCampaignObject(campaignString);
         const { movies, shows } = parseCampaignContent(data.devices?.platform?.misc);
         logger.info("[Config] Content campaigns parsed:", { movies, shows });
 
@@ -301,8 +312,10 @@ function decryptConfig(encrypted: string): RuntimeConfig {
             envType: envType,
             publicIp: data.publicIp,
             apiUpdates: apiUpdates,
-            movies: movies,
-            shows: shows,
+            devices: data.devices,
+            campaign: parsedCampaign,
+            movies: (parsedCampaign.movies as CampaignContentConfig[]) || movies,
+            shows: (parsedCampaign.shows as CampaignContentConfig[]) || shows,
         };
 
         logger.info("[Config] Mapped config", {
