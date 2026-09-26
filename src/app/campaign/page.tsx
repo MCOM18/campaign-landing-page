@@ -593,73 +593,39 @@ export default function Home() {
           setShowGoldPopup(true);
           setIsVerifying(false);
           handleReset();
-        } else {
-          // If not a gold user, fetch the fresh plans list with the session ID header
-          const payloadPlans = {
-            country: geoData?.country_code || "IN",
-            deviceTypeId: 3,
-            languageId: 1
-          };
-          const headersPlans = { sessionid: response.session_id };
-
-          logger.info("[Verify Subscription] Fetching plans list post-verification... Request:", { payload: payloadPlans, headers: headersPlans });
-
-          const plansResponse = await api.post("subscription/allplans", payloadPlans, {
-            headers: headersPlans
-          });
-          freshPlansData = plansResponse.data?.data;
-          logger.info("[Verify Subscription] Fresh plans loaded successfully:", plansResponse.data);
         }
       } catch (subErr) {
-        logger.error("[Verify Subscription] Failed to verify subscription status or fetch plans:", subErr);
+        logger.error("[Verify Subscription] Failed to verify subscription status:", subErr);
       }
 
-
-
       if (!isGoldUser) {
-        // Find if any product has offer details in the fresh plans data
-        const allPlansListFresh = freshPlansData?.aAllSubscriptionPlans || [];
-        let offerProduct: any = null;
-        let offerSku: any = null;
-        let offerGroup: any = null;
+        let offerGroup = specialOffer?.aAllSubscriptionPlans?.[0] || specialOffer?.oSubscriptionGroup || specialOffer;
+        let offerProduct = offerGroup?.aSubscriptionProducts?.[0];
+        let offerSku = offerProduct?.aProviderSkus?.[0];
 
-        for (const g of allPlansListFresh) {
-          if (g.aSubscriptionProducts) {
-            for (const p of g.aSubscriptionProducts) {
-              if (p.aProviderSkus) {
-                for (const s of p.aProviderSkus) {
-                  if (s.oOfferDetails) {
-                    offerProduct = p;
-                    offerSku = s;
-                    offerGroup = g;
-                    break;
-                  }
-                }
-              }
-              if (offerProduct) break;
-            }
-          }
-          if (offerProduct) break;
-        }
-
-        // Store the fresh plans data in state
-        setFreshPlans(freshPlansData);
-
-        if (offerProduct) {
-          // Store selected plan with offer in localStorage
+        if (offerGroup && offerProduct && offerSku) {
+          // Construct plan object for payment screen
           const selectedPlanObj = {
             ...offerGroup,
+            isCampaignOffer: true,
             oSubscriptionGroup: {
               ...offerGroup,
-              oGroupTranslation: offerGroup.oGroupTranslation,
+              oGroupTranslation: offerGroup?.oGroupTranslation || {},
               aSubscriptionProducts: [
                 {
                   ...offerProduct,
                   aProviderSkus: [
                     {
                       ...offerSku,
-                      sProviderOfferId: offerSku.sProviderOfferId || offerSku.oOfferDetails?.sProviderOfferId,
-                      oOfferDetails: offerSku.oOfferDetails
+                      sProviderOfferId: offerSku?.sProviderOfferId || offerSku?.oOfferDetails?.sProviderOfferId || null,
+                      oOfferDetails: offerSku?.oOfferDetails || null,
+                      oPricing: {
+                        ...(offerSku?.oPricing || {}),
+                        // Override primary price with the offer price so payment gateway gets the correct amount (₹20)
+                        nPrice: offerProduct?.oOfferDetails?.oOfferPricing?.nPrice ?? offerSku?.oPricing?.nPrice,
+                        // Save the original price (₹499) so SubscriptionPlanCard can use it for the recurring text
+                        nOriginalPrice: offerSku?.oPricing?.nOriginalPrice ?? offerSku?.oPricing?.nPrice ?? offerSku?.nMaxAmount
+                      }
                     }
                   ]
                 }
@@ -669,10 +635,9 @@ export default function Home() {
           localStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj));
           router.push("/payment");
         } else {
-          // If no offer details is found (it is null)
-          // Set step to PLANS to show the plan selection screen
-          setStep(TrialFormStep.PLANS);
-          setIsVerifying(false);
+          // Fallback if the structure doesn't match
+          localStorage.setItem("selectedPlan", JSON.stringify({ ...specialOffer, isCampaignOffer: true }));
+          router.push("/payment");
         }
       }
       clearTimeout(safetyTimeout);
@@ -896,8 +861,6 @@ export default function Home() {
                           ))}
                         </div>
 
-                        <SingleCouponInput />
-
                         <button
                           onClick={handleSelectPlanAndContinue}
                           className="btn-primary active btn-start-trial"
@@ -1081,8 +1044,6 @@ export default function Home() {
                                       />
                                     ))}
                                   </div>
-
-                                  <SingleCouponInput />
 
                                   <button
                                     onClick={handleSelectPlanAndContinue}

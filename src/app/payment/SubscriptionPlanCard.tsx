@@ -128,6 +128,8 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   const sku = effectivePlan?.sku || effectivePlan?.providerSku || product?.aProviderSkus?.[0];
   const offer = offerDetailsProp || effectivePlan?.oOfferDetails || product?.oOfferDetails || sku?.oOfferDetails || planInput?.offerDetails;
 
+  const isCampaignOffer = !!(planInput?.isCampaignOffer || effectivePlan?.isCampaignOffer);
+
   const handleVerifyCoupon = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const cleanCode = couponCode.trim();
@@ -169,7 +171,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
           if (campaignRefId) {
             sessionStorage.setItem("pending_campaign_id", campaignRefId);
           }
-          
+
           const nCouponLockMinutes = resData?.nCouponLockMinutes ?? campaignDetails?.nCouponLockMinutes;
           if (nCouponLockMinutes) {
             sessionStorage.setItem("coupon_lock_minutes", nCouponLockMinutes.toString());
@@ -244,6 +246,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     sku?.oPricing?.nOriginalPrice;
 
   const finalPriceNum =
+    (isCampaignOffer ? offer?.oOfferPricing?.nPrice : undefined) ??
     planInput?.finalPrice ??
     planInput?.finalPriceNum ??
     sku?.oPricing?.nPrice ??
@@ -281,7 +284,9 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   const subtext =
     effectivePlan?.sRenewalText ||
     effectivePlan?.sDescription ||
-    (durationLabel ? `After ${durationLabel}` : "");
+    (isCampaignOffer && offer?.nValidityCount && offer?.sValidityDuration
+      ? `After ${offer.nValidityCount} ${offer.sValidityDuration}${offer.nValidityCount > 1 ? 's' : ''}`
+      : (durationLabel ? `After ${durationLabel}` : ""));
 
   const recurringUnit = isYearly ? "year" : validityUnit;
   const cleanOrigPriceNum =
@@ -291,10 +296,13 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         ? origPriceNum.replace(/^[^\d.]+/, "")
         : null;
 
+  // The recurring amount is either the explicit original price or the regular SKU price
+  const baseRecurringAmount = cleanOrigPriceNum ?? sku?.oPricing?.nPrice;
+
   const recurringPrice =
     effectivePlan?.sRecurringPriceText ||
-    (cleanOrigPriceNum !== null && cleanOrigPriceNum !== ""
-      ? `${currencySym}${cleanOrigPriceNum}/${recurringUnit}`
+    (baseRecurringAmount !== null && baseRecurringAmount !== undefined && baseRecurringAmount !== ""
+      ? (isCampaignOffer && offer ? `${currencySym}${baseRecurringAmount}` : `${currencySym}${baseRecurringAmount}/${recurringUnit}`)
       : "");
 
   // 5. Dynamic Features List directly from Backend API (aFeatures)

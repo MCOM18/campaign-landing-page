@@ -337,10 +337,8 @@ export const usePaymentHandler = () => {
   ) => {
     const isSvodPayment = !pricingData?.type || pricingData?.type === "SVOD";
 
-    if (isSvodPayment) {
-      setShowProcessingOverlay(true);
-      setOverlayError(null);
-    }
+    setShowProcessingOverlay(true);
+    setOverlayError(null);
 
     setPaymentInitData(null);
     localStorage.setItem("payment_status", "PENDING");
@@ -382,7 +380,7 @@ export const usePaymentHandler = () => {
       if (result.success) {
         const verificationData = result.data?.data;
         localStorage.setItem("payment_status", "SUCCESS");
-        if (isSvodPayment) setShowProcessingOverlay(false);
+        setShowProcessingOverlay(false);
 
         // Match initiated sToken against verify response
         let matchedType: string = pricingData?.type || "SVOD";
@@ -503,13 +501,11 @@ export const usePaymentHandler = () => {
         logger.error("Failed to track payment failure (verification failed):", analyticsErr);
       }
 
-      if (isSvodPayment) {
-        setOverlayError(errorMessage);
-        setTimeout(() => {
-          setShowProcessingOverlay(false);
-          setOverlayError(null);
-        }, 2000);
-      }
+      setOverlayError(errorMessage);
+      setTimeout(() => {
+        setShowProcessingOverlay(false);
+        setOverlayError(null);
+      }, 2000);
       return { success: false, error: errorMessage };
 
     } catch (err: unknown) {
@@ -542,15 +538,12 @@ export const usePaymentHandler = () => {
         logger.error("Failed to track payment failure (handling error):", analyticsErr);
       }
 
-      if (isSvodPayment) {
-        setOverlayError(errorMessage);
-        setTimeout(() => {
-          setShowProcessingOverlay(false);
-          setOverlayError(null);
-        }, 2000);
-      } else {
-        toast.error(errorMessage);
-      }
+      setOverlayError(errorMessage);
+      setTimeout(() => {
+        setShowProcessingOverlay(false);
+        setOverlayError(null);
+      }, 2000);
+      toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
   };
