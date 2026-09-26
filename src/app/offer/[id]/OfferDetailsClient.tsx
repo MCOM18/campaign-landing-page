@@ -26,6 +26,10 @@ import {
   FiShield
 } from "react-icons/fi";
 import thumbnailsJson from "../../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
+import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
+import { trackEvent } from "@/services/analytics/events";
+import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
+import { parseSourceLinkParams } from "@/shared/analytics/utils/getSourceLink";
 
 interface OfferDetailsClientProps {
   params: Promise<{ id: string }>;
@@ -116,6 +120,8 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setAuth = useAuthStore((state) => state.setAuth);
 
+  const impressionTracked = useRef(false);
+
   useEffect(() => {
     if (campaignId) {
       if (typeof window !== "undefined") {
@@ -124,6 +130,55 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       logger.info(`[OfferDetailsClient] Loaded offer details page for campaignId: ${campaignId}`);
     }
   }, [campaignId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isAppReady || !data || impressionTracked.current) return;
+    impressionTracked.current = true;
+
+    try {
+      let sourceLink = window.location.href;
+      if (sourceLink.includes("utm_") || sourceLink.includes("source_link=")) {
+        localStorage.setItem("source_link", sourceLink);
+      } else {
+        const stored = localStorage.getItem("source_link");
+        if (stored) {
+          sourceLink = stored;
+        } else {
+          localStorage.setItem("source_link", sourceLink);
+        }
+      }
+
+      const devicePayload = buildDevicePayload();
+      const geoData = getUserGeoLocation();
+      const utmParams = parseSourceLinkParams(sourceLink);
+
+      const offerData = data?.data?.data || data?.data || data || {};
+      const campaignDetails = offerData?.campaignDetails || {};
+
+      const impressionPayload = {
+        event_name: "campaign_landing_impression",
+        offer_id: campaignId,
+        offer_name: campaignDetails.campaignName || campaignDetails.name || "",
+        campaign_type: "offer_campaign",
+        deviceTypeCode: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
+        platform: "web",
+        os: devicePayload.os || "unknown",
+        browser: devicePayload.browser || "unknown",
+        language: DEFAULT_HEADER_VALUES.LANGUAGE,
+        lat: geoData?.lat || null,
+        lng: geoData?.lng || null,
+        country: geoData?.country_code || "IN",
+        source_link: sourceLink,
+        ...utmParams,
+        timestamp: new Date().toISOString(),
+      };
+
+      logger.info("[OfferDetails Analytics] Impression event:", impressionPayload);
+      trackEvent("campaign_landing_impression", impressionPayload);
+    } catch (err) {
+      logger.error("[OfferDetails Analytics] Error tracking impression:", err);
+    }
+  }, [isAppReady, data, campaignId]);
 
   // Extract nested API data
   // API client returns: { metaData, data: <decryptedPayload> }
@@ -461,7 +516,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         setIsApplyingCoupon(false);
         return;
       }
-      
+
       const resData = res?.data?.data || res?.data || res;
       const campaignDetails = resData?.campaignDetails || {};
       const nCouponLockMinutes = resData?.nCouponLockMinutes ?? campaignDetails?.nCouponLockMinutes;

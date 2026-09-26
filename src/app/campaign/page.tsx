@@ -702,7 +702,13 @@ export default function Home() {
 
   return (
     <>
-      <main className="app-container">
+      <main
+        className="app-container"
+        style={{
+          background: "linear-gradient(180deg, #1c0f03 0%, var(--theme-glow-color) 90%)",
+          minHeight: "100vh",
+        }}
+      >
         {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
         <div className="mobile-only" style={{ width: "100%" }}>
           <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>

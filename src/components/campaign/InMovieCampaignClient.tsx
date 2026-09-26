@@ -685,10 +685,21 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
         impressionTracked.current = true;
 
         try {
-            localStorage.setItem("source_link", window.location.href);
+            let sourceLink = window.location.href;
+            if (sourceLink.includes("utm_") || sourceLink.includes("source_link=")) {
+                localStorage.setItem("source_link", sourceLink);
+            } else {
+                const stored = localStorage.getItem("source_link");
+                if (stored) {
+                    sourceLink = stored;
+                } else {
+                    localStorage.setItem("source_link", sourceLink);
+                }
+            }
 
             const devicePayload = buildDevicePayload();
             const geoData = getUserGeoLocation();
+            const utmParams = parseSourceLinkParams(sourceLink);
 
             const impressionPayload = {
                 event_name: "campaign_landing_impression",
@@ -703,6 +714,8 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
                 lat: geoData?.lat || null,
                 lng: geoData?.lng || null,
                 country: geoData?.country_code || "IN",
+                source_link: sourceLink,
+                ...utmParams,
                 timestamp: new Date().toISOString(),
             };
 

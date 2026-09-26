@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const { slug = [] } = await params;
     if (!slug || slug.length === 0) {
       return {
-        title: "JOJO - 7 Days Free Trial",
+        title: "JOJO Gold",
         description: "Get unlimited access to JOJO Gold. Enjoy exclusive content, no video ads, watch on up to 4 devices, and stream in Full HD 1080p.",
       };
     }

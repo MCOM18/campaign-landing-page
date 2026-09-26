@@ -577,6 +577,19 @@ export const usePaymentHandler = () => {
       const userPhoneCode = localStorage.getItem("user_phone_code") || selectedProfile?.sPhoneCode || appConfig.DEFAULT_MOBILE_NUMBER_CODE;
       const currentGeoData = getUserGeoLocation();
 
+      let sUtmSource = "";
+      if (typeof window !== "undefined") {
+        const sourceLink = localStorage.getItem("source_link") || window.location.href;
+        try {
+          const urlObj = new URL(sourceLink);
+          sUtmSource = urlObj.searchParams.get("utm_source") || "";
+        } catch (e) {
+          // Fallback if URL parsing fails
+          const match = sourceLink.match(/[?&]utm_source=([^&]+)/);
+          if (match) sUtmSource = match[1];
+        }
+      }
+
       const payload = {
         iProviderSkuId: pricingData.skuId,
         nAmount: pricingData.price,
@@ -595,6 +608,7 @@ export const usePaymentHandler = () => {
           null,
         sEmail: localStorage.getItem("user_email") || null,
         sCouponCode: localStorage.getItem("sCouponCode") || null,
+        sUtmSource: sUtmSource,
       };
 
       const sessionId = localStorage.getItem("session_id");

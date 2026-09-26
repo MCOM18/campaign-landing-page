@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { validateCode } from "@/features/offer/api/validateCode";
 import { fetchOfferByCampaignCached } from "@/features/offer/hooks/useOfferByCampaign";
@@ -114,10 +114,13 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   showCouponInput = false,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const isPaymentRoute = pathname === "/payment";
+
   const [couponCode, setCouponCode] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [couponError, setCouponError] = useState<string | null>(null);
-  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState<boolean>(false);
 
   const planInput = planObjProp || planProp;
   if (!planInput) return null;
@@ -142,7 +145,6 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     if (isVerifying) return;
     setIsVerifying(true);
     setCouponError(null);
-    setCouponSuccess(null);
 
     try {
       logger.info("[SubscriptionPlanCard] Validating coupon code:", cleanCode);
@@ -161,8 +163,6 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         resData?.campaignId;
 
       if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
-        const successMsg = resData?.sReason || metaData?.message || "Coupon code is valid and eligible";
-        setCouponSuccess(successMsg);
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("sCouponCode");
@@ -187,9 +187,10 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
 
         setCouponCode("");
 
+        setIsNavigating(true);
         setTimeout(() => {
           router.push("/payment");
-        }, 400);
+        }, 300);
       } else {
         const errorMsg = resData?.sReason || metaData?.message || "Invalid or ineligible coupon code";
         setCouponError(errorMsg);
@@ -327,22 +328,26 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   const featuresToRender = featuresList.length > 0 ? featuresList.slice(0, 4) : DEFAULT_FEATURES;
 
   // Selection styling: When selected (isActive === true), show ONLY gold border, no solid background color fill!
-  const borderStyle = isActive
-    ? "2px solid #FAAF3F"
-    : "1.5px solid rgba(255, 255, 255, 0.1)";
+  const borderStyle = isPaymentRoute
+    ? "none"
+    : isActive
+      ? "2px solid transparent"
+      : "1.5px solid rgba(255, 255, 255, 0.1)";
 
-  const backgroundStyle = isActive
-    ? "rgba(250, 175, 63, 0.06)"
-    : "rgba(255, 255, 255, 0.03)";
+  const backgroundStyle = isPaymentRoute
+    ? "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)"
+    : isActive
+      ? "linear-gradient(#1a1610, #1a1610) padding-box, linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%) border-box"
+      : "rgba(255, 255, 255, 0.03)";
 
   const boxShadowStyle = isActive
     ? "0 0 20px rgba(250, 175, 63, 0.25)"
     : "none";
 
-  const mainTextColor = "#FFFFFF";
-  const subTextColor = isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.6)";
-  const origPriceColor = "rgba(255, 255, 255, 0.5)";
-  const strokeColor = isActive ? "#FAAF3F" : "#FFFFFF";
+  const mainTextColor = isPaymentRoute ? "#000000" : "#FFFFFF";
+  const subTextColor = isPaymentRoute ? "rgba(0, 0, 0, 0.85)" : isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.6)";
+  const origPriceColor = isPaymentRoute ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.5)";
+  const strokeColor = isPaymentRoute ? "#000000" : isActive ? "#FAAF3F" : "#FFFFFF";
 
   return (
     <div className="spc-wrapper" style={{ width: "100%", marginBottom: "24px" }}>
@@ -359,7 +364,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
           borderRadius: landscapeUrl ? "0 0 24px 24px" : "24px",
           background: backgroundStyle,
           border: borderStyle,
-          padding: "20px 20px 16px 20px",
+          padding: "16px 20px 16px 20px",
           color: mainTextColor,
           boxShadow: boxShadowStyle,
           cursor: onClick ? "pointer" : "default",
@@ -376,15 +381,27 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "18px", fontWeight: "700", color: mainTextColor, letterSpacing: "-0.2px" }}>
+            <span style={{
+              fontSize: "18px",
+              fontWeight: "700",
+              letterSpacing: "-0.2px",
+              ...(isActive && !isPaymentRoute ? {
+                background: "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                color: "transparent"
+              } : {
+                color: mainTextColor
+              })
+            }}>
               {planTitle}
             </span>
             {discountLabel && (
               <span
                 style={{
-                  backgroundColor: "#000000",
-                  color: "#FFFFFF",
-                  border: isActive ? "1px solid rgba(250, 175, 63, 0.6)" : "1px solid rgba(255, 255, 255, 0.2)",
+                  backgroundColor: isPaymentRoute ? "#000000" : "#000000",
+                  color: isPaymentRoute ? "#F2C46D" : "#FFFFFF",
+                  border: isPaymentRoute ? "1px solid rgba(0,0,0,0.2)" : isActive ? "1px solid rgba(250, 175, 63, 0.6)" : "1px solid rgba(255, 255, 255, 0.2)",
                   fontSize: "11px",
                   fontWeight: "600",
                   padding: "4px 10px",
@@ -410,7 +427,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
                 {originalPrice}
               </span>
             )}
-            <span style={{ fontSize: "24px", fontWeight: "700", color: isActive ? "#FAAF3F" : "#FFFFFF" }}>
+            <span style={{ fontSize: "24px", fontWeight: "700", color: isPaymentRoute ? "#000000" : isActive ? "#FAAF3F" : "#FFFFFF" }}>
               {finalPrice}
             </span>
           </div>
@@ -439,7 +456,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         <div
           style={{
             height: "1px",
-            backgroundColor: isActive ? "rgba(250, 175, 63, 0.3)" : "rgba(255, 255, 255, 0.12)",
+            backgroundColor: isPaymentRoute ? "rgba(0, 0, 0, 0.15)" : isActive ? "rgba(250, 175, 63, 0.3)" : "rgba(255, 255, 255, 0.12)",
             margin: "0 -4px 14px -4px",
           }}
         />
@@ -467,7 +484,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
                       width: "32px",
                       height: "28px",
                       objectFit: "contain",
-                      filter: isActive ? "none" : "opacity(0.8)",
+                      filter: isPaymentRoute ? "brightness(0)" : isActive ? "none" : "brightness(0) invert(1) opacity(0.8)",
                     }}
                   />
                 ) : index === 0 ? (
@@ -499,7 +516,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
                     <path d="M14 19H20" stroke={strokeColor} strokeWidth="1.8" strokeLinecap="round" />
                   </svg>
                 )}
-                <span style={{ fontSize: "10px", fontWeight: "500", color: isActive ? "#FFFFFF" : "rgba(255, 255, 255, 0.7)", lineHeight: "1.2", textAlign: "center" }}>
+                <span style={{ fontSize: "10px", fontWeight: "500", color: isPaymentRoute ? "#000000" : isActive ? "#FAAF3F" : "rgba(255, 255, 255, 0.7)", lineHeight: "1.2", textAlign: "center" }}>
                   {feature.sFeatureName}
                 </span>
               </div>
@@ -526,18 +543,13 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
               style={{
                 fontSize: "12px",
                 fontWeight: "600",
-                color: "#FAAF3F",
+                color: "#FFFFFF",
                 letterSpacing: "0.4px",
-                textTransform: "uppercase",
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAAF3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                <line x1="7" y1="7" x2="7.01" y2="7"></line>
-              </svg>
               Have a Coupon Code?
             </label>
 
@@ -548,23 +560,20 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
                 onChange={(e) => {
                   setCouponCode(e.target.value.toUpperCase());
                   setCouponError(null);
-                  setCouponSuccess(null);
                 }}
-                placeholder="ENTER COUPON CODE"
+                placeholder="Enter Coupon Code"
                 disabled={isVerifying}
                 style={{
                   flex: 1,
-                  backgroundColor: "rgba(0, 0, 0, 0.4)",
+                  backgroundColor: "transparent",
                   border: couponError
                     ? "1px solid #ff4a4a"
-                    : couponSuccess
-                      ? "1px solid #4caf50"
-                      : "1px solid rgba(250, 175, 63, 0.4)",
+                    : "transparent",
                   borderRadius: "8px",
                   padding: "10px 14px",
                   color: "#FFFFFF",
                   fontSize: "13px",
-                  fontWeight: "600",
+                  fontWeight: "400",
                   letterSpacing: "1px",
                   outline: "none",
                   transition: "border-color 0.2s ease",
@@ -582,25 +591,31 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
                   padding: "10px 16px",
                   fontSize: "13px",
                   fontWeight: "700",
-                  cursor: isVerifying || !couponCode.trim() ? "not-allowed" : "pointer",
-                  opacity: isVerifying || !couponCode.trim() ? 0.6 : 1,
+                  cursor: (isVerifying || isNavigating) || !couponCode.trim() ? "not-allowed" : "pointer",
+                  opacity: (isVerifying || isNavigating) || !couponCode.trim() ? 0.6 : 1,
                   whiteSpace: "nowrap",
                   transition: "all 0.2s ease",
                 }}
               >
-                {isVerifying ? "Verifying..." : "Verify Code"}
+                {(isVerifying || isNavigating) ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3"></circle>
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+                      </path>
+                    </svg>
+                    {isNavigating ? "Applying..." : "Verifying..."}
+                  </div>
+                ) : (
+                  "Redeem Code"
+                )}
               </button>
             </div>
 
             {couponError && (
               <span style={{ color: "#ff4a4a", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
                 {couponError}
-              </span>
-            )}
-
-            {couponSuccess && (
-              <span style={{ color: "#4caf50", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
-                {couponSuccess}
               </span>
             )}
           </div>
@@ -622,7 +637,7 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
   const [couponCode, setCouponCode] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [couponError, setCouponError] = useState<string | null>(null);
-  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState<boolean>(false);
 
   const handleVerifyCoupon = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -636,7 +651,6 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
     if (isVerifying) return;
     setIsVerifying(true);
     setCouponError(null);
-    setCouponSuccess(null);
 
     try {
       logger.info("[SingleCouponInput] Validating coupon code:", cleanCode);
@@ -655,8 +669,6 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
         resData?.campaignId;
 
       if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
-        const successMsg = resData?.sReason || metaData?.message || "Coupon code is valid and eligible";
-        setCouponSuccess(successMsg);
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("sCouponCode");
@@ -682,9 +694,10 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
         if (onSuccess) {
           onSuccess(cleanCode, campaignRefId);
         } else {
+          setIsNavigating(true);
           setTimeout(() => {
             router.push("/payment");
-          }, 400);
+          }, 300);
         }
       } else {
         const errorMsg = resData?.sReason || metaData?.message || "Invalid or ineligible coupon code";
@@ -707,103 +720,104 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
   };
 
   return (
-    <div
-      className="spc-coupon-container"
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        width: "100%",
-        marginBottom: "24px",
-        padding: "16px",
-        borderRadius: "16px",
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
-        border: "1px solid rgba(250, 175, 63, 0.3)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-      }}
-    >
+    <>
       <label
         style={{
           fontSize: "12px",
           fontWeight: "600",
-          color: "#FAAF3F",
+          color: "#FFFFFF",
           letterSpacing: "0.4px",
-          textTransform: "uppercase",
           display: "flex",
           alignItems: "center",
           gap: "6px",
+          marginBottom: "8px",
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAAF3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-          <line x1="7" y1="7" x2="7.01" y2="7"></line>
-        </svg>
         Have a Coupon Code?
       </label>
+      <div
+        className="spc-coupon-container"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          marginBottom: "24px",
+          padding: "6px",
+          borderRadius: "12px",
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+        }}
+      >
 
-      <div style={{ display: "flex", gap: "8px", width: "100%" }}>
-        <input
-          type="text"
-          value={couponCode}
-          onChange={(e) => {
-            setCouponCode(e.target.value.toUpperCase());
-            setCouponError(null);
-            setCouponSuccess(null);
-          }}
-          placeholder="ENTER COUPON CODE"
-          disabled={isVerifying}
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            border: couponError
-              ? "1px solid #ff4a4a"
-              : couponSuccess
-                ? "1px solid #4caf50"
-                : "1px solid rgba(250, 175, 63, 0.4)",
-            borderRadius: "8px",
-            padding: "10px 14px",
-            color: "#FFFFFF",
-            fontSize: "13px",
-            fontWeight: "600",
-            letterSpacing: "1px",
-            outline: "none",
-            transition: "border-color 0.2s ease",
-          }}
-        />
-        <button
-          type="button"
-          onClick={handleVerifyCoupon}
-          disabled={isVerifying || !couponCode.trim()}
-          style={{
-            backgroundImage: "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)",
-            color: "#000000",
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 16px",
-            fontSize: "13px",
-            fontWeight: "700",
-            cursor: isVerifying || !couponCode.trim() ? "not-allowed" : "pointer",
-            opacity: isVerifying || !couponCode.trim() ? 0.6 : 1,
-            whiteSpace: "nowrap",
-            transition: "all 0.2s ease",
-          }}
-        >
-          {isVerifying ? "Verifying..." : "Verify Code"}
-        </button>
+
+        <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+          <input
+            type="text"
+            value={couponCode}
+            onChange={(e) => {
+              setCouponCode(e.target.value.toUpperCase());
+              setCouponError(null);
+            }}
+            placeholder="Enter Coupon Code"
+            disabled={isVerifying}
+            style={{
+              flex: 1,
+              backgroundColor: "transparent",
+              border: couponError
+                ? "1px solid #ff4a4a"
+                : "transparent",
+              borderRadius: "8px",
+              padding: "10px 14px",
+              color: "#FFFFFF",
+              fontSize: "13px",
+              fontWeight: "400",
+              letterSpacing: "1px",
+              outline: "none",
+              transition: "border-color 0.2s ease",
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleVerifyCoupon}
+            disabled={isVerifying || !couponCode.trim()}
+            style={{
+              backgroundImage: "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)",
+              color: "#000000",
+              border: "none",
+              borderRadius: "8px",
+              padding: "10px 16px",
+              fontSize: "13px",
+              fontWeight: "700",
+              cursor: (isVerifying || isNavigating) || !couponCode.trim() ? "not-allowed" : "pointer",
+              opacity: (isVerifying || isNavigating) || !couponCode.trim() ? 0.6 : 1,
+              whiteSpace: "nowrap",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {(isVerifying || isNavigating) ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3"></circle>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+                  </path>
+                </svg>
+                {isNavigating ? "Applying..." : "Verifying..."}
+              </div>
+            ) : (
+              "Redeem Code"
+            )}
+          </button>
+        </div>
+
+        {couponError && (
+          <span style={{ color: "#ff4a4a", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
+            {couponError}
+          </span>
+        )}
       </div>
-
-      {couponError && (
-        <span style={{ color: "#ff4a4a", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
-          {couponError}
-        </span>
-      )}
-
-      {couponSuccess && (
-        <span style={{ color: "#4caf50", fontSize: "12px", fontWeight: "500", marginTop: "2px" }}>
-          {couponSuccess}
-        </span>
-      )}
-    </div>
+    </>
   );
 };
 

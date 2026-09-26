@@ -355,9 +355,6 @@ export default function HomePage() {
   const firstGroup = campaignPlan?.aAllSubscriptionPlans?.[0];
   const firstProduct = firstGroup?.aSubscriptionProducts?.[0];
 
-  // CTA button label – no offer translation, use a sensible default
-  const confirmButtonLabel = "Subscribe Now";
-
   // Features from the first product
   const activeFeatures: any[] = firstProduct?.aFeatures || [];
 
@@ -370,8 +367,9 @@ export default function HomePage() {
     ? `Auto-renews at ${currencySymbol}${productPrice}/year. Cancel anytime.`
     : "";
 
-  // Footer note comes at the top level of the response data
-  const footerNote = "By proceeding with the \"Subscribe Now\" process, we might send a one-time verification code to the Phone number/Email linked to your account. Standard message and data rates may apply.             ";
+  const footerNote = "By proceeding with the \"login\" process, we might send a one-time verification code to the phone number linked to your account. Standard message and data rates may apply.";
+  const extractedLabel = footerNote.match(/"([^"]+)"/)?.[1] ?? "";
+  const confirmButtonLabel = extractedLabel.charAt(0).toUpperCase() + extractedLabel.slice(1);
 
   const [step, setStep] = useState<TrialFormStep>(() => {
     if (typeof window !== "undefined") {
@@ -971,8 +969,9 @@ export default function HomePage() {
                             onClick={handleSelectPlanAndContinue}
                             className="btn-primary active btn-start-trial"
                             style={{
-                              width: "80%",
+                              width: "46%",
                               display: "block",
+                              marginTop: "40px",
                               marginLeft: "auto",
                               marginRight: "auto",
                               padding: "12px",
@@ -986,12 +985,13 @@ export default function HomePage() {
                             <p
                               style={{
                                 color: "rgba(255, 255, 255, 0.7)",
-                                fontSize: "14px",
-                                lineHeight: "22px",
+                                fontSize: "12px",
+                                lineHeight: "16px",
                                 textAlign: "left",
-                                fontWeight: "400",
+                                fontWeight: "300",
                                 width: "100%",
                                 marginTop: "2.5rem",
+                                marginBottom: "2rem",
                                 whiteSpace: "pre-line",
                               }}
                             >
