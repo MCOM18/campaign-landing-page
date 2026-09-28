@@ -499,6 +499,30 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     if (isApplyingCoupon) return;
     setIsApplyingCoupon(true);
 
+    const devicePayload = buildDevicePayload();
+    const geoData = getUserGeoLocation();
+    const sourceLink = typeof window !== "undefined" ? localStorage.getItem("source_link") || window.location.href : "";
+    const utmParams = parseSourceLinkParams(sourceLink);
+    const offerData = data?.data?.data || data?.data || data || {};
+    const currentCampaignDetails = offerData?.campaignDetails || {};
+    const userId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+
+    const baseEventPayload = {
+      coupon_code: codeToApply,
+      user_id: userId,
+      platform: "web",
+      device_type: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE || "web",
+      page_name: "offer_details",
+      offer_id: campaignId,
+      offer_name: currentCampaignDetails.campaignName || currentCampaignDetails.name || "",
+      os: devicePayload.os || "unknown",
+      browser: devicePayload.browser || "unknown",
+      country: geoData?.country_code || "IN",
+      source_link: sourceLink,
+      ...utmParams,
+      timestamp: new Date().toISOString(),
+    };
+
     try {
       const res: any = await validateCode(codeToApply, campaignId);
       logger.info("[Apply Coupon] Validation response:", res);
@@ -512,6 +536,26 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
           res?.metaData?.message ||
           res?.["meta-data"]?.message ||
           "Coupon not found or campaign is not active";
+
+        const lowerMsg = errMsg.toLowerCase();
+        const failureReason =
+          lowerMsg.includes("redeemed") || lowerMsg.includes("already used") || lowerMsg.includes("purchased")
+            ? "already_used"
+            : lowerMsg.includes("expired")
+              ? "expired_code"
+              : lowerMsg.includes("eligible") || bIsEligible === false
+                ? "not_eligible"
+                : "invalid_code";
+
+        // Failure: coupon_code_failed + coupon_apply_result
+        trackEvent("coupon_code_failed", { ...baseEventPayload, message: errMsg });
+        trackEvent("coupon_apply_result", {
+          ...baseEventPayload,
+          result: "failed",
+          failure_reason: failureReason,
+          message: errMsg,
+        });
+
         toast.error(errMsg);
         setIsApplyingCoupon(false);
         return;
@@ -529,6 +573,14 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         }
       }
 
+      // Success: coupon_code_applied + coupon_apply_result
+      trackEvent("coupon_code_applied", { ...baseEventPayload, message: "Coupon applied successfully" });
+      trackEvent("coupon_apply_result", {
+        ...baseEventPayload,
+        result: "success",
+        message: "Coupon applied successfully",
+      });
+
       handleRedeemClick();
     } catch (err: any) {
       logger.error("[Apply Coupon] Validation error:", err);
@@ -538,6 +590,16 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         err?.response?.data?.data?.sReason ||
         err?.message ||
         "Coupon not found or campaign is not active";
+
+      // Server error: coupon_code_failed + coupon_apply_result
+      trackEvent("coupon_code_failed", { ...baseEventPayload, message: errMsg });
+      trackEvent("coupon_apply_result", {
+        ...baseEventPayload,
+        result: "failed",
+        failure_reason: "server_error",
+        message: errMsg,
+      });
+
       toast.error(errMsg);
     } finally {
       setIsApplyingCoupon(false);

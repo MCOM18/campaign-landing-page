@@ -4,6 +4,11 @@ import toast from "react-hot-toast";
 import { validateCode } from "@/features/offer/api/validateCode";
 import { fetchOfferByCampaignCached } from "@/features/offer/hooks/useOfferByCampaign";
 import { logger } from "@/lib/logger/logger";
+import { trackEvent } from "@/services/analytics/events";
+import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
+import { parseSourceLinkParams } from "@/shared/analytics/utils/getSourceLink";
+import { getUserGeoLocation } from "@/utils/userUtil";
+import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import "./payment.css";
 
 interface SubscriptionPlanCardProps {
@@ -146,6 +151,26 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     setIsVerifying(true);
     setCouponError(null);
 
+    const devicePayload = buildDevicePayload();
+    const geoData = getUserGeoLocation();
+    const sourceLink = typeof window !== "undefined" ? localStorage.getItem("source_link") || window.location.href : "";
+    const utmParams = parseSourceLinkParams(sourceLink);
+    const userId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+
+    const baseEventPayload = {
+      coupon_code: cleanCode,
+      user_id: userId,
+      platform: "web",
+      device_type: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE || "web",
+      page_name: "payment",
+      os: devicePayload.os || "unknown",
+      browser: devicePayload.browser || "unknown",
+      country: geoData?.country_code || "IN",
+      source_link: sourceLink,
+      ...utmParams,
+      timestamp: new Date().toISOString(),
+    };
+
     try {
       logger.info("[SubscriptionPlanCard] Validating coupon code:", cleanCode);
       const response: any = await validateCode(cleanCode, "");
@@ -185,6 +210,14 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
           localStorage.setItem("selectedPlan", JSON.stringify(effectivePlan));
         }
 
+        // Success analytics
+        trackEvent("coupon_code_applied", { ...baseEventPayload, message: "Coupon applied successfully" });
+        trackEvent("coupon_apply_result", {
+          ...baseEventPayload,
+          result: "success",
+          message: "Coupon applied successfully",
+        });
+
         setCouponCode("");
 
         setIsNavigating(true);
@@ -193,6 +226,26 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         }, 300);
       } else {
         const errorMsg = resData?.sReason || metaData?.message || "Invalid or ineligible coupon code";
+
+        const lowerMsg = errorMsg.toLowerCase();
+        const failureReason =
+          lowerMsg.includes("redeemed") || lowerMsg.includes("already used") || lowerMsg.includes("purchased")
+            ? "already_used"
+            : lowerMsg.includes("expired")
+              ? "expired_code"
+              : lowerMsg.includes("eligible") || bIsEligible === false
+                ? "not_eligible"
+                : "invalid_code";
+
+        // Failure analytics
+        trackEvent("coupon_code_failed", { ...baseEventPayload, message: errorMsg });
+        trackEvent("coupon_apply_result", {
+          ...baseEventPayload,
+          result: "failed",
+          failure_reason: failureReason,
+          message: errorMsg,
+        });
+
         setCouponError(errorMsg);
         toast.error(errorMsg);
       }
@@ -204,6 +257,16 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         err?.response?.data?.data?.sReason ||
         err?.message ||
         "Invalid coupon code. Please try again.";
+
+      // Server error analytics
+      trackEvent("coupon_code_failed", { ...baseEventPayload, message: errorMsg });
+      trackEvent("coupon_apply_result", {
+        ...baseEventPayload,
+        result: "failed",
+        failure_reason: "server_error",
+        message: errorMsg,
+      });
+
       setCouponError(errorMsg);
       toast.error(errorMsg);
     } finally {
@@ -652,6 +715,27 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
     setIsVerifying(true);
     setCouponError(null);
 
+    const devicePayload = buildDevicePayload();
+    const geoData = getUserGeoLocation();
+    const sourceLink = typeof window !== "undefined" ? localStorage.getItem("source_link") || window.location.href : "";
+    const utmParams = parseSourceLinkParams(sourceLink);
+    const userId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+
+    const baseEventPayload = {
+      coupon_code: cleanCode,
+      user_id: userId,
+      platform: "web",
+      device_type: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE || "web",
+      page_name: "payment",
+      offer_id: campaignId || "",
+      os: devicePayload.os || "unknown",
+      browser: devicePayload.browser || "unknown",
+      country: geoData?.country_code || "IN",
+      source_link: sourceLink,
+      ...utmParams,
+      timestamp: new Date().toISOString(),
+    };
+
     try {
       logger.info("[SingleCouponInput] Validating coupon code:", cleanCode);
       const response: any = await validateCode(cleanCode, campaignId || "");
@@ -689,6 +773,14 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
           await fetchAndStoreCampaignPlan(campaignRefId, cleanCode);
         }
 
+        // Success analytics
+        trackEvent("coupon_code_applied", { ...baseEventPayload, message: "Coupon applied successfully" });
+        trackEvent("coupon_apply_result", {
+          ...baseEventPayload,
+          result: "success",
+          message: "Coupon applied successfully",
+        });
+
         setCouponCode("");
 
         if (onSuccess) {
@@ -701,6 +793,26 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
         }
       } else {
         const errorMsg = resData?.sReason || metaData?.message || "Invalid or ineligible coupon code";
+
+        const lowerMsg = errorMsg.toLowerCase();
+        const failureReason =
+          lowerMsg.includes("redeemed") || lowerMsg.includes("already used") || lowerMsg.includes("purchased")
+            ? "already_used"
+            : lowerMsg.includes("expired")
+              ? "expired_code"
+              : lowerMsg.includes("eligible") || bIsEligible === false
+                ? "not_eligible"
+                : "invalid_code";
+
+        // Failure analytics
+        trackEvent("coupon_code_failed", { ...baseEventPayload, message: errorMsg });
+        trackEvent("coupon_apply_result", {
+          ...baseEventPayload,
+          result: "failed",
+          failure_reason: failureReason,
+          message: errorMsg,
+        });
+
         setCouponError(errorMsg);
         toast.error(errorMsg);
       }
@@ -712,6 +824,16 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
         err?.response?.data?.data?.sReason ||
         err?.message ||
         "Invalid coupon code. Please try again.";
+
+      // Server error analytics
+      trackEvent("coupon_code_failed", { ...baseEventPayload, message: errorMsg });
+      trackEvent("coupon_apply_result", {
+        ...baseEventPayload,
+        result: "failed",
+        failure_reason: "server_error",
+        message: errorMsg,
+      });
+
       setCouponError(errorMsg);
       toast.error(errorMsg);
     } finally {

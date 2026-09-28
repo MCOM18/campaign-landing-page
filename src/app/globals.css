@@ -642,6 +642,7 @@ body {
   position: relative;
   z-index: 10;
   box-sizing: border-box;
+  margin-top: 20px;
 }
 
 @media (min-width: 768px) {

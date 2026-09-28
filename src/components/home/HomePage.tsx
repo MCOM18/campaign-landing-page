@@ -381,6 +381,14 @@ export default function HomePage() {
     }
     return TrialFormStep.INPUT;
   });
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsLoggedIn(!!localStorage.getItem("user_id"));
+    }
+  }, [step]);
+
   const [contactInfo, setContactInfo] = useState("");
   const [parsedPhone, setParsedPhone] = useState("");
   const [parsedPhoneCode, setParsedPhoneCode] = useState("");
@@ -732,6 +740,35 @@ export default function HomePage() {
           minHeight: "100vh",
         }}
       >
+        {/* Floating Logout Button */}
+        {isLoggedIn && (
+          <button
+            onClick={() => {
+              localStorage.clear();
+              sessionStorage.clear();
+              router.push("/");
+              setIsLoggedIn(false);
+              setStep(TrialFormStep.INPUT);
+            }}
+            style={{
+              position: "fixed",
+              top: "16px",
+              right: "16px",
+              zIndex: 99999,
+              padding: "8px 16px",
+              background: "#ffffff",
+              border: "1px solid #ffffff",
+              borderRadius: "8px",
+              color: "#000000",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
+              fontSize: "12px",
+              fontWeight: "600",
+              cursor: "pointer",
+            }}
+          >
+            Logout
+          </button>
+        )}
         {/* 1. MOBILE VIEW (Visible on screens < 768px) */}
         <div className="mobile-only" style={{ width: "100%" }}>
 

@@ -13,7 +13,10 @@ export type AnalyticsEvent =
   | "payment_failure"
   | "campaign_landing_impression"
   | "initiate_checkout"
-  | "all_plan_data";
+  | "all_plan_data"
+  | "coupon_code_applied"
+  | "coupon_code_failed"
+  | "coupon_apply_result";
 
 /**
  * Single entry point for all frontend analytics tracking.
