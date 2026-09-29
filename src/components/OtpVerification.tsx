@@ -153,11 +153,6 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
     <div className="fade-in responsive-form-container" style={{ width: "100%" }}>
       {/* Contact Info and Edit Link */}
       <div className="responsive-text-align" style={{ marginBottom: "1.5rem", width: "100%" }}>
-        {receivedOtpData && (
-          <div style={{ color: "#39ff14", backgroundColor: "rgba(57, 255, 20, 0.15)", border: "1px solid #39ff14", padding: "8px", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", marginBottom: "0.8rem", wordBreak: "break-all" }}>
-            [RECEIVED WEBOTP DATA]: {receivedOtpData}
-          </div>
-        )}
         <p style={{ color: "#ffffff", fontSize: "16px", marginBottom: "0.5rem" }}>
           Enter the OTP sent on <strong style={{ color: "#ffffff" }}>{contactInfo}</strong>
         </p>
