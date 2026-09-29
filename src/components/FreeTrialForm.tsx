@@ -254,6 +254,8 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
         <input
           type="text"
           ref={inputRef}
+          name="emailOrPhone"
+          autoComplete="tel"
           className="form-input"
           placeholder={
             isPhoneOnly ? "Enter your Phone Number" :

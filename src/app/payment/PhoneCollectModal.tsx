@@ -113,6 +113,7 @@ const PhoneCollectModal: React.FC<PhoneCollectModalProps> = ({ onComplete }) => 
           {/* Phone input */}
           <input
             type="tel"
+            autoComplete="on"
             className={`phone-modal-input ${phoneError ? "input-error" : ""}`}
             placeholder="Phone number"
             value={phone}
@@ -131,6 +132,7 @@ const PhoneCollectModal: React.FC<PhoneCollectModalProps> = ({ onComplete }) => 
               <div className="phone-modal-search-wrapper">
                 <input
                   type="text"
+                  autoComplete="on"
                   placeholder="Search country..."
                   className="phone-modal-search"
                   value={searchQuery}
