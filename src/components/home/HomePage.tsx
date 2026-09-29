@@ -818,7 +818,7 @@ export default function HomePage() {
                   {/* Logo at top */}
                   <div style={{ width: "100%", display: "flex", justifyContent: "center", paddingTop: "48px", paddingBottom: "0", position: "relative", zIndex: 2 }}>
                     <img
-                      src="/assets/images/Logo/JOJO_LOGO.svg"
+                      src="/assets/jojo-gold.svg"
                       alt="JOJO"
                       style={{ width: "112px", height: "36px", display: "block" }}
                     />
@@ -1102,7 +1102,7 @@ export default function HomePage() {
                     {isCampaignLogin ? (
                       /* Campaign login: show JOJO header logo */
                       <img
-                        src="/assets/images/Logo/JOJO_LOGO.svg"
+                        src="/assets/jojo-gold.svg"
                         alt="JOJO"
                         style={{ width: "112px", height: "36px", display: "block" }}
                       />

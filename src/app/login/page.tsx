@@ -545,9 +545,9 @@ export default function LoginPage() {
               />
             ) : (
               <img
-                src="/assets/images/Logo/JOJO_LOGO.svg"
+                src="/assets/jojo-gold.svg"
                 alt="JOJO"
-                style={{ width: "110px", height: "36px", objectFit: "contain" }}
+                style={{ height: "30px", objectFit: "contain", marginBottom: "15px" }}
               />
             )}
           </div>
@@ -617,7 +617,7 @@ export default function LoginPage() {
               {mainLogoUrl ? (
                 <img src={mainLogoUrl} alt={campaignName} style={{ height: "48px", maxWidth: "160px", objectFit: "contain" }} />
               ) : (
-                <img src="/assets/images/Logo/JOJO_LOGO.svg" alt="JOJO" style={{ width: "120px", height: "40px", display: "block" }} />
+                <img src="/assets/jojo-gold.svg" alt="JOJO" style={{ width: "120px", height: "40px", display: "block" }} />
               )}
             </header>
 
