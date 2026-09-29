@@ -384,9 +384,29 @@ export default function HomePage() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsLoggedIn(!!localStorage.getItem("user_id"));
-    }
+    if (typeof window === "undefined") return;
+
+    const checkAuthAndStep = () => {
+      const userId = localStorage.getItem("user_id");
+      const sessionId = localStorage.getItem("session_id");
+      const hasAuth = Boolean(userId && sessionId);
+      setIsLoggedIn(hasAuth);
+
+      if (step === TrialFormStep.PLANS && !hasAuth) {
+        setStep(TrialFormStep.INPUT);
+      }
+    };
+
+    checkAuthAndStep();
+    window.addEventListener("pageshow", checkAuthAndStep);
+    window.addEventListener("focus", checkAuthAndStep);
+    window.addEventListener("popstate", checkAuthAndStep);
+
+    return () => {
+      window.removeEventListener("pageshow", checkAuthAndStep);
+      window.removeEventListener("focus", checkAuthAndStep);
+      window.removeEventListener("popstate", checkAuthAndStep);
+    };
   }, [step]);
 
   const [contactInfo, setContactInfo] = useState("");
@@ -741,7 +761,7 @@ export default function HomePage() {
         }}
       >
         {/* Floating Logout Button */}
-        {isLoggedIn && (
+        {(isLoggedIn || step === TrialFormStep.PLANS) && (
           <button
             onClick={() => {
               localStorage.clear();

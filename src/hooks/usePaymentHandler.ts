@@ -71,8 +71,9 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
     const providerSku = product?.aProviderSkus?.[0];
     const pricing = providerSku?.oPricing;
     if (pricing) {
+      const finalPrice = providerSku?.oCouponDetails?.nFinalAmount ?? selectedPlan.finalPrice ?? pricing.nPrice;
       return {
-        price: pricing.nPrice,
+        price: finalPrice,
         currency: pricing.sCurrency,
         currencySymbol: pricing.sCurrencySymbol,
         type: "SVOD",
@@ -80,24 +81,28 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
         pricing,
         billingCycle: providerSku?.sBillingCycle || "yearly",
         duration: providerSku?.nDuration || 12,
-        maxAmount: providerSku?.nMaxAmount || pricing.nPrice,
-        offerId: product?.oOfferDetails?.sOfferId || providerSku?.oOfferDetails?.sOfferId || null,
+        maxAmount: providerSku?.nMaxAmount || finalPrice,
+        offerId: product?.oOfferDetails?.sOfferId || providerSku?.oOfferDetails?.sOfferId || providerSku?.oCouponDetails?.sOfferId || null,
       };
     }
   }
 
   // SVOD plan with providerSku
   if (selectedPlan?.providerSku?.oPricing) {
+    const providerSku = selectedPlan.providerSku;
+    const pricing = providerSku.oPricing;
+    const finalPrice = providerSku?.oCouponDetails?.nFinalAmount ?? selectedPlan.finalPrice ?? pricing.nPrice;
     return {
-      price: selectedPlan.providerSku.oPricing.nPrice,
-      currency: selectedPlan.providerSku.oPricing.sCurrency,
-      currencySymbol: selectedPlan.providerSku.oPricing.sCurrencySymbol,
+      price: finalPrice,
+      currency: pricing.sCurrency,
+      currencySymbol: pricing.sCurrencySymbol,
       type: "SVOD",
-      skuId: selectedPlan.providerSku?.sUniqueSkuId,
-      pricing: selectedPlan.providerSku.oPricing,
-      billingCycle: selectedPlan.providerSku?.sBillingCycle || "monthly",
-      duration: selectedPlan.providerSku?.nDuration || 1,
-      maxAmount: selectedPlan.providerSku?.nMaxAmount || selectedPlan.providerSku.oPricing.nPrice * 12,
+      skuId: providerSku?.sUniqueSkuId,
+      pricing: pricing,
+      billingCycle: providerSku?.sBillingCycle || "monthly",
+      duration: providerSku?.nDuration || 1,
+      maxAmount: providerSku?.nMaxAmount || finalPrice * 12,
+      offerId: providerSku?.oOfferDetails?.sOfferId || providerSku?.oCouponDetails?.sOfferId || null,
     };
   }
 
@@ -109,8 +114,9 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
       logger.warn("TVOD: sUniqueSkuId not found");
       return null;
     }
+    const finalPrice = providerSku?.oCouponDetails?.nFinalAmount ?? selectedPlan.finalPrice ?? selectedPlan.pricing.nPrice;
     return {
-      price: selectedPlan.pricing.nPrice,
+      price: finalPrice,
       currency: selectedPlan.pricing.sCurrency,
       currencySymbol: selectedPlan.pricing.sCurrencySymbol,
       type: "TVOD",
@@ -118,6 +124,7 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
       pricing: selectedPlan.pricing,
       billingCycle: "one_time",
       duration: 1,
+      offerId: providerSku?.oOfferDetails?.sOfferId || providerSku?.oCouponDetails?.sOfferId || null,
     };
   }
 
@@ -125,8 +132,9 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
   if (selectedPlan?.aProviderSkus?.[0]?.oPricing) {
     const providerSku = selectedPlan.aProviderSkus[0];
     const pricing = providerSku.oPricing;
+    const finalPrice = providerSku?.oCouponDetails?.nFinalAmount ?? selectedPlan.finalPrice ?? pricing.nPrice;
     return {
-      price: pricing.nPrice,
+      price: finalPrice,
       currency: pricing.sCurrency,
       currencySymbol: pricing.sCurrencySymbol,
       type: "TVOD",
@@ -134,6 +142,7 @@ export const getPricingData = (selectedPlan: any): PricingData | null => {
       pricing,
       billingCycle: "one_time",
       duration: 1,
+      offerId: providerSku?.oOfferDetails?.sOfferId || providerSku?.oCouponDetails?.sOfferId || null,
     };
   }
 
