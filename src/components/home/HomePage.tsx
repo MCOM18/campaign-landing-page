@@ -314,7 +314,6 @@ export default function HomePage() {
         ...queryParams
       };
 
-      logger.info("[Analytics] Sending campaign_landing_impression payload:", impressionPayload);
       trackEvent("campaign_landing_impression", impressionPayload);
 
     } catch (err) {

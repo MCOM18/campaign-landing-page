@@ -3,7 +3,8 @@ import { appConfig } from "../config/app.config";
 type LogLevel = "info" | "warn" | "error" | "debug";
 
 function log(level: LogLevel, message: string, meta?: unknown) {
-  if (!appConfig.flags.enableLogger) return;
+  const isLoggerOff = process.env.NEXT_PUBLIC_CONSOLE_LOGGER_OFF === "false";
+  if (!appConfig.flags.enableLogger || isLoggerOff) return;
 
   const timestamp = new Date().toISOString();
   const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
