@@ -30,7 +30,7 @@ import api from "@/utils/apiClient";
 import { getUserGeoLocation, clearUserDataAndReload } from "@/utils/userUtil";
 import SubscriptionPlanCard, { SingleCouponInput } from "@/app/payment/SubscriptionPlanCard";
 
-const renderFooterWithLinks = (text: string) => {
+const renderFooterWithLinks = (text: string, queryString: string = "") => {
   if (!text) return null;
 
   const termsText = "Terms of Use";
@@ -49,7 +49,7 @@ const renderFooterWithLinks = (text: string) => {
       <>
         {beforeTerms}
         <a
-          href="https://jojoapp.in/terms-conditions"
+          href={`https://jojoapp.in/terms-conditions${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -58,7 +58,7 @@ const renderFooterWithLinks = (text: string) => {
         </a>
         {betweenTermsAndPrivacy}
         <a
-          href="https://jojoapp.in/privacy-policy"
+          href={`https://jojoapp.in/privacy-policy${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -76,7 +76,7 @@ const renderFooterWithLinks = (text: string) => {
       <>
         {parts[0]}
         <a
-          href="https://jojoapp.in/terms-conditions"
+          href={`https://jojoapp.in/terms-conditions${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -94,7 +94,7 @@ const renderFooterWithLinks = (text: string) => {
       <>
         {parts[0]}
         <a
-          href="https://jojoapp.in/privacy-policy"
+          href={`https://jojoapp.in/privacy-policy${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -118,11 +118,14 @@ export default function HomePage() {
   const [campaignPlan, setCampaignPlan] = useState<any>(null);
   const [isCampaignLoading, setIsCampaignLoading] = useState(true);
 
+  const [queryString, setQueryString] = useState("");
+
   // Check pending_campaign_id in localStorage
   const [isCampaignLogin, setIsCampaignLogin] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      setQueryString(window.location.search);
       const url = new URL(window.location.href);
       const dataParam = url.searchParams.get("data");
       const campaignIdQuery = url.searchParams.get("campaignId") || url.searchParams.get("campaign_id");
@@ -1052,7 +1055,7 @@ export default function HomePage() {
                                 whiteSpace: "pre-line",
                               }}
                             >
-                              {renderFooterWithLinks(freshPlans.sFooterNote)}
+                              {renderFooterWithLinks(freshPlans.sFooterNote, queryString)}
                             </p>
                           )}
                         </div>
@@ -1225,7 +1228,7 @@ export default function HomePage() {
                                         whiteSpace: "pre-line",
                                       }}
                                     >
-                                      {renderFooterWithLinks(freshPlans.sFooterNote)}
+                                      {renderFooterWithLinks(freshPlans.sFooterNote, queryString)}
                                     </p>
                                   )}
                                 </div>

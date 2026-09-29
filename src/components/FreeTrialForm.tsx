@@ -12,7 +12,7 @@ import { CoverflowCarousel } from "@/components/CoverflowCarousel";
 import { useKeyboardScrollFix } from "@/hooks/useKeyboardScrollFix";
 
 /** Renders footer note text, turning "Terms of Use" and "Privacy Statement" into gold clickable links. */
-const renderFooterWithLinks = (text: string) => {
+const renderFooterWithLinks = (text: string, queryString: string = "") => {
   if (!text) return null;
 
   const termsText = "Terms of Use";
@@ -34,11 +34,11 @@ const renderFooterWithLinks = (text: string) => {
     return (
       <>
         {beforeTerms}
-        <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+        <a href={`https://jojoapp.in/terms-conditions${queryString}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
           {termsText}
         </a>
         {betweenTermsAndPrivacy}
-        <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+        <a href={`https://jojoapp.in/privacy-policy${queryString}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
           {privacyText}
         </a>
         {afterPrivacy}
@@ -51,7 +51,7 @@ const renderFooterWithLinks = (text: string) => {
     return (
       <>
         {parts[0]}
-        <a href="https://jojoapp.in/terms-conditions" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+        <a href={`https://jojoapp.in/terms-conditions${queryString}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
           {termsText}
         </a>
         {parts.slice(1).join(termsText)}
@@ -64,7 +64,7 @@ const renderFooterWithLinks = (text: string) => {
     return (
       <>
         {parts[0]}
-        <a href="https://jojoapp.in/privacy-policy" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+        <a href={`https://jojoapp.in/privacy-policy${queryString}`} target="_blank" rel="noopener noreferrer" style={linkStyle}>
           {privacyText}
         </a>
         {parts.slice(1).join(privacyText)}
@@ -97,6 +97,13 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [queryString, setQueryString] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setQueryString(window.location.search);
+    }
+  }, []);
 
   const { data: countries = [] } = useGetCountries();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -347,7 +354,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
         }}
       >
         {footerNote
-          ? renderFooterWithLinks(footerNote)
+          ? renderFooterWithLinks(footerNote, queryString)
           : 'By proceeding with the \"login\" process, we might send a one-time verification code to the phone number linked to your account. Standard message and data rates may apply.'}
       </p>
 

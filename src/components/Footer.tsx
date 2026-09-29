@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import footerData from "@/lib/data/footer.data.json";
 import { env } from "@/lib/config/env";
 
@@ -11,6 +12,14 @@ const SOCIAL_ICON_MAP: Record<string, string> = {
 };
 
 export default function Footer() {
+  const [queryString, setQueryString] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setQueryString(window.location.search);
+    }
+  }, []);
+
   return (
     <footer className="web-footer-container">
       {/* ── MOBILE FOOTER (Screens < 768px): Logo first, then all menus ── */}
@@ -29,7 +38,7 @@ export default function Footer() {
         {/* 2. All Menus After Logo */}
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
           <a
-            href="https://jojoapp.in/terms-conditions"
+            href={`https://jojoapp.in/terms-conditions${queryString}`}
             target="_blank"
             rel="noopener noreferrer"
             className="web-footer-link"
@@ -38,7 +47,7 @@ export default function Footer() {
             Terms & Conditions
           </a>
           <a
-            href="https://jojoapp.in/privacy-policy"
+            href={`https://jojoapp.in/privacy-policy${queryString}`}
             target="_blank"
             rel="noopener noreferrer"
             className="web-footer-link"
@@ -186,7 +195,7 @@ export default function Footer() {
         <div className="web-footer-grid">
           <div className="web-footer-column">
             <a
-              href="https://jojoapp.in/terms-conditions"
+              href={`https://jojoapp.in/terms-conditions${queryString}`}
               target="_blank"
               rel="noopener noreferrer"
               className="web-footer-link"
@@ -195,7 +204,7 @@ export default function Footer() {
               Terms & Conditions
             </a>
             <a
-              href="https://jojoapp.in/privacy-policy"
+              href={`https://jojoapp.in/privacy-policy${queryString}`}
               target="_blank"
               rel="noopener noreferrer"
               className="web-footer-link"

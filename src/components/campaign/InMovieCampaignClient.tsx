@@ -92,7 +92,7 @@ const getCountryFromRoute = (routeParams?: any): string => {
 
 const Button_name = "Subscribe Now";
 
-const renderFooterWithLinks = (text: string) => {
+const renderFooterWithLinks = (text: string, queryString: string = "") => {
     if (!text) return null;
 
     const formattedText = text.replaceAll("Upgrade Now", Button_name);
@@ -112,7 +112,7 @@ const renderFooterWithLinks = (text: string) => {
             <>
                 {beforeTerms}
                 <a
-                    href="https://jojoapp.in/terms-conditions"
+                    href={`https://jojoapp.in/terms-conditions${queryString}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: "#F26E21", textDecoration: "underline", fontWeight: "600" }}
@@ -121,7 +121,7 @@ const renderFooterWithLinks = (text: string) => {
                 </a>
                 {betweenTermsAndPrivacy}
                 <a
-                    href="https://jojoapp.in/privacy-policy"
+                    href={`https://jojoapp.in/privacy-policy${queryString}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: "#F26E21", textDecoration: "underline", fontWeight: "600" }}
@@ -139,7 +139,7 @@ const renderFooterWithLinks = (text: string) => {
             <>
                 {parts[0]}
                 <a
-                    href="https://jojoapp.in/terms-conditions"
+                    href={`https://jojoapp.in/terms-conditions${queryString}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -157,7 +157,7 @@ const renderFooterWithLinks = (text: string) => {
             <>
                 {parts[0]}
                 <a
-                    href="https://jojoapp.in/privacy-policy"
+                    href={`https://jojoapp.in/privacy-policy${queryString}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -482,6 +482,7 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
     const [parsedPhoneCode, setParsedPhoneCode] = useState("");
     const [isExists, setIsExists] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
+    const [queryString, setQueryString] = useState("");
 
     const [goldSubscriptionInfo, setGoldSubscriptionInfo] = useState<any>(null);
     const [showGoldPopup, setShowGoldPopup] = useState(false);
@@ -496,6 +497,7 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
     // Restore auth store state on mount if session exists
     useEffect(() => {
         if (typeof window === "undefined") return;
+        setQueryString(window.location.search);
         const sessionId = localStorage.getItem("session_id");
         const userId = localStorage.getItem("user_id");
         const userDataRaw = localStorage.getItem("userData");
@@ -1271,7 +1273,7 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
                                                         whiteSpace: "pre-line",
                                                     }}
                                                 >
-                                                    {renderFooterWithLinks(freshPlans.sFooterNote)}
+                                                    {renderFooterWithLinks(freshPlans.sFooterNote, queryString)}
                                                 </p>
                                             )}
                                         </div>
@@ -1511,7 +1513,7 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
                                                         whiteSpace: "pre-line",
                                                     }}
                                                 >
-                                                    {renderFooterWithLinks(freshPlans.sFooterNote)}
+                                                    {renderFooterWithLinks(freshPlans.sFooterNote, queryString)}
                                                 </p>
                                             )}
                                         </div>

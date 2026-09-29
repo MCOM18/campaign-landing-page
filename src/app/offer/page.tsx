@@ -29,7 +29,7 @@ import api from "../../utils/apiClient";
 import { getUserGeoLocation, clearUserDataAndReload } from "../../utils/userUtil";
 import SubscriptionPlanCard, { SingleCouponInput } from "../payment/SubscriptionPlanCard";
 
-const renderFooterWithLinks = (text: string) => {
+const renderFooterWithLinks = (text: string, queryString: string = "") => {
   if (!text) return null;
 
   const termsText = "Terms of Use";
@@ -48,7 +48,7 @@ const renderFooterWithLinks = (text: string) => {
       <>
         {beforeTerms}
         <a
-          href="https://jojoapp.in/terms-conditions"
+          href={`https://jojoapp.in/terms-conditions${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -57,7 +57,7 @@ const renderFooterWithLinks = (text: string) => {
         </a>
         {betweenTermsAndPrivacy}
         <a
-          href="https://jojoapp.in/privacy-policy"
+          href={`https://jojoapp.in/privacy-policy${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -75,7 +75,7 @@ const renderFooterWithLinks = (text: string) => {
       <>
         {parts[0]}
         <a
-          href="https://jojoapp.in/terms-conditions"
+          href={`https://jojoapp.in/terms-conditions${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -93,7 +93,7 @@ const renderFooterWithLinks = (text: string) => {
       <>
         {parts[0]}
         <a
-          href="https://jojoapp.in/privacy-policy"
+          href={`https://jojoapp.in/privacy-policy${queryString}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: "#FAAF3F", textDecoration: "underline", fontWeight: "600" }}
@@ -114,6 +114,7 @@ export default function Home() {
   const { data: countries = [] } = useGetCountries();
 
   const [freshPlans, setFreshPlans] = useState<any>(null);
+  const [queryString, setQueryString] = useState("");
 
   const lottieMobileRef = useRef<any>(null);
   const lottieDesktopRef = useRef<any>(null);
@@ -125,6 +126,7 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined" || !isAppReady || impressionTracked.current) return;
     impressionTracked.current = true;
+    setQueryString(window.location.search);
 
     try {
       localStorage.setItem("source_link", window.location.href);
@@ -895,7 +897,7 @@ export default function Home() {
                               whiteSpace: "pre-line",
                             }}
                           >
-                            {renderFooterWithLinks(freshPlans.sFooterNote)}
+                            {renderFooterWithLinks(freshPlans.sFooterNote, queryString)}
                           </p>
                         )}
                       </div>
@@ -1079,7 +1081,7 @@ export default function Home() {
                                         whiteSpace: "pre-line",
                                       }}
                                     >
-                                      {renderFooterWithLinks(freshPlans.sFooterNote)}
+                                      {renderFooterWithLinks(freshPlans.sFooterNote, queryString)}
                                     </p>
                                   )}
                                 </div>
