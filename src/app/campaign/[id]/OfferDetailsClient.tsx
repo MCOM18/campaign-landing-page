@@ -138,7 +138,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     try {
       let sourceLink = window.location.href;
       const stored = localStorage.getItem("source_link");
-      
+
       if (sourceLink.includes("utm_") || sourceLink.includes("source_link=")) {
         localStorage.setItem("source_link", sourceLink);
       } else if (!stored || !stored.includes(window.location.pathname)) {
@@ -675,7 +675,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     if (campaignId) {
       sessionStorage.setItem("pending_campaign_id", campaignId);
     }
-    
+
     try {
       let sourceLink = "";
       if (typeof window !== "undefined") {
@@ -718,7 +718,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     } catch (err) {
       logger.error("[OfferDetails Analytics] Error tracking click:", err);
     }
-    
+
     router.push("/login");
   };
 
@@ -952,7 +952,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                               </svg>
                             </>
                           ) : (
-                            "Apply"
+                            "Redeem Code"
                           )}
                         </button>
                       </div>
@@ -1098,7 +1098,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                                 <path d="M12 2a10 10 0 0 1 10 10" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
                               </svg>
                             ) : (
-                              "Apply"
+                              "Redeem Code"
                             )}
                           </button>
                         </div>

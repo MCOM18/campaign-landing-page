@@ -112,7 +112,7 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
       <div style={{ width: "100%" }}>
         <button
           onClick={() => {
-            window.open("https://jojoapp.in", "_blank", "noopener,noreferrer");
+            window.open("https://jojoapp.in/appInstall", "_blank", "noopener,noreferrer");
           }}
           style={{
             width: "100%",

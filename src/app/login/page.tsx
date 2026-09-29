@@ -466,8 +466,7 @@ export default function LoginPage() {
         <div style={{ width: "100%" }}>
           <FreeTrialForm
             onSubmit={handleInputSubmit}
-            confirmButtonLabel="Next"
-            footerNote={sFooterNote}
+            confirmButtonLabel="Login"
             showCarousel={isMobileLayout}
             loginVia={loginVia}
             isLoading={isVerifying}

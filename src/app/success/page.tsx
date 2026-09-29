@@ -16,7 +16,7 @@ export default function SuccessPage() {
           setIsTrial(true);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   const handleReset = () => {
@@ -37,14 +37,14 @@ export default function SuccessPage() {
           const campaignData = JSON.parse(campaignDataRaw);
           analyticsService.track("campaign_purchase_success", campaignData);
           localStorage.removeItem("campaign_decoded_data");
-        } catch (e) {}
+        } catch (e) { }
       }
 
       window.location.href = storedRedirectUrl as string;
     } else {
       localStorage.removeItem("campaign_redirect_url");
       localStorage.removeItem("campaign_decoded_data");
-      window.location.href = "https://jojoapp.in";
+      window.location.href = "https://jojoapp.in/appInstall";
     }
   };
 

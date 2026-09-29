@@ -348,7 +348,7 @@ export const FreeTrialForm: React.FC<FreeTrialFormProps> = ({
       >
         {footerNote
           ? renderFooterWithLinks(footerNote)
-          : 'By proceeding with the "Subscribe Now" process, we might send a one-time verification code to the Phone number/Email linked to your account. Standard message and data rates may apply.'}
+          : 'By proceeding with the \"login\" process, we might send a one-time verification code to the phone number linked to your account. Standard message and data rates may apply.'}
       </p>
 
       {/* 3D Coverflow Card Carousel below footerNote */}
