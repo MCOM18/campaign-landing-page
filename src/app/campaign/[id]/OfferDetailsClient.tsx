@@ -453,6 +453,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
 
       if (!isGoldUser) {
         setShowAuthModal(false);
+        toast.dismiss();
         toast.success("Authentication successful! Redirecting to payment...");
 
         if (selectedPlanObj?.plan) {
@@ -497,6 +498,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const handleApplyCoupon = async () => {
     const codeToApply = couponInput.trim();
     if (!codeToApply) {
+      toast.dismiss();
       toast.error("Please enter a coupon code");
       return;
     }
@@ -562,6 +564,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
           message: errMsg,
         });
 
+        toast.dismiss();
         toast.error(errMsg);
         setIsApplyingCoupon(false);
         return;
@@ -606,6 +609,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         message: errMsg,
       });
 
+      toast.dismiss();
       toast.error(errMsg);
     } finally {
       setIsApplyingCoupon(false);

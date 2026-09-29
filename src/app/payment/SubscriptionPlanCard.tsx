@@ -253,6 +253,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         });
 
         setCouponError(errorMsg);
+        toast.dismiss();
         toast.error(errorMsg);
       }
     } catch (err: any) {
@@ -274,6 +275,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       });
 
       setCouponError(errorMsg);
+      toast.dismiss();
       toast.error(errorMsg);
     } finally {
       setIsVerifying(false);
@@ -820,6 +822,7 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
         });
 
         setCouponError(errorMsg);
+        toast.dismiss();
         toast.error(errorMsg);
       }
     } catch (err: any) {
@@ -841,6 +844,7 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
       });
 
       setCouponError(errorMsg);
+      toast.dismiss();
       toast.error(errorMsg);
     } finally {
       setIsVerifying(false);

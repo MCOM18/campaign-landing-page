@@ -29,6 +29,7 @@ function PaymentPage() {
   const [activeAppLoader, setActiveAppLoader] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [lockTimeLeft, setLockTimeLeft] = useState<number | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const handleCouponExpire = () => {
     sessionStorage.removeItem("applied_coupon_code");
@@ -36,6 +37,7 @@ function PaymentPage() {
     sessionStorage.removeItem("coupon_lock_timestamp");
     setAppliedCoupon(null);
     setLockTimeLeft(null);
+    toast.dismiss();
     toast.error("Your coupon code has expired. The price has been updated.");
 
     const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
@@ -72,6 +74,7 @@ function PaymentPage() {
       const stored = localStorage.getItem("selectedPlan");
 
       if (!sessionId || !userId || !stored) {
+        toast.dismiss();
         toast.error("Please log in first.");
         router.push("/");
         return;
@@ -256,11 +259,13 @@ function PaymentPage() {
 
   useEffect(() => {
     if (isMounted && !selectedPlan) {
+      toast.dismiss();
       toast.error("Please select a plan first");
       router.push("/");
       return;
     }
     if (isMounted && selectedPlan && !pricingData) {
+      toast.dismiss();
       toast.error("Invalid plan pricing. Please try again.");
       router.push("/");
       return;
@@ -407,6 +412,7 @@ function PaymentPage() {
     executePayment(selectedPlan, paymentMethod, paymentDetails, pricingData, data)
       .then((res: any) => {
         if (res?.success) {
+          setIsNavigating(true);
           router.push("/success");
         } else {
           setFailedErrorMsg(res?.error || "Payment verification failed. Please try again.");
@@ -478,6 +484,7 @@ function PaymentPage() {
             }
 
             if (!pricingData) {
+              toast.dismiss();
               toast.error("Pricing data not available");
               return;
             }
@@ -494,8 +501,10 @@ function PaymentPage() {
                     .then((res: any) => {
                       if (!res) return;
                       setActiveAppLoader(null);
-                      if (res?.success) router.push("/success");
-                      else {
+                      if (res?.success) {
+                        setIsNavigating(true);
+                        router.push("/success");
+                      } else {
                         setFailedErrorMsg(res?.error || "Payment verification failed.");
                         setShowFailedPopup(true);
                       }
@@ -508,6 +517,7 @@ function PaymentPage() {
                 })
                 .catch((err) => {
                   setActiveAppLoader(null);
+                  toast.dismiss();
                   toast.error(err?.message || "Failed to prepare payment.");
                 });
             } else {
@@ -542,6 +552,16 @@ function PaymentPage() {
               router.push("/");
             }}
           />
+        </div>
+      )}
+
+      {isNavigating && (
+        <div className="pay-overlay">
+          <div className="pay-overlay-card">
+            <div className="pay-spinner" />
+            <p className="pay-overlay-title">Redirecting to Success</p>
+            <p className="pay-overlay-subtitle">Please wait...</p>
+          </div>
         </div>
       )}
 
@@ -729,6 +749,7 @@ function PaymentPage() {
                                       }
 
                                       if (!pricingData) {
+                                        toast.dismiss();
                                         toast.error("Pricing data not available");
                                         return;
                                       }
@@ -751,8 +772,10 @@ function PaymentPage() {
                                           .then((res: any) => {
                                             if (!res) return; // if it was aborted earlier
                                             setActiveAppLoader(null);
-                                            if (res?.success) setShowSuccessPopup(true);
-                                            else {
+                                            if (res?.success) {
+                                              setIsNavigating(true);
+                                              router.push("/success");
+                                            } else {
                                               setFailedErrorMsg(res?.error || "Payment verification failed.");
                                               setShowFailedPopup(true);
                                             }
@@ -796,6 +819,7 @@ function PaymentPage() {
                                   }
 
                                   if (!pricingData) {
+                                    toast.dismiss();
                                     toast.error("Pricing data not available");
                                     return;
                                   }
@@ -818,8 +842,10 @@ function PaymentPage() {
                                       .then((res: any) => {
                                         if (!res) return;
                                         setActiveAppLoader(null);
-                                        if (res?.success) setShowSuccessPopup(true);
-                                        else {
+                                        if (res?.success) {
+                                          setIsNavigating(true);
+                                          router.push("/success");
+                                        } else {
                                           setFailedErrorMsg(res?.error || "Payment verification failed.");
                                           setShowFailedPopup(true);
                                         }
