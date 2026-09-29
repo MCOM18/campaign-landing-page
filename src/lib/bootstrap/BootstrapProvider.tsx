@@ -102,8 +102,8 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
           city: finalGeoData.city || '',
         };
 
-        // STEP 2.5: Fetch Special Offer Plan — only on /campaign route
-        const isCampaignRoute = pathname?.startsWith("/campaign");
+        // STEP 2.5: Fetch Special Offer Plan — only on /offer route
+        const isCampaignRoute = pathname?.startsWith("/offer");
         if (isCampaignRoute) {
           try {
             logger.info("[Bootstrap] Fetching special offer plan (campaign route only)...");

@@ -12,6 +12,7 @@ export type AnalyticsEvent =
   | "payment_success"
   | "payment_failure"
   | "campaign_landing_impression"
+  | "campaign_clicked"
   | "initiate_checkout"
   | "all_plan_data"
   | "coupon_code_applied"

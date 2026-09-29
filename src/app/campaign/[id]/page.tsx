@@ -17,4 +17,4 @@ export default function OfferDetailsPage({ params }: PageProps) {
       <OfferDetailsClient params={params} />
     </Suspense>
   );
-}
+}export const dynamicParams = true;

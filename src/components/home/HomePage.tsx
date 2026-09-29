@@ -193,7 +193,7 @@ export default function HomePage() {
 
       const campaignIdQuery = url.searchParams.get("campaignId") || url.searchParams.get("campaign_id");
       if (campaignIdQuery) {
-        router.push(`/offer/${campaignIdQuery}`);
+        router.push(`/campaign/${campaignIdQuery}`);
         return;
       }
 
@@ -695,7 +695,7 @@ export default function HomePage() {
         if (pendingCampaignId) {
           clearTimeout(safetyTimeout);
           setIsVerifying(false);
-          router.push(`/offer/${pendingCampaignId}`);
+          router.push(`/campaign/${pendingCampaignId}`);
           return;
         }
 

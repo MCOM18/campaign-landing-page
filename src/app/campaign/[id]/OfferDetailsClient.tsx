@@ -42,7 +42,7 @@ const getCampaignIdFromPath = (
   if (typeof window !== "undefined") {
     const pathname = window.location.pathname;
     const segments = pathname.split("/").filter(Boolean);
-    const offerIndex = segments.indexOf("offer");
+    const offerIndex = segments.indexOf("campaign");
     if (offerIndex !== -1 && segments[offerIndex + 1]) {
       const urlId = decodeURIComponent(segments[offerIndex + 1]).replace(/\.html$/, "");
       if (urlId && urlId !== "default") {
@@ -137,15 +137,14 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
 
     try {
       let sourceLink = window.location.href;
+      const stored = localStorage.getItem("source_link");
+      
       if (sourceLink.includes("utm_") || sourceLink.includes("source_link=")) {
         localStorage.setItem("source_link", sourceLink);
+      } else if (!stored || !stored.includes(window.location.pathname)) {
+        localStorage.setItem("source_link", sourceLink);
       } else {
-        const stored = localStorage.getItem("source_link");
-        if (stored) {
-          sourceLink = stored;
-        } else {
-          localStorage.setItem("source_link", sourceLink);
-        }
+        sourceLink = stored;
       }
 
       const devicePayload = buildDevicePayload();
@@ -159,6 +158,12 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         event_name: "campaign_landing_impression",
         offer_id: campaignId,
         offer_name: campaignDetails.campaignName || campaignDetails.name || "",
+        campaignId: campaignDetails.campaignId || "",
+        campaignName: campaignDetails.campaignName || "",
+        campaignRefId: campaignDetails.campaignRefId || "",
+        sponsorId: campaignDetails.sponsorId || "",
+        offerId: offerData?.offerDetails?.offerId || "",
+        offerType: offerData?.offerDetails?.offerType || "",
         campaign_type: "offer_campaign",
         deviceTypeCode: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
         platform: "web",
@@ -519,6 +524,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       browser: devicePayload.browser || "unknown",
       country: geoData?.country_code || "IN",
       source_link: sourceLink,
+      user_journey: "CAMPAIGN_FLOW_WISE_APPLIED",
       ...utmParams,
       timestamp: new Date().toISOString(),
     };
@@ -665,6 +671,57 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     </div>
   );
 
+  const handleLoginClick = () => {
+    if (campaignId) {
+      sessionStorage.setItem("pending_campaign_id", campaignId);
+    }
+    
+    try {
+      let sourceLink = "";
+      if (typeof window !== "undefined") {
+        sourceLink = window.location.href;
+      }
+
+      const devicePayload = buildDevicePayload();
+      const geoData = getUserGeoLocation();
+      const utmParams = parseSourceLinkParams(sourceLink);
+
+      const offerDataLocal = data?.data?.data || data?.data || data || {};
+      const campaignDetailsLocal = offerDataLocal?.campaignDetails || {};
+
+      const clickPayload = {
+        event_name: "campaign_clicked",
+        offer_id: campaignId,
+        offer_name: campaignDetailsLocal.campaignName || campaignDetailsLocal.name || "",
+        campaignId: campaignDetailsLocal.campaignId || "",
+        campaignName: campaignDetailsLocal.campaignName || "",
+        campaignRefId: campaignDetailsLocal.campaignRefId || "",
+        sponsorId: campaignDetailsLocal.sponsorId || "",
+        offerId: offerDataLocal?.offerDetails?.offerId || "",
+        offerType: offerDataLocal?.offerDetails?.offerType || "",
+        campaign_type: "offer_campaign",
+        deviceTypeCode: DEFAULT_HEADER_VALUES.DEVICE_TYPE_CODE,
+        platform: "web",
+        os: devicePayload.os || "unknown",
+        browser: devicePayload.browser || "unknown",
+        language: DEFAULT_HEADER_VALUES.LANGUAGE,
+        lat: geoData?.lat || null,
+        lng: geoData?.lng || null,
+        country: geoData?.country_code || "IN",
+        source_link: sourceLink,
+        ...utmParams,
+        timestamp: new Date().toISOString(),
+      };
+
+      logger.info("[OfferDetails Analytics] Click event:", clickPayload);
+      trackEvent("campaign_clicked", clickPayload);
+    } catch (err) {
+      logger.error("[OfferDetails Analytics] Error tracking click:", err);
+    }
+    
+    router.push("/login");
+  };
+
   const isLoggedIn = checkIsLoggedIn();
 
   return (
@@ -807,12 +864,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                   {!isLoggedIn ? (
                     <div style={{ width: "100%", display: "flex", justifyContent: "center", marginBottom: "28px" }}>
                       <button
-                        onClick={() => {
-                          if (campaignId) {
-                            sessionStorage.setItem("pending_campaign_id", campaignId);
-                          }
-                          router.push("/login");
-                        }}
+                        onClick={handleLoginClick}
                         className="btn-primary active"
                         style={{
                           width: "100%",
@@ -965,12 +1017,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                     {!isLoggedIn ? (
                       <div style={{ width: "100%", display: "flex", justifyContent: "flex-start", marginTop: "16px" }}>
                         <button
-                          onClick={() => {
-                            if (campaignId) {
-                              sessionStorage.setItem("pending_campaign_id", campaignId);
-                            }
-                            router.push("/login");
-                          }}
+                          onClick={handleLoginClick}
                           className="btn-primary active"
                           style={{
                             width: "100%",

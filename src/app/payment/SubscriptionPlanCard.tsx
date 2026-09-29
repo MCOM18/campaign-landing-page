@@ -157,6 +157,11 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     const utmParams = parseSourceLinkParams(sourceLink);
     const userId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
 
+    const isCampaignFlow = sourceLink.includes("/campaign/");
+    const userJourney = isCampaignFlow
+      ? "CAMPAIGN_FLOW_WISE_APPLIED"
+      : "GENERAL_FLOW_WISE_APPLIED";
+
     const baseEventPayload = {
       coupon_code: cleanCode,
       user_id: userId,
@@ -167,6 +172,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       browser: devicePayload.browser || "unknown",
       country: geoData?.country_code || "IN",
       source_link: sourceLink,
+      user_journey: userJourney,
       ...utmParams,
       timestamp: new Date().toISOString(),
     };

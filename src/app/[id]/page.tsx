@@ -12,7 +12,7 @@ export default async function DynamicCampaignRedirect({ params }: PageProps) {
   const { id } = await params;
 
   if (id) {
-    redirect(`/offer/${id}`);
+    redirect(`/campaign/${id}`);
   } else {
     redirect("/");
   }

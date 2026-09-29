@@ -387,7 +387,7 @@ export default function LoginPage() {
             ? sessionStorage.getItem("pending_campaign_id") || ""
             : "";
         if (pendingCampaignIdForRedirect) {
-          router.push(`/offer/${encodeURIComponent(pendingCampaignIdForRedirect)}`);
+          router.push(`/campaign/${encodeURIComponent(pendingCampaignIdForRedirect)}`);
         } else {
           router.push("/payment");
         }

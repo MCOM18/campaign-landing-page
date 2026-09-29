@@ -40,7 +40,7 @@ function PaymentPage() {
 
     const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
     if (pendingCampaignId) {
-      router.push(`/offer/${pendingCampaignId}`);
+      router.push(`/campaign/${pendingCampaignId}`);
     } else {
       router.push("/");
     }
