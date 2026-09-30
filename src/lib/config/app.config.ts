@@ -372,6 +372,13 @@ export const AppConfig = {
             return undefined;
         }
     },
+    set specialOfferPlan(value: unknown) {
+        try {
+            getAppConfig().specialOfferPlan = value;
+        } catch {
+            // ignore
+        }
+    },
     get movies() {
         try {
             return getAppConfig().movies || [];

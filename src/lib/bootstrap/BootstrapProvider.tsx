@@ -1,13 +1,12 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { fetchConfig, setAppConfig } from "@lib/config/app.config";
 import { fetchGeoData } from "@lib/geo/geo.service";
 import { getCachedGeo, setCachedGeo } from "@lib/geo/geo.cache";
 import { logger } from "@lib/logger/logger";
 import { BootstrapContext } from "./BootstrapContext";
-import { getAllPlans } from "@/features/subscription/api/getAllPlans";
 import { getSpecialOfferPlan } from "@/features/subscription/api/getSpecialOfferPlan";
 
 interface BootstrapProviderProps {
@@ -18,6 +17,7 @@ type BootstrapState = "loading" | "ready" | "error";
 
 export function BootstrapProvider({ children }: BootstrapProviderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [state, setState] = useState<BootstrapState>("loading");
   const [error, setError] = useState<string | null>(null);
   const [isAppReady, setIsAppReady] = useState(false);
@@ -108,20 +108,34 @@ export function BootstrapProvider({ children }: BootstrapProviderProps) {
           try {
             logger.info("[Bootstrap] Fetching special offer plan (campaign route only)...");
             const offerResponse = await getSpecialOfferPlan({
-              country: config.geoLocationData.countryCode || "IN",
-              countryCode: config.geoLocationData.countryCode || "IN",
-              sState: config.geoLocationData.region || "",
-              city: config.geoLocationData.city || "",
+              country: config.geoLocationData?.countryCode || "IN",
+              countryCode: config.geoLocationData?.countryCode || "IN",
+              sState: config.geoLocationData?.region || "",
+              city: config.geoLocationData?.city || "",
               bIsRegistered: false,
               fcmToken: ""
             });
-            config.specialOfferPlan = offerResponse.data;
-            logger.info("[Bootstrap] Special offer plan loaded successfully", offerResponse.data);
+            config.specialOfferPlan = offerResponse?.data ?? null;
+            logger.info("[Bootstrap] Special offer plan loaded successfully", offerResponse?.data);
+
+            const hasValidOffer = Boolean(
+              offerResponse?.data &&
+              (typeof offerResponse.data === "object" ? Object.keys(offerResponse.data).length > 0 : true)
+            );
+
+            if (!hasValidOffer) {
+              logger.warn("[Bootstrap] Special offer plan data is null. Navigating to /");
+              const search = typeof window !== "undefined" && window.location.search ? window.location.search : "";
+              router.replace(`/${search}`);
+            }
           } catch (offerError) {
             // Special offer plan failure should NOT block app
             logger.warn("[Bootstrap] Failed to fetch special offer plan", {
               error: offerError instanceof Error ? offerError.message : 'Unknown'
             });
+            config.specialOfferPlan = null;
+            const search = typeof window !== "undefined" && window.location.search ? window.location.search : "";
+            router.replace(`/${search}`);
           }
         } else {
           logger.info("[Bootstrap] Skipping special offer plan (not a campaign route)");

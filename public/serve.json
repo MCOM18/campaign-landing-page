@@ -3,6 +3,8 @@
   "rewrites": [
     { "source": "/offer/:id", "destination": "/offer/default/index.html" },
     { "source": "/offer/:id/**", "destination": "/offer/default/index.html" },
+    { "source": "/campaign/:id", "destination": "/campaign/default/index.html" },
+    { "source": "/campaign/:id/**", "destination": "/campaign/default/index.html" },
     { "source": "/link=**", "destination": "/index.html" },
     { "source": "**/link=**", "destination": "/index.html" }
   ]

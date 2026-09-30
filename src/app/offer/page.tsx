@@ -17,6 +17,7 @@ import { appConfig, AppConfig } from "@/lib/config/app.config";
 import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import { REGEX } from "@/lib/constants/regex";
 import { logger } from "@/lib/logger/logger";
+import { getSpecialOfferPlan } from "@/features/subscription/api/getSpecialOfferPlan";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -115,6 +116,8 @@ export default function Home() {
 
   const [freshPlans, setFreshPlans] = useState<any>(null);
   const [queryString, setQueryString] = useState("");
+  const [offerPlan, setOfferPlan] = useState<any>(() => AppConfig.specialOfferPlan);
+  const [isOfferFetching, setIsOfferFetching] = useState<boolean>(false);
 
   const lottieMobileRef = useRef<any>(null);
   const lottieDesktopRef = useRef<any>(null);
@@ -123,8 +126,14 @@ export default function Home() {
 
   const impressionTracked = useRef(false);
 
+  const currentSpecialOffer = offerPlan ?? AppConfig.specialOfferPlan;
+  const hasValidOffer = Boolean(
+    currentSpecialOffer &&
+    (typeof currentSpecialOffer === "object" ? Object.keys(currentSpecialOffer).length > 0 : true)
+  );
+
   useEffect(() => {
-    if (typeof window === "undefined" || !isAppReady || impressionTracked.current) return;
+    if (typeof window === "undefined" || !isAppReady || !hasValidOffer || impressionTracked.current) return;
     impressionTracked.current = true;
     setQueryString(window.location.search);
 
@@ -270,11 +279,51 @@ export default function Home() {
     }
   }, [lottieMobileRef.current]);
 
-  const specialOffer = AppConfig.specialOfferPlan;
-
   useEffect(() => {
-    const firstGroup = specialOffer?.aAllSubscriptionPlans?.[0];
-    const theme = specialOffer?.sTheme || specialOffer?.theme || firstGroup?.sTheme || firstGroup?.theme || "theme-default";
+    if (!isAppReady) return;
+
+    if (offerPlan === undefined && AppConfig.specialOfferPlan === undefined) {
+      setIsOfferFetching(true);
+      getSpecialOfferPlan({
+        country: AppConfig.geoLocationData?.countryCode || "IN",
+        countryCode: AppConfig.geoLocationData?.countryCode || "IN",
+        sState: AppConfig.geoLocationData?.region || "",
+        city: AppConfig.geoLocationData?.city || "",
+        bIsRegistered: false,
+        fcmToken: "",
+      })
+        .then((res) => {
+          const data = res?.data ?? null;
+          AppConfig.specialOfferPlan = data;
+          setOfferPlan(data);
+          if (!data) {
+            logger.warn("[OfferPage] Special offer plan API returned null data. Navigating to /");
+            const search = typeof window !== "undefined" && window.location.search ? window.location.search : "";
+            router.replace(`/${search}`);
+          }
+        })
+        .catch((err) => {
+          logger.warn("[OfferPage] Failed to fetch special offer plan", err);
+          AppConfig.specialOfferPlan = null;
+          setOfferPlan(null);
+          const search = typeof window !== "undefined" && window.location.search ? window.location.search : "";
+          router.replace(`/${search}`);
+        })
+        .finally(() => {
+          setIsOfferFetching(false);
+        });
+      return;
+    }
+
+    if (!hasValidOffer) {
+      logger.warn("[OfferPage] Special offer plan data is null or empty. Navigating to /");
+      const search = typeof window !== "undefined" && window.location.search ? window.location.search : "";
+      router.replace(`/${search}`);
+      return;
+    }
+
+    const firstGroup = currentSpecialOffer?.aAllSubscriptionPlans?.[0];
+    const theme = currentSpecialOffer?.sTheme || currentSpecialOffer?.theme || firstGroup?.sTheme || firstGroup?.theme || "theme-default";
 
     document.body.classList.forEach((cls) => {
       if (cls.startsWith("theme-")) {
@@ -287,7 +336,9 @@ export default function Home() {
     return () => {
       document.body.classList.remove(theme);
     };
-  }, [specialOffer]);
+  }, [isAppReady, offerPlan, hasValidOffer, currentSpecialOffer, router]);
+
+  const specialOffer = currentSpecialOffer;
 
   const subscriptionGroup = specialOffer?.oSubscriptionGroup;
   const product = subscriptionGroup?.aSubscriptionProducts?.[0];
@@ -680,7 +731,7 @@ export default function Home() {
     }
   };
 
-  if (!isAppReady) {
+  if (!isAppReady || isOfferFetching || !hasValidOffer) {
     return (
       <div
         style={{
@@ -696,7 +747,7 @@ export default function Home() {
         }}
       >
         <div className="premium-loader" />
-        <p style={{ color: "#ffffff", fontSize: "15px" }}>Loading settings...</p>
+        <p style={{ color: "#ffffff", fontSize: "15px" }}>Loading...</p>
       </div>
     );
   }
