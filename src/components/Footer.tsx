@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import footerData from "@/lib/data/footer.data.json";
 import { env } from "@/lib/config/env";
 
@@ -12,13 +11,6 @@ const SOCIAL_ICON_MAP: Record<string, string> = {
 };
 
 export default function Footer() {
-  const [queryString, setQueryString] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setQueryString(window.location.search);
-    }
-  }, []);
 
   return (
     <footer className="web-footer-container">
@@ -26,7 +18,7 @@ export default function Footer() {
       <div className="mobile-footer-wrapper">
         {/* 1. Logo First */}
         <div style={{ marginBottom: "16px" }}>
-          <a href="https://jojoapp.in/" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
+          <a href="https://jojoapp.in/?utm_source=campaign_page&utm_name=campaign_page" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
             <img
               src="/assets/plain_logo.svg"
               alt="JOJO Logo"
@@ -38,7 +30,7 @@ export default function Footer() {
         {/* 2. All Menus After Logo */}
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
           <a
-            href={`https://jojoapp.in/terms-conditions${queryString}`}
+            href={`https://jojoapp.in/terms-conditions?utm_source=campaign_page&utm_name=campaign_page`}
             target="_blank"
             rel="noopener noreferrer"
             className="web-footer-link"
@@ -47,7 +39,7 @@ export default function Footer() {
             Terms & Conditions
           </a>
           <a
-            href={`https://jojoapp.in/privacy-policy${queryString}`}
+            href={`https://jojoapp.in/privacy-policy?utm_source=campaign_page&utm_name=campaign_page`}
             target="_blank"
             rel="noopener noreferrer"
             className="web-footer-link"
@@ -56,7 +48,7 @@ export default function Footer() {
             Privacy Policy
           </a>
           <a
-            href="https://jojolimited.com/career"
+            href="https://jojolimited.com/career?utm_source=campaign_page&utm_name=campaign_page"
             target="_blank"
             rel="noopener noreferrer"
             className="web-footer-link"
@@ -65,7 +57,7 @@ export default function Footer() {
             Careers
           </a>
           <a
-            href="https://jojolimited.com/contact"
+            href="https://jojolimited.com/contact?utm_source=campaign_page&utm_name=campaign_page"
             target="_blank"
             rel="noopener noreferrer"
             className="web-footer-link"
@@ -74,7 +66,7 @@ export default function Footer() {
             Contact us
           </a>
           <a
-            href="https://help.jojoapp.in/en/support/home"
+            href="https://help.jojoapp.in/en/support/home?utm_source=campaign_page&utm_name=campaign_page"
             target="_blank"
             rel="noopener noreferrer"
             className="web-footer-link"
@@ -166,7 +158,7 @@ export default function Footer() {
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "4px", marginTop: "1rem" }}>
             <a
-              href="https://jojolimited.com/"
+              href="https://jojolimited.com/?utm_source=campaign_page&utm_name=campaign_page"
               target="_blank"
               rel="noopener noreferrer"
               style={{ display: "flex", alignItems: "center", gap: "4px", textDecoration: "none", cursor: "pointer" }}
@@ -195,7 +187,7 @@ export default function Footer() {
         <div className="web-footer-grid">
           <div className="web-footer-column">
             <a
-              href={`https://jojoapp.in/terms-conditions${queryString}`}
+              href={`https://jojoapp.in/terms-conditions?utm_source=campaign_page&utm_name=campaign_page`}
               target="_blank"
               rel="noopener noreferrer"
               className="web-footer-link"
@@ -204,7 +196,7 @@ export default function Footer() {
               Terms & Conditions
             </a>
             <a
-              href={`https://jojoapp.in/privacy-policy${queryString}`}
+              href={`https://jojoapp.in/privacy-policy?utm_source=campaign_page&utm_name=campaign_page`}
               target="_blank"
               rel="noopener noreferrer"
               className="web-footer-link"
@@ -213,7 +205,7 @@ export default function Footer() {
               Privacy Policy
             </a>
             <div style={{ marginTop: "1rem" }}>
-              <a href="https://jojoapp.in/" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
+              <a href="https://jojoapp.in/?utm_source=campaign_page&utm_name=campaign_page" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
                 <img
                   src="/assets/plain_logo.svg"
                   alt="JOJO Logo"
@@ -225,7 +217,7 @@ export default function Footer() {
 
           <div className="web-footer-column">
             <a
-              href="https://jojolimited.com/career"
+              href="https://jojolimited.com/career?utm_source=campaign_page&utm_name=campaign_page"
               target="_blank"
               rel="noopener noreferrer"
               className="web-footer-link"
@@ -234,7 +226,7 @@ export default function Footer() {
               Careers
             </a>
             <a
-              href="https://jojolimited.com/contact"
+              href="https://jojolimited.com/contact?utm_source=campaign_page&utm_name=campaign_page"
               target="_blank"
               rel="noopener noreferrer"
               className="web-footer-link"
@@ -243,7 +235,7 @@ export default function Footer() {
               Contact us
             </a>
             <a
-              href="https://help.jojoapp.in/en/support/home"
+              href="https://help.jojoapp.in/en/support/home?utm_source=campaign_page&utm_name=campaign_page"
               target="_blank"
               rel="noopener noreferrer"
               className="web-footer-link"
@@ -332,7 +324,7 @@ export default function Footer() {
 
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "4px", marginTop: "1rem" }}>
               <a
-                href="https://jojolimited.com/"
+                href="https://jojolimited.com/?utm_source=campaign_page&utm_name=campaign_page"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ display: "flex", alignItems: "center", gap: "4px", textDecoration: "none", cursor: "pointer" }}

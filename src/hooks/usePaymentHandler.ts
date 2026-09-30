@@ -743,21 +743,54 @@ export const usePaymentHandler = () => {
           const errPayload = error instanceof Error ? error.message : JSON.stringify(error);
           logger.error(`Payment error: ${errPayload}`);
           const msg = error?.error?.description || error?.error?.reason || "Payment failed. Please try again.";
-          toast.error(msg);
-          // window.alert("Payment failed: " + msg);
-          setIsProcessing(false);
-
           const errPaymentId = error?.error?.metadata?.payment_id || error?.metadata?.payment_id;
           const errOrderId = error?.error?.metadata?.order_id || error?.metadata?.order_id || orderDetails?.order_id;
           const errCode = error?.error?.code || error?.code;
 
+          // FULL-PROOF FIX for intent issues:
+          // In intent flows, the modal might close and fire an error (like 'payment_cancelled') 
+          // while the payment actually succeeded or is pending verification. 
+          // We must check our verify API first before throwing an error.
           if (initiateData?.sToken) {
+            try {
+              const sProviderToken = localStorage.getItem("payment_sProviderToken");
+              if (sProviderToken) {
+                // Poll using the payment ID if available, otherwise order ID
+                const result = await pollVerifyPayment({
+                  ePaymentProvider: initiateData.ePaymentGateway || "RZP",
+                  sOrderId: errPaymentId || errOrderId || initiateData.oOrderDetails?.order_id || "",
+                  sProviderToken,
+                  sToken: initiateData.sToken,
+                }, 5, 2000); // 5 attempts for error fallback
+
+                if (result.success) {
+                  // It actually succeeded!
+                  toast.success("Payment successful! Verified.");
+                  await registerPaymentStatus(PurchaseStatus.SUCCESS, initiateData.sToken, initiateData.ePaymentGateway || "RZP");
+                  
+                  await handlePaymentSuccess({
+                    razorpay_payment_id: errPaymentId || errOrderId || initiateData.oOrderDetails?.order_id || "",
+                    razorpay_order_id: errOrderId || initiateData.oOrderDetails?.order_id || "",
+                    razorpay_signature: "", 
+                  }, selectedPlan, pricingData, paymentMethod);
+                  
+                  resolve({ success: true });
+                  return; // Don't proceed to fail the payment
+                }
+              }
+            } catch (pollErr) {
+              logger.warn("Fallback polling during error failed", pollErr);
+            }
+
             const isCancelled = msg.toLowerCase().includes("cancel") ||
               (error?.error?.reason === "payment_cancelled") ||
               (error?.reason === "payment_cancelled");
             const finalStatus = isCancelled ? PurchaseStatus.CANCELLED : PurchaseStatus.FAILED;
             await registerPaymentStatus(finalStatus, initiateData.sToken, initiateData.ePaymentGateway || "RZP");
           }
+
+          toast.error(msg);
+          setIsProcessing(false);
 
           // Track new unified payment_failure event
           try {
