@@ -34,6 +34,7 @@ interface PaymentInitData {
   expiresAt?: number;
   createdAt?: number;
   version?: string;
+  sOrderId?: string;
 }
 
 interface InitiateOptions {
@@ -674,6 +675,7 @@ export const usePaymentHandler = () => {
   const executePayment = (
     selectedPlan: any, paymentMethod: string, paymentDetails: any, pricingData: PricingData, initiateData: PaymentInitData, intentApp?: string, p0?: () => void): Promise<any> => {
     return new Promise((resolve, reject) => {
+      let isResolved = false;
       try {
         // Script must already be loaded by preparePayment
         if (typeof window.Razorpay !== "function") {
@@ -723,6 +725,8 @@ export const usePaymentHandler = () => {
 
 
         rzp.on("payment.success", async (response: any) => {
+          if (isResolved) return;
+          isResolved = true;
           console.log("Successs---->> response---->>", response)
           toast.success("Payment successful! Verifying...");
           // window.alert("Congratulation! Payment successful.");
@@ -740,6 +744,8 @@ export const usePaymentHandler = () => {
         });
 
         rzp.on("payment.error", async (error: any) => {
+          if (isResolved) return;
+          isResolved = true;
           const errPayload = error instanceof Error ? error.message : JSON.stringify(error);
           logger.error(`Payment error: ${errPayload}`);
           const msg = error?.error?.description || error?.error?.reason || "Payment failed. Please try again.";
@@ -841,6 +847,40 @@ export const usePaymentHandler = () => {
         if (intentApp && intentApp !== "any") {
           const appName = intentApp === "google_pay" ? "gpay" : intentApp;
           rzp.createPayment(paymentData, { app: appName });
+          
+          // Proactive polling for intent (since Razorpay callbacks may never fire upon return)
+          if (initiateData?.sToken) {
+            const sProviderToken = localStorage.getItem("payment_sProviderToken");
+            if (sProviderToken) {
+              // 60 attempts * 3s delay = 3 minutes of polling
+              pollVerifyPayment({
+                ePaymentProvider: initiateData.ePaymentGateway || "RZP",
+                sOrderId: initiateData.oOrderDetails?.order_id || initiateData.sOrderId,
+                sProviderToken,
+                sToken: initiateData.sToken,
+              }, 60, 3000)
+                .then(async (result) => {
+                  if (isResolved) return;
+                  
+                  if (result.success) {
+                    isResolved = true;
+                    toast.success("Payment successful! Verified.");
+                    await registerPaymentStatus(PurchaseStatus.SUCCESS, initiateData.sToken, initiateData.ePaymentGateway || "RZP");
+                    await handlePaymentSuccess({
+                      razorpay_payment_id: initiateData.oOrderDetails?.order_id || "",
+                      razorpay_order_id: initiateData.oOrderDetails?.order_id || "",
+                      razorpay_signature: "",
+                    }, selectedPlan, pricingData, paymentMethod);
+                    resolve({ success: true });
+                  } else {
+                    isResolved = true;
+                    toast.error(result.error || "Payment verification failed or timed out.");
+                    reject(new Error(result.error || "Payment verification failed or timed out."));
+                  }
+                })
+                .catch(() => { /* ignore */ });
+            }
+          }
         } else {
           rzp.createPayment(paymentData);
         }
