@@ -5,7 +5,6 @@ const isStaticExport = process.env.NEXT_PUBLIC_DYNAMIC_BUILD !== "true" && proce
 const shouldRemoveConsole = process.env.NEXT_PUBLIC_CONSOLE_LOGGER_OFF === "false";
 
 const nextConfig: NextConfig = {
-  output: isStaticExport ? "export" : undefined,
   compiler: {
     removeConsole: shouldRemoveConsole,
   },
