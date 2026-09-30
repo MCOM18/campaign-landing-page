@@ -766,6 +766,14 @@ export default function HomePage() {
         {(isLoggedIn || step === TrialFormStep.PLANS) && (
           <button
             onClick={() => {
+              const userDataRaw = localStorage.getItem("userData");
+              const user = userDataRaw ? JSON.parse(userDataRaw) : null;
+              trackEvent("logout", {
+                reason: "user_initiated",
+                user_id: user?.id || localStorage.getItem("user_id") || "",
+                email: user?.email || "",
+                phone: user?.phone || localStorage.getItem("user_phone") || "",
+              });
               localStorage.clear();
               sessionStorage.clear();
               router.push("/");

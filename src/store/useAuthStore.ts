@@ -94,6 +94,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     trackEvent("logout", {
       reason: "user_initiated",
       user_id: currentUser?.id || "",
+      email: currentUser?.email || "",
+      phone: currentUser?.phone || "",
     });
 
     // Reset analytics user
