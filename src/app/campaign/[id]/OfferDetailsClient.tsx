@@ -1260,6 +1260,7 @@ function renderGoldOfferCard({
 
   // 2. Savings / Discount Badge (e.g. "20% OFF" or "7 Day Free Trial")
   const discountLabel = offerDetails?.offerName || "";
+  const isFreeTrial = discountLabel.toLowerCase().includes("free") || discountLabel.toLowerCase().includes("trial");
 
   // 3. Currency and Prices (e.g. original ₹499, final ₹399.2)
   const currencySym = planObj?.currencySymbol || plan?.providerSku?.oPricing?.sCurrencySymbol || "₹";
@@ -1277,7 +1278,15 @@ function renderGoldOfferCard({
   const isYearly = validityDays >= 365 || validityUnit === "year" || (plan?.nValidityCount && plan.nValidityCount >= 12);
 
   const durationLabel = planTitle.toLowerCase().trim();
-  const subtext = plan?.sRenewalText || plan?.sDescription || (durationLabel ? `After ${durationLabel}` : "");
+
+  let subtext = plan?.sRenewalText || plan?.sDescription;
+  if (!subtext) {
+    if (offerDetails?.offerType === "FREE_TRIAL" && offerDetails?.freeTrialCount && offerDetails?.freeTrialUnit) {
+      subtext = `After ${offerDetails.freeTrialCount} ${offerDetails.freeTrialUnit}`;
+    } else {
+      subtext = durationLabel ? `After ${durationLabel}` : "";
+    }
+  }
 
   const recurringUnit = isYearly ? "year" : validityUnit;
   const recurringPrice =
@@ -1336,7 +1345,12 @@ function renderGoldOfferCard({
           marginBottom: "4px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{
+          display: "flex",
+          flexDirection: isFreeTrial ? "column" : "row",
+          alignItems: isFreeTrial ? "flex-start" : "center",
+          gap: isFreeTrial ? "2px" : "10px"
+        }}>
           <span style={{ fontSize: "17px", fontWeight: "700", color: "#1A0F00" }}>
             {planTitle}
           </span>
@@ -1386,6 +1400,7 @@ function renderGoldOfferCard({
             fontSize: "13px",
             color: "#3D2706",
             fontWeight: "500",
+            marginTop: "14px",
             marginBottom: "14px",
           }}
         >
