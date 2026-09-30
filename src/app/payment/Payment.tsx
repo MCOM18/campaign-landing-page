@@ -32,6 +32,15 @@ function PaymentPage() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   const handleCouponExpire = () => {
+    const expiredCoupon = sessionStorage.getItem("applied_coupon_code");
+    const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
+    trackEvent("event_expired", {
+      coupon_code: expiredCoupon || "",
+      plan_id: selectedPlan?.iSubscriptionGroupId || "",
+      plan_name: selectedPlan?.sTitle || selectedPlan?.sProductName || "",
+      campaign_id: pendingCampaignId || "",
+    });
+
     sessionStorage.removeItem("applied_coupon_code");
     sessionStorage.removeItem("coupon_lock_minutes");
     sessionStorage.removeItem("coupon_lock_timestamp");
@@ -40,7 +49,6 @@ function PaymentPage() {
     toast.dismiss();
     toast.error("Your coupon code has expired. The price has been updated.");
 
-    const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
     if (pendingCampaignId) {
       router.push(`/campaign/${pendingCampaignId}`);
     } else {
@@ -135,6 +143,10 @@ function PaymentPage() {
   // Countdown Timer for Coupon Lock
   useEffect(() => {
     if (lockTimeLeft === null) return;
+    if (isProcessing || isPreparing) {
+      setLockTimeLeft(null);
+      return;
+    }
 
     if (lockTimeLeft <= 0) {
       handleCouponExpire();
@@ -154,7 +166,7 @@ function PaymentPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [lockTimeLeft, router]);
+  }, [lockTimeLeft, router, isProcessing, isPreparing]);
 
   const isOverseasUser = countryCode !== appConfig.DEFAULT_COUNTRY_NAME;
 
@@ -632,7 +644,9 @@ function PaymentPage() {
           {/* Back header */}
           <div
             className="pay-head"
+            style={{ opacity: (isProcessing || isPreparing) ? 0.5 : 1, pointerEvents: (isProcessing || isPreparing) ? "none" : "auto" }}
             onClick={() => {
+              if (isProcessing || isPreparing) return;
               localStorage.removeItem("payment_init_data");
               localStorage.removeItem("payment_sToken");
               localStorage.removeItem("payment_sProviderToken");
@@ -648,7 +662,7 @@ function PaymentPage() {
               <span>Payment</span>
             </div>
             <div>
-              {lockTimeLeft !== null && lockTimeLeft > 0 && (
+              {lockTimeLeft !== null && lockTimeLeft > 0 && !isProcessing && !isPreparing && (
                 <span style={{ fontSize: "12px", fontWeight: "700", color: "#ff4a4a", background: "rgba(255, 74, 74, 0.1)", padding: "4px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px" }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4a4a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>

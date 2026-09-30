@@ -1278,7 +1278,15 @@ function renderGoldOfferCard({
   const isYearly = validityDays >= 365 || validityUnit === "year" || (plan?.nValidityCount && plan.nValidityCount >= 12);
 
   const durationLabel = planTitle.toLowerCase().trim();
-  const subtext = plan?.sRenewalText || plan?.sDescription || (durationLabel ? `After ${durationLabel}` : "");
+
+  let subtext = plan?.sRenewalText || plan?.sDescription;
+  if (!subtext) {
+    if (offerDetails?.offerType === "FREE_TRIAL" && offerDetails?.freeTrialCount && offerDetails?.freeTrialUnit) {
+      subtext = `After ${offerDetails.freeTrialCount} ${offerDetails.freeTrialUnit}`;
+    } else {
+      subtext = durationLabel ? `After ${durationLabel}` : "";
+    }
+  }
 
   const recurringUnit = isYearly ? "year" : validityUnit;
   const recurringPrice =

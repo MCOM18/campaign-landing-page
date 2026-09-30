@@ -134,7 +134,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   const product = effectivePlan?.product || effectivePlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0];
   const group = effectivePlan?.group || effectivePlan?.oSubscriptionGroup;
   const sku = effectivePlan?.sku || effectivePlan?.providerSku || product?.aProviderSkus?.[0];
-  const offer = offerDetailsProp || effectivePlan?.oOfferDetails || product?.oOfferDetails || sku?.oOfferDetails || planInput?.offerDetails;
+  const offer = offerDetailsProp || effectivePlan?.oOfferDetails || product?.oOfferDetails || sku?.oOfferDetails || planInput?.offerDetails || planInput?.oOfferDetails;
 
   const isCampaignOffer = !!(planInput?.isCampaignOffer || effectivePlan?.isCampaignOffer);
 
@@ -352,13 +352,28 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     validityUnit === "year" ||
     (effectivePlan?.nValidityCount && effectivePlan.nValidityCount >= 12);
 
+  const isFreeTrial = offer?.offerType === "FREE_TRIAL" || (discountLabel || "").toLowerCase().includes("free");
   const durationLabel = planTitle.toLowerCase().trim();
-  const subtext =
-    effectivePlan?.sRenewalText ||
-    effectivePlan?.sDescription ||
-    (isCampaignOffer && offer?.nValidityCount && offer?.sValidityDuration
-      ? `After ${offer.nValidityCount} ${offer.sValidityDuration}${offer.nValidityCount > 1 ? 's' : ''}`
-      : (durationLabel ? `After ${durationLabel}` : ""));
+  let subtext = "";
+  if (isFreeTrial && offer?.freeTrialCount && offer?.freeTrialUnit) {
+    subtext = `After ${offer.freeTrialCount} ${offer.freeTrialUnit}`;
+  } else if (isFreeTrial && discountLabel) {
+    const match = discountLabel.toLowerCase().match(/(\d+)\s*(month|day|year|week)/);
+    if (match) {
+      subtext = `After ${match[1]} ${match[2]}`;
+    } else {
+      subtext = effectivePlan?.sRenewalText || effectivePlan?.sDescription || (durationLabel ? `After ${durationLabel}` : "");
+    }
+  } else {
+    subtext = effectivePlan?.sRenewalText || effectivePlan?.sDescription;
+    if (!subtext) {
+      if (isCampaignOffer && offer?.nValidityCount && offer?.sValidityDuration) {
+        subtext = `After ${offer.nValidityCount} ${offer.sValidityDuration}${offer.nValidityCount > 1 ? 's' : ''}`;
+      } else {
+        subtext = durationLabel ? `After ${durationLabel}` : "";
+      }
+    }
+  }
 
   const recurringUnit = isYearly ? "year" : validityUnit;
   const cleanOrigPriceNum =
@@ -451,7 +466,12 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
             marginBottom: "4px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{
+            display: "flex",
+            flexDirection: isFreeTrial ? "column" : "row",
+            alignItems: isFreeTrial ? "flex-start" : "center",
+            gap: isFreeTrial ? "2px" : "10px"
+          }}>
             <span style={{
               fontSize: "18px",
               fontWeight: "700",
@@ -515,7 +535,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
               color: subTextColor,
               fontWeight: "400",
               marginBottom: "14px",
-              marginTop: "4px",
+              marginTop: "12px",
             }}
           >
             <span>{subtext}</span>

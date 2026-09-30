@@ -17,7 +17,8 @@ export type AnalyticsEvent =
   | "all_plan_data"
   | "coupon_code_applied"
   | "coupon_code_failed"
-  | "coupon_apply_result";
+  | "coupon_apply_result"
+  | "event_expired";
 
 /**
  * Single entry point for all frontend analytics tracking.
