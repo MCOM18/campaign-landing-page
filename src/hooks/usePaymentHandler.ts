@@ -378,13 +378,11 @@ export const usePaymentHandler = () => {
       const sToken = localStorage.getItem("payment_sToken");
       const sProviderToken = localStorage.getItem("payment_sProviderToken");
 
-      if (!sToken || !sProviderToken) throw new Error("Missing payment tokens");
-
       const result = await pollVerifyPayment({
         ePaymentProvider: "RZP",
         sOrderId: paymentId,
-        sProviderToken,
-        sToken,
+        sProviderToken: sProviderToken,
+        sToken: sToken,
       });
 
       if (result.success) {
@@ -424,15 +422,6 @@ export const usePaymentHandler = () => {
           } catch (error) {
             logger.warn("Optimistic TVOD update failed:", error);
           }
-        }
-
-        // Analytics
-        try {
-          if (AnalyticEvents?.svodPurchaseSuccess && matchedType === "SVOD") {
-            AnalyticEvents.svodPurchaseSuccess(selectedPlan, { user_id: userId }, "RAZORPAY", sToken, null);
-          }
-        } catch (error) {
-          logger.warn("Analytics error:", error);
         }
 
         // Track new unified payment_success event
@@ -600,6 +589,18 @@ export const usePaymentHandler = () => {
         }
       }
 
+      const appliedCoupon = localStorage.getItem("sCouponCode") || sessionStorage.getItem("applied_coupon_code") || null;
+
+      let finalOfferId = pricingData.offerId ||
+        selectedPlan?.providerSku?.oOfferDetails?.sOfferId ||
+        selectedPlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]?.oOfferDetails?.sOfferId ||
+        selectedPlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]?.aProviderSkus?.[0]?.oOfferDetails?.sOfferId ||
+        null;
+
+      if (appliedCoupon) {
+        finalOfferId = null;
+      }
+
       const payload = {
         iProviderSkuId: pricingData.skuId,
         nAmount: pricingData.price,
@@ -611,13 +612,9 @@ export const usePaymentHandler = () => {
         sPaymentMethod: paymentMethod,
         sPhone: userPhone,
         sPhoneCode: userPhoneCode,
-        sOfferId: pricingData.offerId ||
-          selectedPlan?.providerSku?.oOfferDetails?.sOfferId ||
-          selectedPlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]?.oOfferDetails?.sOfferId ||
-          selectedPlan?.oSubscriptionGroup?.aSubscriptionProducts?.[0]?.aProviderSkus?.[0]?.oOfferDetails?.sOfferId ||
-          null,
+        sOfferId: finalOfferId,
         sEmail: localStorage.getItem("user_email") || null,
-        sCouponCode: localStorage.getItem("sCouponCode") || null,
+        sCouponCode: appliedCoupon,
         sUtmSource: sUtmSource,
       };
 
@@ -773,13 +770,13 @@ export const usePaymentHandler = () => {
                   // It actually succeeded!
                   toast.success("Payment successful! Verified.");
                   await registerPaymentStatus(PurchaseStatus.SUCCESS, initiateData.sToken, initiateData.ePaymentGateway || "RZP");
-                  
+
                   await handlePaymentSuccess({
                     razorpay_payment_id: errPaymentId || errOrderId || initiateData.oOrderDetails?.order_id || "",
                     razorpay_order_id: errOrderId || initiateData.oOrderDetails?.order_id || "",
-                    razorpay_signature: "", 
+                    razorpay_signature: "",
                   }, selectedPlan, pricingData, paymentMethod);
-                  
+
                   resolve({ success: true });
                   return; // Don't proceed to fail the payment
                 }
@@ -847,7 +844,7 @@ export const usePaymentHandler = () => {
         if (intentApp && intentApp !== "any") {
           const appName = intentApp === "google_pay" ? "gpay" : intentApp;
           rzp.createPayment(paymentData, { app: appName });
-          
+
           // Proactive polling for intent (since Razorpay callbacks may never fire upon return)
           if (initiateData?.sToken) {
             const sProviderToken = localStorage.getItem("payment_sProviderToken");
@@ -861,7 +858,7 @@ export const usePaymentHandler = () => {
               }, 60, 3000)
                 .then(async (result) => {
                   if (isResolved) return;
-                  
+
                   if (result.success) {
                     isResolved = true;
                     toast.success("Payment successful! Verified.");

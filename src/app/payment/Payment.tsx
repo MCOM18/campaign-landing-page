@@ -90,6 +90,15 @@ function PaymentPage() {
 
       setIsAuthorized(true);
 
+      const historyRaw = localStorage.getItem("screen_history");
+      let history = historyRaw ? JSON.parse(historyRaw) : [];
+      const currentScreen = "/payment";
+      
+      if (history[history.length - 1] !== currentScreen) {
+        history.push(currentScreen);
+        localStorage.setItem("screen_history", JSON.stringify(history));
+      }
+
       // Removed trackLoginCompleted from here
 
 
@@ -650,10 +659,21 @@ function PaymentPage() {
               localStorage.removeItem("payment_init_data");
               localStorage.removeItem("payment_sToken");
               localStorage.removeItem("payment_sProviderToken");
-              if (typeof window !== "undefined" && window.history.length > 1) {
-                router.back();
-              } else {
-                router.push("/");
+              
+              if (typeof window !== "undefined") {
+                const historyRaw = localStorage.getItem("screen_history");
+                let history = historyRaw ? JSON.parse(historyRaw) : [];
+                // Pop the current /payment screen
+                if (history[history.length - 1] === "/payment") {
+                  history.pop();
+                }
+                localStorage.setItem("screen_history", JSON.stringify(history));
+
+                if (window.history.length > 1) {
+                  router.back();
+                } else {
+                  router.push("/");
+                }
               }
             }}
           >
