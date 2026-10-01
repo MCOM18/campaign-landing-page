@@ -2,7 +2,7 @@
 
 set -e
 
-APP_DIR="/var/www/subscription.jojoapp.in"
+APP_DIR="/var/www/subscription_campaign_landing_page"
 
 echo "===== Cleaning application directory ====="
 

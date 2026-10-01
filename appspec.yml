@@ -5,11 +5,11 @@ file_exists_behavior: OVERWRITE
 
 files:
   - source: /
-    destination: /var/www/subscription.jojoapp.in/
+    destination: /var/www/subscription_campaign_landing_page/
 
 # ADD THIS SECTION BELOW
 permissions:
-  - object: /var/www/subscription.jojoapp.in/
+  - object: /var/www/subscription_campaign_landing_page/
     pattern: "**"
     owner: ec2-user
     group: ec2-user

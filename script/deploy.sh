@@ -2,13 +2,14 @@
 
 set -e
 
+source /etc/jojo.env
 source /home/ec2-user/.bashrc || source /etc/profile
 
 if [ -s "$NVM_DIR/nvm.sh" ]; then
     . "$NVM_DIR/nvm.sh"
 fi
 
-APP_DIR="/var/www/subscription.jojoapp.in"
+APP_DIR="/var/www/subscription_campaign_landing_page"
 
 echo "========================================"
 echo "Starting Application Deployment"
@@ -43,7 +44,24 @@ BUILD_TIME=$(cat build_time.txt)
 echo "Version: $VERSION"
 echo "Build Time: $BUILD_TIME"
 
-for ENV_FILE in .env .env.production; do
+echo "========================================="
+echo "Building Application"
+echo "========================================="
+
+if [ "$APP_ENV" = "stage" ]; then
+    BUILD_SCRIPT="build:stage"
+elif [ "$APP_ENV" = "production" ]; then
+    BUILD_SCRIPT="build:prod"
+else
+    echo "ERROR: Invalid APP_ENV: $APP_ENV"
+    exit 1
+fi
+
+echo "Environment : $APP_ENV"
+echo "NPM Script  : $BUILD_SCRIPT"
+
+
+for ENV_FILE in .env .env.production .env.stage; do
 
     echo "Updating $ENV_FILE"
 
@@ -83,13 +101,13 @@ echo "========================================"
 echo "Building Next.js"
 echo "========================================"
 
-npm run build
+npm run "$BUILD_SCRIPT"
 
 echo "========================================"
 echo "Restart PM2"
 echo "========================================"
 
-pm2 restart 5
+pm2 restart campaign-landing-page
 
 echo "========================================"
 echo "Deployment Completed"
