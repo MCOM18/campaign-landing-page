@@ -131,13 +131,8 @@ export default function HomePage() {
       const campaignIdQuery = url.searchParams.get("campaignId") || url.searchParams.get("campaign_id");
       const sourceLinkQuery = url.searchParams.get("source_link");
 
-      // If we are on the root URL with no campaign-specific parameters, 
-      // clear all cache and localstorage so the normal flow works fresh.
-      if (!dataParam && !campaignIdQuery && !sourceLinkQuery) {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
-
+      // Removed aggressive cache clearing that broke back navigation
+      
       const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
       setIsCampaignLogin(Boolean(pendingCampaignId));
     }
@@ -275,11 +270,8 @@ export default function HomePage() {
       }
 
       if (!dataParam && !redirectUrl) {
-        const savedSourceLink = localStorage.getItem("source_link");
-        localStorage.clear();
-        sessionStorage.clear();
-        if (savedSourceLink) localStorage.setItem("source_link", savedSourceLink);
-        logger.info("[Campaign] Clean URL detected. Cleared all localStorage and sessionStorage, but preserved source_link.");
+        // Removed aggressive clearing here to preserve login state on normal flow back navigation
+        logger.info("[Campaign] Clean URL detected. Proceeding without clearing localStorage.");
       } else {
         const enrichedData = {
           decoded_data: decoded,
@@ -375,6 +367,10 @@ export default function HomePage() {
 
   const [step, setStep] = useState<TrialFormStep>(() => {
     if (typeof window !== "undefined") {
+      const savedStep = localStorage.getItem("current_step") as TrialFormStep;
+      if (savedStep && Object.values(TrialFormStep).includes(savedStep)) {
+        return savedStep;
+      }
       const sessionId = localStorage.getItem("session_id");
       const userId = localStorage.getItem("user_id");
       if (sessionId && userId) {
@@ -383,6 +379,22 @@ export default function HomePage() {
     }
     return TrialFormStep.INPUT;
   });
+
+  // Track screen history and current step in local storage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("current_step", step);
+      
+      const historyRaw = localStorage.getItem("screen_history");
+      let history = historyRaw ? JSON.parse(historyRaw) : [];
+      const currentScreen = `home:${step}`;
+      
+      if (history[history.length - 1] !== currentScreen) {
+        history.push(currentScreen);
+        localStorage.setItem("screen_history", JSON.stringify(history));
+      }
+    }
+  }, [step]);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {

@@ -736,6 +736,38 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         minHeight: "100vh",
       }}
     >
+      {/* Top Right Logout Button */}
+      {isLoggedIn && !showLoader && (
+        <button
+          onClick={() => {
+            localStorage.removeItem("session_id");
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("userData");
+            localStorage.removeItem("user_phone");
+            localStorage.removeItem("user_phone_code");
+            useAuthStore.getState().clearAuth();
+            window.location.reload();
+          }}
+          style={{
+            position: "absolute",
+            top: "16px",
+            right: "16px",
+            background: "#FFFFFF",
+            color: "#000000",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: "pointer",
+            zIndex: 100,
+            transition: "all 0.2s ease",
+          }}
+        >
+          Logout
+        </button>
+      )}
+
       {/* Loading View */}
       {showLoader && <PageSkeleton />}
 

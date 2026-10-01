@@ -375,6 +375,10 @@ export default function Home() {
 
   const [step, setStep] = useState<TrialFormStep>(() => {
     if (typeof window !== "undefined") {
+      const savedStep = localStorage.getItem("current_step") as TrialFormStep;
+      if (savedStep && Object.values(TrialFormStep).includes(savedStep)) {
+        return savedStep;
+      }
       const sessionId = localStorage.getItem("session_id");
       const userId = localStorage.getItem("user_id");
       if (sessionId && userId) {
@@ -383,6 +387,22 @@ export default function Home() {
     }
     return TrialFormStep.INPUT;
   });
+
+  // Track screen history and current step in local storage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("current_step", step);
+      
+      const historyRaw = localStorage.getItem("screen_history");
+      let history = historyRaw ? JSON.parse(historyRaw) : [];
+      const currentScreen = `offer:${step}`;
+      
+      if (history[history.length - 1] !== currentScreen) {
+        history.push(currentScreen);
+        localStorage.setItem("screen_history", JSON.stringify(history));
+      }
+    }
+  }, [step]);
   const [contactInfo, setContactInfo] = useState("");
   const [parsedPhone, setParsedPhone] = useState("");
   const [parsedPhoneCode, setParsedPhoneCode] = useState("");
