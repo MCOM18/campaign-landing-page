@@ -9,6 +9,8 @@
     "dev:prod": "npx env-cmd -f .env.production next dev",
     "prod": "npx env-cmd -f .env.production next dev",
     "build": "next build",
+    "build:stage": "npx env-cmd -f .env.stage next build",
+    "build:prod": "npx env-cmd -f .env.production next build",
     "start": "next start",
     "lint": "eslint"
   },
