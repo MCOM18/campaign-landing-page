@@ -1563,7 +1563,7 @@ function renderAccordions({
           {termsList.map((term: string, i: number) => (
             <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
               <span style={{ color: "#FAAF3F", fontSize: "14px", lineHeight: "1.4" }}>•</span>
-              <p style={{ fontSize: "12px", color: "var(--text-secondary)", lineHeight: "1.5", margin: 0 }}>
+              <p style={{ fontSize: "12px", color: "var(--text-primary)", lineHeight: "1.5", margin: 0 }}>
                 {term}
               </p>
             </div>
