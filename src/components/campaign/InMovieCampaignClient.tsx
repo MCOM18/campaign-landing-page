@@ -25,6 +25,7 @@ import { useParams, useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react";
 import thumbnailsJson from "../../../public/assets/json/THUMBNAILS SCROLL ANIMATION.json";
 import type { CampaignItem } from "@/types/campaign";
+import { formatPrice } from "@/utils/priceUtil";
 
 const DEFAULT_PANEL_BG = "rgba(48, 24, 11, 1)";
 
@@ -1187,10 +1188,10 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
                                                         (isYearly ? "12 Months" : "1 Month");
 
                                                     const isPlanActive = selectedPlanIndex === idx;
-                                                    const finalPriceStr = `${symbol}${finalPriceVal}`;
+                                                    const finalPriceStr = `${symbol}${formatPrice(finalPriceVal)}`;
                                                     const originalPriceStr =
                                                         originalPriceVal !== undefined && originalPriceVal !== null && originalPriceVal > finalPriceVal
-                                                            ? `${symbol}${originalPriceVal}`
+                                                            ? `${symbol}${formatPrice(originalPriceVal)}`
                                                             : null;
                                                     const badge = isPlanActive && (isYearly || idx === 0) ? "POCKET FRIENDLY" : null;
 
@@ -1466,10 +1467,10 @@ export default function MovieCampaignClient({ params, initialCampaign, type }: M
                                                         (isYearly ? "12 Months" : "1 Month");
 
                                                     const isPlanActive = selectedPlanIndex === idx;
-                                                    const finalPriceStr = `${symbol}${finalPriceVal}`;
+                                                    const finalPriceStr = `${symbol}${formatPrice(finalPriceVal)}`;
                                                     const originalPriceStr =
                                                         originalPriceVal !== undefined && originalPriceVal !== null && originalPriceVal > finalPriceVal
-                                                            ? `${symbol}${originalPriceVal}`
+                                                            ? `${symbol}${formatPrice(originalPriceVal)}`
                                                             : null;
                                                     const badge = isPlanActive && (isYearly || idx === 0) ? "POCKET FRIENDLY" : null;
 

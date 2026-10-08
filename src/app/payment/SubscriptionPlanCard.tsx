@@ -9,6 +9,7 @@ import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload"
 import { parseSourceLinkParams } from "@/shared/analytics/utils/getSourceLink";
 import { getUserGeoLocation } from "@/utils/userUtil";
 import { COUPON_MAX_LENGTH, isValidCouponCode, sanitizeCouponInput } from "@/utils/couponUtil";
+import { formatPrice, formatPriceText } from "@/utils/priceUtil";
 import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import "./payment.css";
 
@@ -80,9 +81,9 @@ async function fetchAndStoreCampaignPlan(campaignRefId: string, couponCode: stri
           sku: modifiedSku,
           providerSku: modifiedSku,
           pricing: modifiedSku.oPricing,
-          sFormattedPrice: `${symbol}${finalPrice}`,
-          sAltPrice: `${symbol}${finalPrice}`,
-          sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+          sFormattedPrice: `${symbol}${formatPrice(finalPrice)}`,
+          sAltPrice: `${symbol}${formatPrice(finalPrice)}`,
+          sOriginalPrice: finalPrice < origPrice ? `${symbol}${formatPrice(origPrice)}` : null,
           nOriginalPrice: origPrice,
           finalPrice: finalPrice,
           originalPrice: origPrice,
@@ -323,16 +324,17 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
     effectivePlan?.pricing?.nPrice ??
     effectivePlan?.nPrice;
 
-  const originalPrice =
+  const originalPrice = formatPriceText(
     effectivePlan?.sOriginalPrice ||
     planInput?.originalPriceFormatted ||
     (typeof origPriceNum === "string" && origPriceNum.includes(currencySym)
       ? origPriceNum
       : origPriceNum !== undefined && origPriceNum !== null && origPriceNum !== ""
         ? `${currencySym}${origPriceNum}`
-        : "");
+        : "")
+  );
 
-  const finalPrice =
+  const finalPrice = formatPriceText(
     effectivePlan?.sFormattedPrice ||
     effectivePlan?.sAltPrice ||
     planInput?.finalPriceFormatted ||
@@ -340,7 +342,8 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       ? finalPriceNum
       : finalPriceNum !== undefined && finalPriceNum !== null && finalPriceNum !== ""
         ? `${currencySym}${finalPriceNum}`
-        : "");
+        : "")
+  );
 
   // 4. Dynamic Subtext ("After 12 months") & Recurring Price ("₹624/year" or "₹120/month")
   const validityUnit = effectivePlan?.sValidityDuration || product?.sValidityDuration || "month";
@@ -384,11 +387,12 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   // The recurring amount is either the explicit original price or the regular SKU price
   const baseRecurringAmount = cleanOrigPriceNum ?? sku?.oPricing?.nPrice;
 
-  const recurringPrice =
+  const recurringPrice = formatPriceText(
     effectivePlan?.sRecurringPriceText ||
     (baseRecurringAmount !== null && baseRecurringAmount !== undefined && baseRecurringAmount !== ""
       ? (isCampaignOffer && offer ? `${currencySym}${baseRecurringAmount}` : `${currencySym}${baseRecurringAmount}/${recurringUnit}`)
-      : "");
+      : "")
+  );
 
   // 5. Dynamic Features List directly from Backend API (aFeatures)
   const featuresList: any[] =
@@ -461,14 +465,17 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: "8px",
             marginBottom: "4px",
           }}
         >
           <div style={{
             display: "flex",
             flexDirection: isFreeTrial ? "column" : "row",
+            flexWrap: "wrap",
             alignItems: isFreeTrial ? "flex-start" : "center",
-            gap: isFreeTrial ? "2px" : "10px"
+            gap: isFreeTrial ? "2px" : "10px",
+            minWidth: 0,
           }}>
             <span style={{
               fontSize: "18px",
@@ -503,7 +510,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
               </span>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexShrink: 0, whiteSpace: "nowrap" }}>
             {originalPrice && originalPrice !== finalPrice && (
               <span
                 style={{
@@ -537,7 +544,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
             }}
           >
             <span>{subtext}</span>
-            <span>{recurringPrice}</span>
+            <span style={{ whiteSpace: "nowrap", marginLeft: "8px" }}>{recurringPrice}</span>
           </div>
         )}
 

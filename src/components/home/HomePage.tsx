@@ -29,6 +29,7 @@ import thumbnailsJson from "../../../public/assets/json/THUMBNAILS SCROLL ANIMAT
 import api from "@/utils/apiClient";
 import { getUserGeoLocation, clearUserDataAndReload } from "@/utils/userUtil";
 import SubscriptionPlanCard, { SingleCouponInput } from "@/app/payment/SubscriptionPlanCard";
+import { formatPrice } from "@/utils/priceUtil";
 
 const renderFooterWithLinks = (text: string, queryString: string = "") => {
   if (!text) return null;
@@ -358,7 +359,7 @@ export default function HomePage() {
   const currencySymbol = pricing?.sCurrencySymbol || "₹";
   const productPrice = pricing?.nPrice !== undefined ? pricing.nPrice : "";
   const disclaimerText = productPrice
-    ? `Auto-renews at ${currencySymbol}${productPrice}/year. Cancel anytime.`
+    ? `Auto-renews at ${currencySymbol}${formatPrice(productPrice)}/year. Cancel anytime.`
     : "";
 
   const footerNote = "By proceeding with the \"login\" process, we might send a one-time verification code to the phone number linked to your account. Standard message and data rates may apply.";

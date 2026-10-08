@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Lottie from 'lottie-react';
 import successJson from '../assets/animations/CONFETTI.json';
+import { formatPrice } from "@/utils/priceUtil";
 
 interface TVODPaymentSuccessProps {
   matchedRecord: any;
@@ -143,7 +144,7 @@ const TVODPaymentSuccess: React.FC<TVODPaymentSuccessProps> = ({
             marginBottom: "12px",
           }}>
             <span style={{ color: "#cccccc", fontSize: "14px" }}>Amount Paid:</span>
-            <span style={{ color: "#ffffff", fontWeight: 600, fontSize: "14px" }}>{currency}{amount}</span>
+            <span style={{ color: "#ffffff", fontWeight: 600, fontSize: "14px" }}>{currency}{formatPrice(amount)}</span>
           </div>
           
           {rentalDays > 0 && (

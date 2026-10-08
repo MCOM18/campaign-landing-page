@@ -29,6 +29,7 @@ import thumbnailsJson from "../../../public/assets/json/THUMBNAILS SCROLL ANIMAT
 import api from "../../utils/apiClient";
 import { getUserGeoLocation, clearUserDataAndReload } from "../../utils/userUtil";
 import SubscriptionPlanCard, { SingleCouponInput } from "../payment/SubscriptionPlanCard";
+import { formatPrice } from "@/utils/priceUtil";
 
 const renderFooterWithLinks = (text: string, queryString: string = "") => {
   if (!text) return null;
@@ -363,7 +364,7 @@ export default function Home() {
   const disclaimerText = disclaimerTemplate
     ? disclaimerTemplate
       .replace("{sCurrencySymbol}", currencySymbol)
-      .replace("{nPrice}", productPrice.toString())
+      .replace("{nPrice}", formatPrice(productPrice))
       .replace("/yearly", "/year")
       .replace("/years", "/year")
     : "";

@@ -18,6 +18,7 @@ import { getUserGeoLocation, clearUserDataAndReload } from "@/utils/userUtil";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { formatPrice } from "@/utils/priceUtil";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -133,9 +134,9 @@ export default function LoginPage() {
               sku: modifiedSku,
               providerSku: modifiedSku,
               pricing: modifiedSku.oPricing,
-              sFormattedPrice: `${symbol}${finalPrice}`,
-              sAltPrice: `${symbol}${finalPrice}`,
-              sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+              sFormattedPrice: `${symbol}${formatPrice(finalPrice)}`,
+              sAltPrice: `${symbol}${formatPrice(finalPrice)}`,
+              sOriginalPrice: finalPrice < origPrice ? `${symbol}${formatPrice(origPrice)}` : null,
               nOriginalPrice: origPrice,
               finalPrice: finalPrice,
               originalPrice: origPrice,
@@ -348,9 +349,9 @@ export default function LoginPage() {
                     sku: modifiedSku,
                     providerSku: modifiedSku,
                     pricing: modifiedSku.oPricing,
-                    sFormattedPrice: `${symbol}${finalPrice}`,
-                    sAltPrice: `${symbol}${finalPrice}`,
-                    sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+                    sFormattedPrice: `${symbol}${formatPrice(finalPrice)}`,
+                    sAltPrice: `${symbol}${formatPrice(finalPrice)}`,
+                    sOriginalPrice: finalPrice < origPrice ? `${symbol}${formatPrice(origPrice)}` : null,
                     nOriginalPrice: origPrice,
                     finalPrice,
                     originalPrice: origPrice,

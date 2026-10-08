@@ -31,6 +31,7 @@ import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
 import { parseSourceLinkParams } from "@/shared/analytics/utils/getSourceLink";
+import { formatPrice, formatPriceText } from "@/utils/priceUtil";
 
 interface OfferDetailsClientProps {
   params: Promise<{ id: string }>;
@@ -269,9 +270,9 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         plan: {
           ...prod,
           providerSku: modifiedSku,
-          sFormattedPrice: `${symbol}${finalPrice}`,
-          sAltPrice: `${symbol}${finalPrice}`,
-          sOriginalPrice: finalPrice < origPrice ? `${symbol}${origPrice}` : null,
+          sFormattedPrice: `${symbol}${formatPrice(finalPrice)}`,
+          sAltPrice: `${symbol}${formatPrice(finalPrice)}`,
+          sOriginalPrice: finalPrice < origPrice ? `${symbol}${formatPrice(origPrice)}` : null,
           nOriginalPrice: origPrice,
           sDiscount: discountLabel,
           nValidity: prod.nValidityDays || 365,
@@ -1302,10 +1303,12 @@ function renderGoldOfferCard({
   const origPriceNum = planObj?.originalPrice ?? plan?.nOriginalPrice;
   const finalPriceNum = planObj?.finalPrice ?? plan?.providerSku?.oPricing?.nPrice;
 
-  const originalPrice =
-    plan?.sOriginalPrice || (origPriceNum !== undefined ? `${currencySym}${origPriceNum}` : "");
-  const finalPrice =
-    plan?.sFormattedPrice || (finalPriceNum !== undefined ? `${currencySym}${finalPriceNum}` : "");
+  const originalPrice = formatPriceText(
+    plan?.sOriginalPrice || (origPriceNum !== undefined ? `${currencySym}${origPriceNum}` : "")
+  );
+  const finalPrice = formatPriceText(
+    plan?.sFormattedPrice || (finalPriceNum !== undefined ? `${currencySym}${finalPriceNum}` : "")
+  );
 
   // 4. Dynamic Subtext ("After 12 months") & Recurring Price ("₹499/year")
   const validityUnit = plan?.sValidityDuration || "month";
@@ -1324,9 +1327,10 @@ function renderGoldOfferCard({
   }
 
   const recurringUnit = isYearly ? "year" : validityUnit;
-  const recurringPrice =
+  const recurringPrice = formatPriceText(
     plan?.sRecurringPriceText ||
-    (origPriceNum !== undefined && origPriceNum !== null ? `${currencySym}${origPriceNum}/${recurringUnit}` : "");
+    (origPriceNum !== undefined && origPriceNum !== null ? `${currencySym}${origPriceNum}/${recurringUnit}` : "")
+  );
 
   // 5. Dynamic Features List directly from Backend Response (aFeatures)
   const featuresList: any[] =
@@ -1377,14 +1381,17 @@ function renderGoldOfferCard({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: "8px",
           marginBottom: "4px",
         }}
       >
         <div style={{
           display: "flex",
           flexDirection: isFreeTrial ? "column" : "row",
+          flexWrap: "wrap",
           alignItems: isFreeTrial ? "flex-start" : "center",
-          gap: isFreeTrial ? "2px" : "10px"
+          gap: isFreeTrial ? "2px" : "10px",
+          minWidth: 0,
         }}>
           <span style={{ fontSize: "17px", fontWeight: "700", color: "#1A0F00" }}>
             {planTitle}
@@ -1406,7 +1413,7 @@ function renderGoldOfferCard({
             </span>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexShrink: 0, whiteSpace: "nowrap" }}>
           {originalPrice && originalPrice !== finalPrice && (
             <span
               style={{
@@ -1440,7 +1447,7 @@ function renderGoldOfferCard({
           }}
         >
           <span>{subtext}</span>
-          <span>{recurringPrice}</span>
+          <span style={{ whiteSpace: "nowrap", marginLeft: "8px" }}>{recurringPrice}</span>
         </div>
       )}
 
