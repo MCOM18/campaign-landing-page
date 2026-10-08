@@ -175,6 +175,12 @@
   padding-right: 44px;
 }
 
+/* Mask CVV without type="password", so browsers don't treat expiry + CVV as saved login credentials */
+.cvv-input-wrapper .payment-input.cvv-masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
 .cvv-eye-btn {
   position: absolute;
   right: 14px;

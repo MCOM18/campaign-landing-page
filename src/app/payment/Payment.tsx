@@ -212,7 +212,8 @@ function PaymentPage() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showFailedPopup, setShowFailedPopup] = useState(false);
   const [failedErrorMsg, setFailedErrorMsg] = useState<string | null>(null);
-  const [showMethodChangeConfirm, setShowMethodChangeConfirm] = useState(false);
+  // Method the user is switching to, pending confirmation (null = no popup)
+  const [pendingMethod, setPendingMethod] = useState<string | null>(null);
 
   // Overseas users can't use UPI — default to card
   useEffect(() => {
@@ -279,10 +280,16 @@ function PaymentPage() {
     }
   }, [osPlatform, preparedData, RAZORPAY_KEY]);
 
+  const hasCardDetails = Object.values(card).some((v) => v.trim()) || !!expiryDisplay.trim();
+
   const toggleMethod = (method: string) => {
-    // Switching from a filled UPI ID to card needs confirmation, since the UPI ID gets cleared
+    // Switching away from filled-in details needs confirmation, since those details get cleared
     if (method === PAYMENT_METHOD.CARD && activeMethod !== PAYMENT_METHOD.CARD && upiId.trim()) {
-      setShowMethodChangeConfirm(true);
+      setPendingMethod(PAYMENT_METHOD.CARD);
+      return;
+    }
+    if (method === PAYMENT_METHOD.UPI && activeMethod !== PAYMENT_METHOD.UPI && hasCardDetails) {
+      setPendingMethod(PAYMENT_METHOD.UPI);
       return;
     }
     setActiveMethod(activeMethod === method ? null : method);
@@ -290,11 +297,19 @@ function PaymentPage() {
   };
 
   const confirmMethodChange = () => {
-    setUpiId("");
-    setUpiError("");
-    setActiveMethod(PAYMENT_METHOD.CARD);
-    setPaymentMethod(PAYMENT_METHOD.CARD);
-    setShowMethodChangeConfirm(false);
+    if (!pendingMethod) return;
+    if (pendingMethod === PAYMENT_METHOD.CARD) {
+      setUpiId("");
+      setUpiError("");
+    } else {
+      setCard({ number: "", month: "", year: "", cvv: "", name: "" });
+      setExpiryDisplay("");
+      setShowCvv(false);
+      setCardErrors({ number: "", expiry: "", cvv: "", name: "" });
+    }
+    setActiveMethod(pendingMethod);
+    setPaymentMethod(pendingMethod);
+    setPendingMethod(null);
   };
 
   const pricingData = getPricingData(selectedPlan);
@@ -620,16 +635,19 @@ function PaymentPage() {
       )}
 
       {/* Change payment method confirmation */}
-      {showMethodChangeConfirm && (
-        <div className="pay-overlay" onClick={() => setShowMethodChangeConfirm(false)}>
+      {pendingMethod && (
+        <div className="pay-overlay" onClick={() => setPendingMethod(null)}>
           <div className="pay-overlay-card" onClick={(e) => e.stopPropagation()}>
             <p className="pay-overlay-title">Change Payment Method?</p>
             <p className="pay-overlay-subtitle">
-              Are you sure you want to change your payment method? The UPI ID you entered will be cleared.
+              Are you sure you want to change your payment method?{" "}
+              {pendingMethod === PAYMENT_METHOD.UPI
+                ? "The card details you entered will be cleared."
+                : "The UPI ID you entered will be cleared."}
             </p>
             <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
               <button
-                onClick={() => setShowMethodChangeConfirm(false)}
+                onClick={() => setPendingMethod(null)}
                 style={{
                   flex: 1,
                   padding: "12px",
@@ -1025,6 +1043,8 @@ function PaymentPage() {
                     <div>
                       <input
                         type="text"
+                        inputMode="numeric"
+                        autoComplete="cc-number"
                         placeholder="Card Number"
                         className={`payment-input${cardErrors.number ? " input-error" : ""}`}
                         value={card.number}
@@ -1038,6 +1058,8 @@ function PaymentPage() {
                       <div>
                         <input
                           type="text"
+                          inputMode="numeric"
+                          autoComplete="cc-exp"
                           placeholder="MM/YY"
                           className={`payment-input${cardErrors.expiry ? " input-error" : ""}`}
                           value={expiryDisplay}
@@ -1048,10 +1070,12 @@ function PaymentPage() {
                       <div>
                         <div className="cvv-input-wrapper">
                           <input
-                            type={showCvv ? "text" : "password"}
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="cc-csc"
                             placeholder="CVV"
                             maxLength={4}
-                            className={`payment-input${cardErrors.cvv ? " input-error" : ""}`}
+                            className={`payment-input${showCvv ? "" : " cvv-masked"}${cardErrors.cvv ? " input-error" : ""}`}
                             value={card.cvv}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, '');
@@ -1076,6 +1100,7 @@ function PaymentPage() {
                     <div>
                       <input
                         type="text"
+                        autoComplete="cc-name"
                         placeholder="Cardholder Name"
                         className={`payment-input${cardErrors.name ? " input-error" : ""}`}
                         value={card.name}
