@@ -589,7 +589,7 @@ export const usePaymentHandler = () => {
         }
       }
 
-      const appliedCoupon = localStorage.getItem("sCouponCode") || sessionStorage.getItem("applied_coupon_code") || null;
+      const appliedCoupon = new URLSearchParams(window.location.search).get("sCouponCode") || null;
 
       let finalOfferId = pricingData.offerId ||
         selectedPlan?.providerSku?.oOfferDetails?.sOfferId ||

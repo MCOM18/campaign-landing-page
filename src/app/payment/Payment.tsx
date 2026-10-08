@@ -31,8 +31,10 @@ function PaymentPage() {
   const [lockTimeLeft, setLockTimeLeft] = useState<number | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  const getCouponFromUrl = () => new URLSearchParams(window.location.search).get("sCouponCode");
+
   const handleCouponExpire = () => {
-    const expiredCoupon = sessionStorage.getItem("applied_coupon_code");
+    const expiredCoupon = getCouponFromUrl();
     const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
     trackEvent("event_expired", {
       coupon_code: expiredCoupon || "",
@@ -41,7 +43,6 @@ function PaymentPage() {
       campaign_id: pendingCampaignId || "",
     });
 
-    sessionStorage.removeItem("applied_coupon_code");
     sessionStorage.removeItem("coupon_lock_minutes");
     sessionStorage.removeItem("coupon_lock_timestamp");
     setAppliedCoupon(null);
@@ -54,6 +55,11 @@ function PaymentPage() {
     } else {
       router.push("/");
     }
+  };
+
+  const getSuccessPath = () => {
+    const sCouponCode = getCouponFromUrl();
+    return sCouponCode ? `/success?sCouponCode=${encodeURIComponent(sCouponCode)}` : "/success";
   };
 
   const formatTime = (seconds: number) => {
@@ -128,10 +134,10 @@ function PaymentPage() {
     }
     setIsMounted(true);
 
-    // Read applied coupon from sessionStorage
-    const storedCoupon = sessionStorage.getItem("applied_coupon_code");
-    if (storedCoupon) {
-      setAppliedCoupon(storedCoupon);
+    // Read applied coupon from search params
+    const urlCoupon = getCouponFromUrl();
+    if (urlCoupon) {
+      setAppliedCoupon(urlCoupon);
 
       const lockMinutesStr = sessionStorage.getItem("coupon_lock_minutes");
       const lockTimestampStr = sessionStorage.getItem("coupon_lock_timestamp");
@@ -434,7 +440,7 @@ function PaymentPage() {
       .then((res: any) => {
         if (res?.success) {
           setIsNavigating(true);
-          router.push("/success");
+          router.push(getSuccessPath());
         } else {
           setFailedErrorMsg(res?.error || "Payment verification failed. Please try again.");
           setShowFailedPopup(true);
@@ -524,7 +530,7 @@ function PaymentPage() {
                       setActiveAppLoader(null);
                       if (res?.success) {
                         setIsNavigating(true);
-                        router.push("/success");
+                        router.push(getSuccessPath());
                       } else {
                         setFailedErrorMsg(res?.error || "Payment verification failed.");
                         setShowFailedPopup(true);
@@ -808,7 +814,7 @@ function PaymentPage() {
                                             setActiveAppLoader(null);
                                             if (res?.success) {
                                               setIsNavigating(true);
-                                              router.push("/success");
+                                              router.push(getSuccessPath());
                                             } else {
                                               setFailedErrorMsg(res?.error || "Payment verification failed.");
                                               setShowFailedPopup(true);
@@ -878,7 +884,7 @@ function PaymentPage() {
                                         setActiveAppLoader(null);
                                         if (res?.success) {
                                           setIsNavigating(true);
-                                          router.push("/success");
+                                          router.push(getSuccessPath());
                                         } else {
                                           setFailedErrorMsg(res?.error || "Payment verification failed.");
                                           setShowFailedPopup(true);

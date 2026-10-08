@@ -37,7 +37,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
   useEffect(() => {
     try {
       const selectedPlanRaw = localStorage.getItem("selectedPlan");
-      const sCouponCode = localStorage.getItem("sCouponCode");
+      const sCouponCode = new URLSearchParams(window.location.search).get("sCouponCode");
 
       let isApplied = propIsCouponApplied ?? !!sCouponCode;
       let title = propPlanTitle || "1 Month";

@@ -17,6 +17,7 @@ import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import api from "@/utils/apiClient";
 import { getUserGeoLocation, clearUserDataAndReload } from "@/utils/userUtil";
+import { COUPON_MAX_LENGTH, isValidCouponCode, sanitizeCouponInput } from "@/utils/couponUtil";
 import Lottie from "lottie-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react";
@@ -86,12 +87,16 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const [couponInput, setCouponInput] = useState<string>("");
 
   useEffect(() => {
-    const fromParams = searchParams?.get("sCouponCode") || "";
-    const fromStorage = typeof window !== "undefined" ? localStorage.getItem("sCouponCode") || "" : "";
-    const effectiveCode = fromParams || fromStorage;
-    setSCouponCode(effectiveCode);
-    setCouponInput(effectiveCode);
+    // Accept both ?sCouponCode= and the short ?code= alias
+    const fromParams = searchParams?.get("sCouponCode") || searchParams?.get("code") || "";
+    setSCouponCode(fromParams);
+    setCouponInput(sanitizeCouponInput(fromParams));
   }, [searchParams]);
+
+  const getPaymentPath = () => {
+    const enteredCoupon = (couponInput || sCouponCode || "").trim();
+    return enteredCoupon ? `/payment?sCouponCode=${encodeURIComponent(enteredCoupon)}` : "/payment";
+  };
 
   const { isAppReady } = useBootstrap();
   const { data, isLoading, isFetching, isError, error, refetch } = useOfferByCampaign(campaignId, sCouponCode);
@@ -301,15 +306,13 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
     if (selectedPlanObj?.plan) {
       localStorage.setItem("selectedPlan", JSON.stringify(selectedPlanObj.plan));
     }
-    const enteredCoupon = (couponInput || sCouponCode || "").trim();
-    localStorage.setItem("sCouponCode", enteredCoupon);
     const codeToSave = campaignRefId || campaignId || "";
     if (codeToSave) {
       sessionStorage.setItem("pending_campaign_id", codeToSave);
     }
 
     if (checkIsLoggedIn()) {
-      router.push("/payment");
+      router.push(getPaymentPath());
     } else {
       setShowAuthModal(true);
       setAuthStep("input");
@@ -463,7 +466,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
         if (codeToSave) {
           sessionStorage.setItem("pending_campaign_id", codeToSave);
         }
-        router.push("/payment");
+        router.push(getPaymentPath());
       }
       clearTimeout(safetyTimeout);
     } catch (err: any) {
@@ -575,7 +578,6 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       const nCouponLockMinutes = resData?.nCouponLockMinutes ?? campaignDetails?.nCouponLockMinutes;
 
       if (typeof window !== "undefined") {
-        sessionStorage.setItem("applied_coupon_code", codeToApply);
         if (nCouponLockMinutes) {
           sessionStorage.setItem("coupon_lock_minutes", nCouponLockMinutes.toString());
           sessionStorage.setItem("coupon_lock_timestamp", Date.now().toString());
@@ -652,8 +654,6 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       </p>
       <button
         onClick={() => {
-          sessionStorage.removeItem("sCouponCode");
-          localStorage.removeItem("sCouponCode");
           window.location.href = "/";
         }}
         className="btn-primary active"
@@ -723,7 +723,8 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
       logger.error("[OfferDetails Analytics] Error tracking click:", err);
     }
 
-    router.push("/login");
+    // Carry the coupon through login so it auto-fills when the user lands back here
+    router.push(sCouponCode ? `/login?sCouponCode=${encodeURIComponent(sCouponCode)}` : "/login");
   };
 
   const isLoggedIn = checkIsLoggedIn();
@@ -942,7 +943,8 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                           className="coupon-input"
                           placeholder="Enter Coupon Code"
                           value={couponInput}
-                          onChange={(e) => setCouponInput(e.target.value)}
+                          maxLength={COUPON_MAX_LENGTH}
+                          onChange={(e) => setCouponInput(sanitizeCouponInput(e.target.value))}
                           style={{
                             flex: 1,
                             background: "transparent",
@@ -959,18 +961,18 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                       <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: "28px" }}>
                         <button
                           onClick={handleApplyCoupon}
-                          disabled={isApplyingCoupon}
+                          disabled={isApplyingCoupon || !isValidCouponCode(couponInput)}
                           style={{
                             width: "50%",
                             minWidth: "160px",
                             padding: "12px",
                             borderRadius: "9999px",
-                            backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
+                            backgroundColor: isApplyingCoupon || !isValidCouponCode(couponInput) ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
                             color: "#FFFFFF",
                             fontSize: "18px",
                             fontWeight: "700",
                             border: "none",
-                            cursor: isApplyingCoupon ? "not-allowed" : "pointer",
+                            cursor: isApplyingCoupon || !isValidCouponCode(couponInput) ? "not-allowed" : "pointer",
                             textAlign: "center",
                             boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
                             display: "flex",
@@ -1093,7 +1095,8 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                             className="coupon-input"
                             placeholder="Enter Coupon Code"
                             value={couponInput}
-                            onChange={(e) => setCouponInput(e.target.value)}
+                            maxLength={COUPON_MAX_LENGTH}
+                            onChange={(e) => setCouponInput(sanitizeCouponInput(e.target.value))}
                             style={{
                               flex: 1,
                               background: "transparent",
@@ -1108,17 +1111,17 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                         <div style={{ display: "flex", justifyContent: "flex-start", width: "100%" }}>
                           <button
                             onClick={handleApplyCoupon}
-                            disabled={isApplyingCoupon}
+                            disabled={isApplyingCoupon || !isValidCouponCode(couponInput)}
                             style={{
                               width: "180px",
                               padding: "14px",
                               borderRadius: "9999px",
-                              backgroundColor: isApplyingCoupon ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
+                              backgroundColor: isApplyingCoupon || !isValidCouponCode(couponInput) ? "rgba(242, 110, 33, 0.7)" : "rgba(242, 110, 33, 1)",
                               color: "#FFFFFF",
                               fontSize: "18px",
                               fontWeight: "700",
                               border: "none",
-                              cursor: isApplyingCoupon ? "not-allowed" : "pointer",
+                              cursor: isApplyingCoupon || !isValidCouponCode(couponInput) ? "not-allowed" : "pointer",
                               textAlign: "center",
                               boxShadow: "0 4px 15px rgba(242, 110, 33, 0.3)",
                               display: "flex",

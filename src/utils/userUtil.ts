@@ -11,6 +11,17 @@ export const clearUserDataAndReload = () => {
   window.location.reload();
 };
 
+export const clearAllUserDataAndGoHome = () => {
+  if (typeof window === "undefined") return;
+  useAuthStore.getState().clearAuth();
+  try {
+    localStorage.clear();
+    sessionStorage.clear();
+  } catch { }
+  // Hard navigation so in-memory caches (React Query, Zustand) are dropped too
+  window.location.replace("/");
+};
+
 export const getUserGeoLocation = () => {
   try {
     if (typeof window === "undefined") return {};

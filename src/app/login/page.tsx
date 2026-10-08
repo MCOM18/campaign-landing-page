@@ -386,10 +386,15 @@ export default function LoginPage() {
           typeof window !== "undefined"
             ? sessionStorage.getItem("pending_campaign_id") || ""
             : "";
+        const sCouponCode =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("sCouponCode")
+            : null;
+        const couponQuery = sCouponCode ? `?sCouponCode=${encodeURIComponent(sCouponCode)}` : "";
         if (pendingCampaignIdForRedirect) {
-          router.push(`/campaign/${encodeURIComponent(pendingCampaignIdForRedirect)}`);
+          router.push(`/campaign/${encodeURIComponent(pendingCampaignIdForRedirect)}${couponQuery}`);
         } else {
-          router.push("/payment");
+          router.push(`/payment${couponQuery}`);
         }
       }
     } catch (err: any) {

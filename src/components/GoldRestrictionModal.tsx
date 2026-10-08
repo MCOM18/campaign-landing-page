@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { clearAllUserDataAndGoHome } from "@/utils/userUtil";
 
 interface GoldRestrictionModalProps {
   subscription: {
@@ -113,6 +114,7 @@ export const GoldRestrictionModal: React.FC<GoldRestrictionModalProps> = ({
         <button
           onClick={() => {
             window.open("https://jojoapp.in/appInstall", "_blank", "noopener,noreferrer");
+            clearAllUserDataAndGoHome();
           }}
           style={{
             width: "100%",

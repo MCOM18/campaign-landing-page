@@ -8,6 +8,7 @@ import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
 import { parseSourceLinkParams } from "@/shared/analytics/utils/getSourceLink";
 import { getUserGeoLocation } from "@/utils/userUtil";
+import { COUPON_MAX_LENGTH, isValidCouponCode, sanitizeCouponInput } from "@/utils/couponUtil";
 import { DEFAULT_HEADER_VALUES } from "@/lib/constants/headers";
 import "./payment.css";
 
@@ -196,9 +197,6 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
       if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
 
         if (typeof window !== "undefined") {
-          localStorage.removeItem("sCouponCode");
-          // Save coupon code to sessionStorage so Payment page can display it
-          sessionStorage.setItem("applied_coupon_code", cleanCode);
           if (campaignRefId) {
             sessionStorage.setItem("pending_campaign_id", campaignRefId);
           }
@@ -228,7 +226,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
 
         setIsNavigating(true);
         setTimeout(() => {
-          router.push("/payment");
+          router.push(`/payment?sCouponCode=${encodeURIComponent(cleanCode)}`);
         }, 300);
       } else {
         const errorMsg = resData?.sReason || metaData?.message || "Invalid or ineligible coupon code";
@@ -649,10 +647,11 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
                 type="text"
                 value={couponCode}
                 onChange={(e) => {
-                  setCouponCode(e.target.value.toUpperCase());
+                  setCouponCode(sanitizeCouponInput(e.target.value));
                   setCouponError(null);
                 }}
                 placeholder="Enter Coupon Code"
+                maxLength={COUPON_MAX_LENGTH}
                 disabled={isVerifying}
                 style={{
                   flex: 1,
@@ -673,7 +672,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
               <button
                 type="button"
                 onClick={handleVerifyCoupon}
-                disabled={isVerifying || !couponCode.trim()}
+                disabled={isVerifying || !isValidCouponCode(couponCode)}
                 style={{
                   backgroundImage: "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)",
                   color: "#000000",
@@ -682,8 +681,8 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
                   padding: "10px 16px",
                   fontSize: "13px",
                   fontWeight: "700",
-                  cursor: (isVerifying || isNavigating) || !couponCode.trim() ? "not-allowed" : "pointer",
-                  opacity: (isVerifying || isNavigating) || !couponCode.trim() ? 0.6 : 1,
+                  cursor: (isVerifying || isNavigating) || !isValidCouponCode(couponCode) ? "not-allowed" : "pointer",
+                  opacity: (isVerifying || isNavigating) || !isValidCouponCode(couponCode) ? 0.6 : 1,
                   whiteSpace: "nowrap",
                   transition: "all 0.2s ease",
                 }}
@@ -783,9 +782,6 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
       if (bIsEligible !== false && (metaData?.status === 200 || metaData?.status === undefined || bIsEligible === true)) {
 
         if (typeof window !== "undefined") {
-          localStorage.removeItem("sCouponCode");
-          // Save coupon code to sessionStorage so Payment page can display it
-          sessionStorage.setItem("applied_coupon_code", cleanCode);
           if (campaignRefId) {
             sessionStorage.setItem("pending_campaign_id", campaignRefId);
           }
@@ -816,7 +812,7 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
         } else {
           setIsNavigating(true);
           setTimeout(() => {
-            router.push("/payment");
+            router.push(`/payment?sCouponCode=${encodeURIComponent(cleanCode)}`);
           }, 300);
         }
       } else {
@@ -908,10 +904,11 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
             type="text"
             value={couponCode}
             onChange={(e) => {
-              setCouponCode(e.target.value.toUpperCase());
+              setCouponCode(sanitizeCouponInput(e.target.value));
               setCouponError(null);
             }}
             placeholder="Enter Coupon Code"
+            maxLength={COUPON_MAX_LENGTH}
             disabled={isVerifying}
             style={{
               flex: 1,
@@ -932,7 +929,7 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
           <button
             type="button"
             onClick={handleVerifyCoupon}
-            disabled={isVerifying || !couponCode.trim()}
+            disabled={isVerifying || !isValidCouponCode(couponCode)}
             style={{
               backgroundImage: "linear-gradient(24.95deg, #faaf3f 21.6%, #ffd691 49.5%, #faaf3f 81.7%)",
               color: "#000000",
@@ -941,8 +938,8 @@ export const SingleCouponInput: React.FC<SingleCouponInputProps> = ({ campaignId
               padding: "8px 10px",
               fontSize: "12px",
               fontWeight: "700",
-              cursor: (isVerifying || isNavigating) || !couponCode.trim() ? "not-allowed" : "pointer",
-              opacity: (isVerifying || isNavigating) || !couponCode.trim() ? 0.6 : 1,
+              cursor: (isVerifying || isNavigating) || !isValidCouponCode(couponCode) ? "not-allowed" : "pointer",
+              opacity: (isVerifying || isNavigating) || !isValidCouponCode(couponCode) ? 0.6 : 1,
               whiteSpace: "nowrap",
               transition: "all 0.2s ease",
             }}
