@@ -78,6 +78,7 @@ function PaymentPage() {
     preparedData,
     showProcessingOverlay,
     pollingAttempt,
+    pollingMaxAttempts,
     overlayError,
   } = usePaymentHandler();
 
@@ -211,6 +212,7 @@ function PaymentPage() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showFailedPopup, setShowFailedPopup] = useState(false);
   const [failedErrorMsg, setFailedErrorMsg] = useState<string | null>(null);
+  const [showMethodChangeConfirm, setShowMethodChangeConfirm] = useState(false);
 
   // Overseas users can't use UPI — default to card
   useEffect(() => {
@@ -278,8 +280,21 @@ function PaymentPage() {
   }, [osPlatform, preparedData, RAZORPAY_KEY]);
 
   const toggleMethod = (method: string) => {
+    // Switching from a filled UPI ID to card needs confirmation, since the UPI ID gets cleared
+    if (method === PAYMENT_METHOD.CARD && activeMethod !== PAYMENT_METHOD.CARD && upiId.trim()) {
+      setShowMethodChangeConfirm(true);
+      return;
+    }
     setActiveMethod(activeMethod === method ? null : method);
     setPaymentMethod(method);
+  };
+
+  const confirmMethodChange = () => {
+    setUpiId("");
+    setUpiError("");
+    setActiveMethod(PAYMENT_METHOD.CARD);
+    setPaymentMethod(PAYMENT_METHOD.CARD);
+    setShowMethodChangeConfirm(false);
   };
 
   const pricingData = getPricingData(selectedPlan);
@@ -413,7 +428,7 @@ function PaymentPage() {
       return;
     }
 
-    const data = await preparePayment(selectedPlan, paymentMethod);
+    const data = await preparePayment(selectedPlan, paymentMethod, paymentMethod === "card" ? card.number : undefined);
     if (!data) return;
 
     if ((data as any).isAlreadyActive) {
@@ -604,6 +619,43 @@ function PaymentPage() {
         </div>
       )}
 
+      {/* Change payment method confirmation */}
+      {showMethodChangeConfirm && (
+        <div className="pay-overlay" onClick={() => setShowMethodChangeConfirm(false)}>
+          <div className="pay-overlay-card" onClick={(e) => e.stopPropagation()}>
+            <p className="pay-overlay-title">Change Payment Method?</p>
+            <p className="pay-overlay-subtitle">
+              Are you sure you want to change your payment method? The UPI ID you entered will be cleared.
+            </p>
+            <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+              <button
+                onClick={() => setShowMethodChangeConfirm(false)}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  background: "transparent",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  color: "#fff",
+                  borderRadius: "16px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: 500,
+                }}
+              >
+                No
+              </button>
+              <button
+                onClick={confirmMethodChange}
+                className="btn-primary active"
+                style={{ flex: 1, padding: "12px", fontSize: "16px" }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Processing overlay */}
       {showProcessingOverlay && (
         <div className="pay-overlay">
@@ -612,7 +664,7 @@ function PaymentPage() {
             <p className="pay-overlay-title">Processing Payment</p>
             <p className="pay-overlay-subtitle">
               {pollingAttempt > 0
-                ? `Verifying payment... (${pollingAttempt}/10)`
+                ? `Verifying payment... (${pollingAttempt}/${pollingMaxAttempts})`
                 : "Please wait..."}
             </p>
             {overlayError && (

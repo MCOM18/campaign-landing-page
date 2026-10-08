@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import api from "../utils/apiClient";
-import { AnalyticEvents } from "../services/analytics/AnalyticEvents";
-import { getUserGeoLocation } from "../utils/userUtil";
-import { logger } from "@/lib/logger/logger";
 import { appConfig } from "@/lib/config/app.config";
+import { logger } from "@/lib/logger/logger";
 import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { PurchaseStatus } from "../enums/enums";
+import api from "../utils/apiClient";
+import { getUserGeoLocation } from "../utils/userUtil";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +30,7 @@ interface PaymentInitData {
   oOrderDetails: any;
   skuId: string;
   paymentMethod: string;
+  sIin?: string;
   expiresAt?: number;
   createdAt?: number;
   version?: string;
@@ -194,12 +194,19 @@ export const usePaymentHandler = () => {
   const [isPreparing, setIsPreparing] = useState(false);
   const [preparedData, setPreparedData] = useState<PaymentInitData | null>(null);
   const [pollingAttempt, setPollingAttempt] = useState(0);
+  const [pollingMaxAttempts, setPollingMaxAttempts] = useState(0);
   const [showProcessingOverlay, setShowProcessingOverlay] = useState(false);
   const [overlayError, setOverlayError] = useState<string | null>(null);
 
   const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
 
   const POLLING_CONFIG = { MAX_ATTEMPTS: 10, RETRY_DELAY_MS: 2000 };
+  // UPI intent (GPay / PhonePe / etc.) verify-payment is capped at 5 calls
+  const INTENT_POLLING_CONFIG = { MAX_ATTEMPTS: 5, RETRY_DELAY_MS: 3000 };
+
+  // Bumped whenever a new intent poll starts (or on cleanup/unmount) so stale loops stop
+  const activePollIdRef = useRef(0);
+  useEffect(() => () => { activePollIdRef.current++; }, []);
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -261,6 +268,8 @@ export const usePaymentHandler = () => {
     setIsPreparing(false);
     setPreparedData(null);
     setPollingAttempt(0);
+    setPollingMaxAttempts(0);
+    activePollIdRef.current++;
     setShowProcessingOverlay(false);
     setOverlayError(null);
   };
@@ -294,9 +303,15 @@ export const usePaymentHandler = () => {
   const pollVerifyPayment = async (
     verifyPayload: any,
     maxAttempts = POLLING_CONFIG.MAX_ATTEMPTS,
-    delayMs = POLLING_CONFIG.RETRY_DELAY_MS
+    delayMs = POLLING_CONFIG.RETRY_DELAY_MS,
+    shouldStop?: () => boolean
   ) => {
+    setPollingMaxAttempts(maxAttempts);
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (shouldStop?.()) {
+        setPollingAttempt(0);
+        return { success: false, stopped: true, error: "Polling stopped" };
+      }
       setPollingAttempt(attempt);
       try {
         const sessionId = localStorage.getItem("session_id");
@@ -551,9 +566,12 @@ export const usePaymentHandler = () => {
   // Call on page load / before button click (async — no gesture needed).
   // Also loads the Razorpay script so executePayment can run synchronously.
 
-  const preparePayment = async (selectedPlan: any, paymentMethod: string): Promise<PaymentInitData | null> => {
+  const preparePayment = async (selectedPlan: any, paymentMethod: string, cardNumber?: string): Promise<PaymentInitData | null> => {
     try {
       setIsPreparing(true);
+
+      // Card IIN = first 6 digits of the card number (sent only for card payments)
+      const sIin = paymentMethod === "card" ? (cardNumber || "").replace(/\D/g, "").slice(0, 6) : "";
 
       const pricingData = getPricingData(selectedPlan);
       if (!pricingData) throw new Error("Invalid pricing");
@@ -562,9 +580,14 @@ export const usePaymentHandler = () => {
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) throw new Error("Failed to load Razorpay SDK. Please check your network and try again.");
 
-      // Use cache if same SKU and same payment method
+      // Use cache if same SKU, same payment method and (for card) same IIN
       const cached = getPaymentInitData();
-      if (cached?.oOrderDetails && cached?.skuId === pricingData.skuId && cached?.paymentMethod === paymentMethod) {
+      if (
+        cached?.oOrderDetails &&
+        cached?.skuId === pricingData.skuId &&
+        cached?.paymentMethod === paymentMethod &&
+        (cached?.sIin || "") === sIin
+      ) {
         setPreparedData(cached);
         setIsPreparing(false);
         return cached;
@@ -616,6 +639,7 @@ export const usePaymentHandler = () => {
         sEmail: localStorage.getItem("user_email") || null,
         sCouponCode: appliedCoupon,
         sUtmSource: sUtmSource,
+        ...(sIin ? { sIin } : {}),
       };
 
       const sessionId = localStorage.getItem("session_id");
@@ -647,6 +671,7 @@ export const usePaymentHandler = () => {
         oOrderDetails: newInitiateData?.oOrderDetails,
         skuId: pricingData.skuId,
         paymentMethod: paymentMethod,
+        ...(sIin ? { sIin } : {}),
       };
 
       setPaymentInitData(data);
@@ -764,7 +789,7 @@ export const usePaymentHandler = () => {
                   sOrderId: errPaymentId || errOrderId || initiateData.oOrderDetails?.order_id || "",
                   sProviderToken,
                   sToken: initiateData.sToken,
-                }, 5, 2000); // 5 attempts for error fallback
+                }, INTENT_POLLING_CONFIG.MAX_ATTEMPTS, 2000); // 5 attempts for error fallback
 
                 if (result.success) {
                   // It actually succeeded!
@@ -849,15 +874,21 @@ export const usePaymentHandler = () => {
           if (initiateData?.sToken) {
             const sProviderToken = localStorage.getItem("payment_sProviderToken");
             if (sProviderToken) {
-              // 60 attempts * 3s delay = 3 minutes of polling
+              // Max 5 verify-payment calls; stops early once a Razorpay callback
+              // resolves this payment or a newer intent payment starts
+              const pollId = ++activePollIdRef.current;
               pollVerifyPayment({
                 ePaymentProvider: initiateData.ePaymentGateway || "RZP",
                 sOrderId: initiateData.oOrderDetails?.order_id || initiateData.sOrderId,
                 sProviderToken,
                 sToken: initiateData.sToken,
-              }, 60, 3000)
+              },
+                INTENT_POLLING_CONFIG.MAX_ATTEMPTS,
+                INTENT_POLLING_CONFIG.RETRY_DELAY_MS,
+                () => isResolved || pollId !== activePollIdRef.current
+              )
                 .then(async (result) => {
-                  if (isResolved) return;
+                  if (isResolved || result.stopped) return;
 
                   if (result.success) {
                     isResolved = true;
@@ -942,7 +973,7 @@ export const usePaymentHandler = () => {
 
       let initiateData: PaymentInitData | null = preparedData || getPaymentInitData();
       if (!initiateData?.oOrderDetails) {
-        initiateData = await preparePayment(selectedPlan, options?.paymentMethod || "upi");
+        initiateData = await preparePayment(selectedPlan, options?.paymentMethod || "upi", options?.card?.number);
         if (!initiateData) {
           setIsProcessing(false);
           return { success: false, error: "Failed to prepare payment" };
@@ -1018,6 +1049,7 @@ export const usePaymentHandler = () => {
     isPreparing,
     preparedData,
     pollingAttempt,
+    pollingMaxAttempts,
     cleanupPaymentState,
     showPaymentDetailsModal: false,
     setShowPaymentDetailsModal: () => { },
