@@ -2,6 +2,12 @@
 
 set -e
 
+source /home/ec2-user/.bashrc || source /etc/profile
+
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh"
+fi
+
 APP_DIR="/var/www/subscription_campaign_landing_page"
 
 echo "===== Cleaning application directory ====="
@@ -13,6 +19,8 @@ if [ ! -d "$APP_DIR" ]; then
 fi
 
 cd "$APP_DIR"
+
+pm2 stop campaign-landing-page
 
 echo "===== Removing .next directory ====="
 rm -rf .next
