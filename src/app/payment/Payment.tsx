@@ -7,7 +7,9 @@ import { FiChevronUp, FiChevronDown, FiChevronLeft, FiEye, FiEyeOff } from "reac
 import SubscriptionPlanCard from "./SubscriptionPlanCard";
 import { usePaymentHandler, getPricingData, checkCardRecurringEligibility, loadRazorpayScript } from "../../hooks/usePaymentHandler";
 import { getUserGeoLocation, clearUserDataAndReload } from "../../utils/userUtil";
-import { PAYMENT_METHOD } from "@/enums/enums";
+import { PAYMENT_METHOD, PaymentType, PurchaseStatus } from "@/enums/enums";
+import { redirectAfterPurchaseSuccess } from "@/utils/successRedirect";
+import { fetchOfferByCampaignCached } from "@/features/offer/hooks/useOfferByCampaign";
 import PhoneCollectModal from "./PhoneCollectModal";
 import { GoldRestrictionModal } from "@/components/GoldRestrictionModal";
 import { SuccessScreen } from "@/components/SuccessScreen";
@@ -16,6 +18,8 @@ import { trackEvent } from "@/services/analytics/events";
 import "./payment.css";
 import { appConfig } from "@/lib/config/app.config";
 import { useBootstrap } from "@/lib/bootstrap/BootstrapContext";
+import { logger } from "@/lib/logger/logger";
+import api from "@/utils/apiClient";
 
 function PaymentPage() {
   const router = useRouter();
@@ -30,6 +34,17 @@ function PaymentPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [lockTimeLeft, setLockTimeLeft] = useState<number | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  // paymentType is read from the GET_OFFER_BY_CAMPAIGN response only — never persisted
+  const [isFreePayment, setIsFreePayment] = useState(false);
+  const [isPaymentTypeResolved, setIsPaymentTypeResolved] = useState(false);
+  // Success details for the free flow, taken from the initiate-payment response
+  const [freeSuccessData, setFreeSuccessData] = useState<{
+    planTitle: string;
+    discountLabel: string;
+    offerName: string;
+    validTill: string;
+  } | null>(null);
+  const [isCheckingGold, setIsCheckingGold] = useState(false);
 
   const getCouponFromUrl = () => new URLSearchParams(window.location.search).get("sCouponCode");
 
@@ -155,6 +170,23 @@ function PaymentPage() {
       }
     }
   }, [router, RAZORPAY_KEY]);
+
+  // Resolve paymentType for the campaign this payment came from
+  useEffect(() => {
+    if (!isAppReady || !isAuthorized) return;
+    const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
+    if (!pendingCampaignId) {
+      setIsPaymentTypeResolved(true);
+      return;
+    }
+    fetchOfferByCampaignCached(pendingCampaignId, getCouponFromUrl() || "")
+      .then((res: any) => {
+        const offerData = res?.data?.data || res?.data || res || {};
+        setIsFreePayment(offerData?.campaignDetails?.paymentType === PaymentType.FREE);
+      })
+      .catch(() => setIsFreePayment(false))
+      .finally(() => setIsPaymentTypeResolved(true));
+  }, [isAppReady, isAuthorized]);
 
   // Countdown Timer for Coupon Lock
   useEffect(() => {
@@ -412,6 +444,73 @@ function PaymentPage() {
   //*********************************************** */
   const handlePaymentClick = async () => {
 
+    if (isFreePayment) {
+      const storedPhone = localStorage.getItem("user_phone");
+      const userData = (() => { try { return JSON.parse(localStorage.getItem("userData") || "{}"); } catch { return {}; } })();
+      const phoneFromUserData = userData?.phone || userData?.sPhone || userData?.phone_number || userData?.mobile || "";
+      if (!storedPhone && !phoneFromUserData) {
+        setShowPhoneModal(true);
+        return;
+      }
+
+      // Gold users can't redeem a free plan — check before calling initiate-payment
+      if (isCheckingGold) return;
+      setIsCheckingGold(true);
+      let isGoldUser = false;
+      try {
+        const geoDataVerify = getUserGeoLocation();
+        const subResponse = await api.post(
+          "subscription/verify-subscription",
+          { countryCode: geoDataVerify?.country_code || "IN" },
+          { headers: { sessionid: localStorage.getItem("session_id") || "" } }
+        );
+        logger.info("[Verify Subscription] Response:", subResponse.data);
+        isGoldUser = subResponse.data?.data?.planType === "SVOD";
+      } catch (subErr) {
+        logger.error("[Verify Subscription] Failed to verify subscription status:", subErr);
+      } finally {
+        setIsCheckingGold(false);
+      }
+
+      if (isGoldUser) {
+        setShowGoldPopup(true);
+        return;
+      }
+
+      const data = await preparePayment(selectedPlan, PAYMENT_METHOD.UPI, undefined, 0);
+      if (!data) return;
+
+      if ((data as any).isAlreadyActive) {
+        setShowGoldPopup(true);
+        return;
+      }
+
+      if (data.isFreeSuccess && data.oVerifyRes?.sStatus === PurchaseStatus.SUCCESS) {
+        const subscription = data.oVerifyRes?.subscription || {};
+        const offer = data.oOfferDetails || {};
+        const endDate = subscription.dEndDate ? new Date(subscription.dEndDate) : null;
+
+        setFreeSuccessData({
+          planTitle: subscription.sSubProductLabel || subscription.oProductTranslation?.sName?.trim() || "",
+          discountLabel:
+            offer.eOfferType === "PERCENTAGE_DISCOUNT"
+              ? `${offer.nDiscountValue}% OFF`
+              : offer.nCalculatedDiscount
+                ? `${pricingData?.currencySymbol || "₹"}${offer.nCalculatedDiscount} OFF`
+                : "",
+          offerName: offer.sCode || "",
+          validTill: endDate && !isNaN(endDate.getTime())
+            ? endDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+            : "",
+        });
+        return;
+      }
+
+      setFailedErrorMsg("Unable to activate your subscription. Please try again.");
+      setShowFailedPopup(true);
+      return;
+    }
+
     if (paymentMethod === "upi") {
       if (!upiId) {
         setUpiError("UPI ID is required");
@@ -518,7 +617,7 @@ function PaymentPage() {
     selectedPlan?.oSubscriptionGroup?.aMediaUrls?.[0] ||
     null;
 
-  if (!isMounted || !isAuthorized || !selectedPlan || !pricingData || !isAppReady) {
+  if (!isMounted || !isAuthorized || !selectedPlan || !pricingData || !isAppReady || !isPaymentTypeResolved) {
     return (
       <div className="payment_wrapper">
         <p style={{ color: "rgba(255,255,255,0.5)" }}>Loading plan details...</p>
@@ -608,6 +707,19 @@ function PaymentPage() {
               setShowSuccessPopup(false);
               router.push("/");
             }}
+          />
+        </div>
+      )}
+
+      {freeSuccessData && (
+        <div className="success-overlay">
+          <SuccessScreen
+            isCouponApplied
+            planTitle={freeSuccessData.planTitle}
+            discountLabel={freeSuccessData.discountLabel}
+            offerName={freeSuccessData.offerName}
+            validTill={freeSuccessData.validTill}
+            onReset={redirectAfterPurchaseSuccess}
           />
         </div>
       )}
@@ -775,6 +887,7 @@ function PaymentPage() {
             plan={selectedPlan}
             isActive
             landscapeUrl={landscapeUrl}
+            hideRenewalLine={isFreePayment}
           />
 
           {/* Applied Coupon Badge */}
@@ -800,6 +913,7 @@ function PaymentPage() {
 
           {/* Payment methods */}
           <div style={{ marginTop: "24px" }}>
+            {!isFreePayment && (
             <div className="payment-methods">
 
               {/* UPI — hidden for overseas users */}
@@ -1115,15 +1229,16 @@ function PaymentPage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* Pay button */}
             <button
               onClick={handlePaymentClick}
-              disabled={isProcessing || isPreparing}
+              disabled={isProcessing || isPreparing || isCheckingGold}
               className="prcoess-btn"
               style={{ marginTop: "28px" }}
             >
-              {isPreparing ? (
+              {isPreparing || isCheckingGold ? (
                 "Preparing..."
               ) : isProcessing ? (
                 "Processing..."

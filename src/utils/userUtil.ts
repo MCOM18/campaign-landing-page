@@ -1,13 +1,37 @@
 import { useAuthStore } from "@/store/useAuthStore";
 
-export const clearUserDataAndReload = () => {
+// Expires every JS-readable cookie on the current host and its parent domains
+// (HttpOnly cookies are not reachable from JS and must be cleared by the server)
+const clearAllCookies = () => {
+  const hostParts = window.location.hostname.split(".");
+  document.cookie.split(";").forEach((cookie) => {
+    const name = cookie.split("=")[0].trim();
+    if (!name) return;
+    const expired = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    document.cookie = expired;
+    for (let i = 0; i < hostParts.length - 1; i++) {
+      document.cookie = `${expired}; domain=.${hostParts.slice(i).join(".")}`;
+    }
+  });
+};
+
+// "Purchase Plan With Another Number": wipe storage, cookies and Cache Storage, then reload
+export const clearUserDataAndReload = async () => {
   if (typeof window === "undefined") return;
-  localStorage.removeItem("session_id");
-  localStorage.removeItem("user_id");
-  localStorage.removeItem("userData");
-  localStorage.removeItem("user_phone");
-  localStorage.removeItem("user_phone_code");
   useAuthStore.getState().clearAuth();
+  try {
+    localStorage.clear();
+    sessionStorage.clear();
+  } catch { }
+  try {
+    clearAllCookies();
+  } catch { }
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+  } catch { }
   window.location.reload();
 };
 

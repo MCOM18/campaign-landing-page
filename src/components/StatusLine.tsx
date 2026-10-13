@@ -43,9 +43,12 @@ export function StatusLine() {
 
   // Get env type ("stage" or "prod")
   let envType = "STAGE";
+  let apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   try {
     if (isConfigLoaded()) {
-      envType = getAppConfig().envType.toUpperCase();
+      const config = getAppConfig();
+      envType = config.envType.toUpperCase();
+      apiBaseUrl = config.apiBaseUrl || apiBaseUrl;
     } else {
       envType = (process.env.NEXT_PUBLIC_ENV_TYPE || "STAGE").toUpperCase();
     }
@@ -193,6 +196,15 @@ export function StatusLine() {
             <span style={getStatusTextStyle(true, envType === "PROD" ? "rose" : "emerald")}>
               <span style={getDotStyle(true, envType === "PROD" ? "rose" : "emerald")} />
               {envType}
+            </span>
+          </div>
+
+          {/* API Base URL */}
+          <div style={loggerBlockStyle}>
+            <span>API:</span>
+            <span style={{ ...getStatusTextStyle(!!apiBaseUrl, apiBaseUrl ? "emerald" : "neutral"), textTransform: "none" }}>
+              <span style={getDotStyle(!!apiBaseUrl, apiBaseUrl ? "emerald" : "neutral")} />
+              {apiBaseUrl || "NOT SET"}
             </span>
           </div>
 

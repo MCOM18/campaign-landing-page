@@ -15,6 +15,7 @@ interface SuccessScreenProps {
   planTitle?: string;
   discountLabel?: string;
   offerName?: string;
+  validTill?: string;
 }
 
 export const SuccessScreen: React.FC<SuccessScreenProps> = ({
@@ -24,6 +25,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
   planTitle: propPlanTitle,
   discountLabel: propDiscountLabel,
   offerName: propOfferName,
+  validTill,
 }) => {
   const [couponData, setCouponData] = useState({
     isCouponApplied: false,
@@ -46,8 +48,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
 
       if (selectedPlanRaw) {
         const plan = JSON.parse(selectedPlanRaw);
-        title = plan.sSubProductLabel || plan.sProductName || title;
-        discount = plan.sDiscount || discount;
+        title = propPlanTitle || plan.sSubProductLabel || plan.sProductName || title;
+        discount = propDiscountLabel || plan.sDiscount || discount;
       }
 
       setCouponData({
@@ -148,7 +150,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
           fontSize: "15px",
           fontWeight: "400",
           textAlign: "center",
-          margin: "0 0 36px 0",
+          margin: validTill ? "0 0 12px 0" : "0 0 36px 0",
           lineHeight: "1.6",
           maxWidth: "320px"
         }}>
@@ -158,6 +160,12 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
             <>{isTrial ? "You've successfully activated your 7-day JOJO Gold Free Trial. Enjoy!" : "You've successfully subscribed to JOJO Gold Premium. Enjoy!"}</>
           )}
         </p>
+
+        {validTill && (
+          <p style={{ color: "#FAAF3F", fontSize: "14px", fontWeight: "600", textAlign: "center", margin: "0 0 36px 0" }}>
+            Valid till {validTill}
+          </p>
+        )}
 
         {/* Golden Features Divider */}
         <div style={{

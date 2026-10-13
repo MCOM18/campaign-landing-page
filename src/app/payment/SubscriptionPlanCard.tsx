@@ -23,6 +23,7 @@ interface SubscriptionPlanCardProps {
   landscapeUrl?: string | null;
   isSelectionScreen?: boolean;
   showCouponInput?: boolean;
+  hideRenewalLine?: boolean;
 }
 
 async function fetchAndStoreCampaignPlan(campaignRefId: string, couponCode: string, fallbackPlan?: any) {
@@ -119,6 +120,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
   onClick,
   landscapeUrl = null,
   showCouponInput = false,
+  hideRenewalLine = false,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -530,7 +532,7 @@ const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
         </div>
 
         {/* Subline: After 1 month ... ₹120/month */}
-        {(subtext || recurringPrice) && (
+        {!hideRenewalLine && (subtext || recurringPrice) && (
           <div
             style={{
               display: "flex",

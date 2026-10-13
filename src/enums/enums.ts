@@ -38,3 +38,9 @@ export enum PurchaseStatus {
   FAILED = "FAILED",
   CANCELLED = "CANCELLED",
 }
+
+export enum PaymentType {
+  ONETIME = "onetime",
+  RECURRING = "recurring",
+  FREE = "free",
+}

@@ -13,7 +13,6 @@ interface PageProps {
 export default function OfferDetailsPage({ params }: PageProps) {
   return (
     <Suspense fallback={<PageSkeleton />}>
-
       <OfferDetailsClient params={params} />
     </Suspense>
   );

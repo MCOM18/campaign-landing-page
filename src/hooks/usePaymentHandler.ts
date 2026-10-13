@@ -35,6 +35,10 @@ interface PaymentInitData {
   createdAt?: number;
   version?: string;
   sOrderId?: string;
+  // Free (paymentType "free") flow: backend activates the subscription in initiate-payment itself
+  isFreeSuccess?: boolean;
+  oVerifyRes?: any;
+  oOfferDetails?: any;
 }
 
 interface InitiateOptions {
@@ -566,7 +570,7 @@ export const usePaymentHandler = () => {
   // Call on page load / before button click (async — no gesture needed).
   // Also loads the Razorpay script so executePayment can run synchronously.
 
-  const preparePayment = async (selectedPlan: any, paymentMethod: string, cardNumber?: string): Promise<PaymentInitData | null> => {
+  const preparePayment = async (selectedPlan: any, paymentMethod: string, cardNumber?: string, nAmountOverride?: number): Promise<PaymentInitData | null> => {
     try {
       setIsPreparing(true);
 
@@ -626,7 +630,7 @@ export const usePaymentHandler = () => {
 
       const payload = {
         iProviderSkuId: pricingData.skuId,
-        nAmount: pricingData.price,
+        nAmount: nAmountOverride ?? pricingData.price,
         sCity: currentGeoData?.city || "",
         sCountryCode2: currentGeoData?.country_code || appConfig.DEFAULT_COUNTRY_NAME,
         sCurrencyCode: pricingData.currency || "INR",
@@ -677,7 +681,13 @@ export const usePaymentHandler = () => {
       setPaymentInitData(data);
       setPreparedData(data);
       setIsPreparing(false);
-      return data;
+      // Free-flow fields are returned only, not persisted with the cached init data
+      return {
+        ...data,
+        isFreeSuccess: newInitiateData?.isFreeSuccess,
+        oVerifyRes: newInitiateData?.oVerifyRes,
+        oOfferDetails: newInitiateData?.oOfferDetails,
+      };
     } catch (err: unknown) {
       logger.error("preparePayment failed:", err);
       setIsPreparing(false);
