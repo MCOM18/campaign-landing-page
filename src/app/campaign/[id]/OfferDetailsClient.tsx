@@ -32,6 +32,7 @@ import { trackEvent } from "@/services/analytics/events";
 import { buildDevicePayload } from "@/shared/analytics/utils/buildDevicePayload";
 import { parseSourceLinkParams } from "@/shared/analytics/utils/getSourceLink";
 import { formatPrice, formatPriceText } from "@/utils/priceUtil";
+import { PaymentType } from "@/enums/enums";
 
 interface OfferDetailsClientProps {
   params: Promise<{ id: string }>;
@@ -205,6 +206,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
   const discountVal = offerDetails?.discountValue || 0;
   const offerType = offerDetails?.offerType || "PERCENTAGE_DISCOUNT";
   const campaignRefId = campaignDetails?.campaignRefId || campaignId;
+  const isFreePayment = campaignDetails?.paymentType === PaymentType.FREE;
 
   // Extract dynamic theme color from API response (use dark theme)
   const themeColor = metadata?.theme?.backgroundColor?.dark || "";
@@ -896,6 +898,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                     offerDetails,
                     activeFeatures,
                     tags,
+                    hideRenewalLine: isFreePayment,
                   })}
 
                   {/* Coupon Redeem Section / Login Button */}
@@ -1050,6 +1053,7 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
                       offerDetails,
                       activeFeatures,
                       tags,
+                      hideRenewalLine: isFreePayment,
                     })}
 
                     {/* Action below card */}
@@ -1277,11 +1281,13 @@ function renderGoldOfferCard({
   offerDetails,
   activeFeatures = [],
   tags = [],
+  hideRenewalLine = false,
 }: {
   planObj: any;
   offerDetails?: any;
   activeFeatures?: any[];
   tags?: string[];
+  hideRenewalLine?: boolean;
 }) {
   const plan = planObj?.plan || {};
 
@@ -1433,7 +1439,7 @@ function renderGoldOfferCard({
       </div>
 
       {/* Subline: After 12 months ... ₹499/year */}
-      {(subtext || recurringPrice) && (
+      {!hideRenewalLine && (subtext || recurringPrice) && (
         <div
           style={{
             display: "flex",
@@ -1457,6 +1463,7 @@ function renderGoldOfferCard({
           height: "1px",
           backgroundColor: "rgba(0, 0, 0, 0.15)",
           margin: "0 -4px 14px -4px",
+          marginTop: "14px",
         }}
       />
 
