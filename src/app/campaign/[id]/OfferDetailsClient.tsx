@@ -585,6 +585,12 @@ export default function OfferDetailsClient({ params }: OfferDetailsClientProps) 
           sessionStorage.setItem("coupon_lock_minutes", nCouponLockMinutes.toString());
           sessionStorage.setItem("coupon_lock_timestamp", Date.now().toString());
         }
+        // Payment page skips the mobile number popup when the validated coupon is free
+        if (campaignDetails?.paymentType) {
+          sessionStorage.setItem("coupon_payment_type", campaignDetails.paymentType);
+        } else {
+          sessionStorage.removeItem("coupon_payment_type");
+        }
       }
 
       // Success: coupon_code_applied + coupon_apply_result

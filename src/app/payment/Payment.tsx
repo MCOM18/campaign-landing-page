@@ -34,7 +34,8 @@ function PaymentPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [lockTimeLeft, setLockTimeLeft] = useState<number | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
-  // paymentType is read from the GET_OFFER_BY_CAMPAIGN response only — never persisted
+  // paymentType is read from the GET_OFFER_BY_CAMPAIGN response, or from the validate-code
+  // response (sessionStorage "coupon_payment_type") when a coupon was redeemed
   const [isFreePayment, setIsFreePayment] = useState(false);
   const [isPaymentTypeResolved, setIsPaymentTypeResolved] = useState(false);
   // Success details for the free flow, taken from the initiate-payment response
@@ -60,6 +61,7 @@ function PaymentPage() {
 
     sessionStorage.removeItem("coupon_lock_minutes");
     sessionStorage.removeItem("coupon_lock_timestamp");
+    sessionStorage.removeItem("coupon_payment_type");
     setAppliedCoupon(null);
     setLockTimeLeft(null);
     toast.dismiss();
@@ -174,17 +176,21 @@ function PaymentPage() {
   // Resolve paymentType for the campaign this payment came from
   useEffect(() => {
     if (!isAppReady || !isAuthorized) return;
+    // Validate-code response for the redeemed coupon marked the campaign as free
+    const isCouponFree =
+      !!getCouponFromUrl() && sessionStorage.getItem("coupon_payment_type") === PaymentType.FREE;
     const pendingCampaignId = sessionStorage.getItem("pending_campaign_id");
     if (!pendingCampaignId) {
+      setIsFreePayment(isCouponFree);
       setIsPaymentTypeResolved(true);
       return;
     }
     fetchOfferByCampaignCached(pendingCampaignId, getCouponFromUrl() || "")
       .then((res: any) => {
         const offerData = res?.data?.data || res?.data || res || {};
-        setIsFreePayment(offerData?.campaignDetails?.paymentType === PaymentType.FREE);
+        setIsFreePayment(isCouponFree || offerData?.campaignDetails?.paymentType === PaymentType.FREE);
       })
-      .catch(() => setIsFreePayment(false))
+      .catch(() => setIsFreePayment(isCouponFree))
       .finally(() => setIsPaymentTypeResolved(true));
   }, [isAppReady, isAuthorized]);
 
@@ -256,8 +262,9 @@ function PaymentPage() {
   }, [isOverseasUser]);
 
   // If email logged in and has no phone, show PhoneCollectModal immediately when ready
+  // (not for free plans — no mobile number is needed to activate them)
   useEffect(() => {
-    if (isMounted && isAuthorized && selectedPlan) {
+    if (isMounted && isAuthorized && selectedPlan && isPaymentTypeResolved && !isFreePayment) {
       const pricingData = getPricingData(selectedPlan);
       if (!pricingData) return;
 
@@ -283,7 +290,7 @@ function PaymentPage() {
         setShowPhoneModal(true);
       }
     }
-  }, [isMounted, isAuthorized, selectedPlan, showPhoneModal]);
+  }, [isMounted, isAuthorized, selectedPlan, showPhoneModal, isPaymentTypeResolved, isFreePayment]);
 
   // Query installed UPI Apps on Android
   useEffect(() => {
@@ -445,13 +452,7 @@ function PaymentPage() {
   const handlePaymentClick = async () => {
 
     if (isFreePayment) {
-      const storedPhone = localStorage.getItem("user_phone");
-      const userData = (() => { try { return JSON.parse(localStorage.getItem("userData") || "{}"); } catch { return {}; } })();
-      const phoneFromUserData = userData?.phone || userData?.sPhone || userData?.phone_number || userData?.mobile || "";
-      if (!storedPhone && !phoneFromUserData) {
-        setShowPhoneModal(true);
-        return;
-      }
+      // Free plans don't need a mobile number, so no PhoneCollectModal here
 
       // Gold users can't redeem a free plan — check before calling initiate-payment
       if (isCheckingGold) return;
