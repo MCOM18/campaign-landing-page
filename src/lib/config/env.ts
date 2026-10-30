@@ -25,6 +25,11 @@ export const env = {
   timestamp: process.env.NEXT_PUBLIC_BUILD_TIME || new Date().toISOString(),
   // reCAPTCHA v3
   recaptchaSiteKey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "",
+
+  // Public origin this app is served from (used for llms.txt / robots.txt absolute URLs)
+  siteUrl: (process.env.NEXT_PUBLIC_SITE_URL || "https://subscription.jojoapp.in").replace(/\/+$/, ""),
+  // Mirrors the trailingSlash condition in next.config.ts
+  trailingSlash: process.env.NEXT_PUBLIC_DYNAMIC_BUILD !== "true" && process.env.NODE_ENV !== "development",
 } as const;
 
 // Validation (fail fast in development)

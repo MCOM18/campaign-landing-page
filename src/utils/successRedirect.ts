@@ -9,7 +9,10 @@ export function redirectAfterPurchaseSuccess() {
 
   const isCampaignUrl = storedRedirectUrl && (() => {
     try {
-      return new URL(storedRedirectUrl).hostname.endsWith("jojoapp.in");
+      // Exact domain or a real subdomain: a bare suffix check would also accept "evil-jojoapp.in".
+      const { protocol, hostname } = new URL(storedRedirectUrl);
+      return (protocol === "https:" || protocol === "http:") &&
+        (hostname === "jojoapp.in" || hostname.endsWith(".jojoapp.in"));
     } catch { return false; }
   })();
 

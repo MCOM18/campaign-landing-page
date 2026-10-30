@@ -12,7 +12,8 @@
     "build:stage": "npx env-cmd -f .env.stage next build",
     "build:prod": "npx env-cmd -f .env.production next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "llms-check": "node script/llms-check.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.1",

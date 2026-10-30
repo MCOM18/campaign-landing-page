@@ -132,6 +132,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
+        {/* Discovery link for AI crawlers (served by app/llms.txt/route.ts) */}
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-readable site summary" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebsite) }}
